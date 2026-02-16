@@ -1,0 +1,24 @@
+#Greeks — POST /api/v1/sensitivities/greeks:
+
+
+{
+  "instrument": {
+    "type": "vanilla_option",
+    "params": {
+      "trade_id": "TEST-001",
+      "underlying": "AAPL",
+      "strike": 185.0,
+      "expiry": "2026-01-15",
+      "option_type": "call",
+      "exercise_type": "european"
+    }
+  },
+  "market_data": {
+    "pricing_date": "2025-01-15",
+    "underlyings": {
+      "AAPL": {"spot": 185.0, "vol": 0.25, "div_yield": 0.005}
+    },
+    "rate": 0.045
+  },
+  "measures": ["delta", "gamma", "vega", "theta"]
+}

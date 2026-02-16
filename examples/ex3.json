@@ -1,0 +1,24 @@
+{
+  "instrument": {
+    "type": "barrier_option",
+    "params": {
+      "trade_id": "BAR-001",
+      "underlying": "AAPL",
+      "strike": 185.0,
+      "expiry": "2026-01-15",
+      "option_type": "call",
+      "barrier_type": "down_out",
+      "barrier_level": 160.0,
+      "rebate": 0.0
+    }
+  },
+  "market_data": {
+    "pricing_date": "2025-01-15",
+    "underlyings": {
+      "AAPL": {"spot": 185.0, "vol": 0.25, "div_yield": 0.005}
+    },
+    "rate": 0.045
+  },
+  "model": "black_scholes",
+  "engine": "analytic"
+}

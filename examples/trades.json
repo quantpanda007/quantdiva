@@ -1,0 +1,162 @@
+{
+  "market_data": {
+    "pricing_date": "2025-01-15",
+    "underlyings": {
+      "AAPL": {
+        "spot": 185.0,
+        "vol": 0.25,
+        "div_yield": 0.005
+      },
+      "SPX": {
+        "spot": 5800.0,
+        "vol": 0.18,
+        "div_yield": 0.015
+      },
+      "TSLA": {
+        "spot": 250.0,
+        "vol": 0.55,
+        "div_yield": 0.0
+      }
+    },
+    "rate": 0.045
+  },
+
+  "trades": [
+    {
+      "trade_id": "VAN-EU-001",
+      "instrument_type": "vanilla_option",
+      "underlying": "AAPL",
+      "strike": 190.0,
+      "expiry": "2025-07-15",
+      "option_type": "call",
+      "exercise_type": "european",
+      "currency": "USD",
+      "engines": ["analytic", "finite_difference", "monte_carlo", "binomial"]
+    },
+    {
+      "trade_id": "VAN-AM-002",
+      "instrument_type": "vanilla_option",
+      "underlying": "AAPL",
+      "strike": 180.0,
+      "expiry": "2025-07-15",
+      "option_type": "put",
+      "exercise_type": "american",
+      "currency": "USD",
+      "engines": ["finite_difference", "binomial", "monte_carlo"]
+    },
+    {
+      "trade_id": "BAR-DO-001",
+      "instrument_type": "barrier_option",
+      "underlying": "SPX",
+      "strike": 5800.0,
+      "expiry": "2025-07-15",
+      "option_type": "call",
+      "barrier_type": "down_out",
+      "barrier_level": 5400.0,
+      "rebate": 0.0,
+      "currency": "USD",
+      "engines": ["analytic", "finite_difference", "monte_carlo"]
+    },
+    {
+      "trade_id": "BAR-UI-002",
+      "instrument_type": "barrier_option",
+      "underlying": "TSLA",
+      "strike": 250.0,
+      "expiry": "2026-01-15",
+      "option_type": "call",
+      "barrier_type": "up_in",
+      "barrier_level": 320.0,
+      "rebate": 5.0,
+      "currency": "USD",
+      "engines": ["analytic"]
+    },
+    {
+      "trade_id": "DIG-CON-001",
+      "instrument_type": "digital_option",
+      "underlying": "SPX",
+      "strike": 6000.0,
+      "expiry": "2025-07-15",
+      "option_type": "call",
+      "digital_type": "cash_or_nothing",
+      "cash_payoff": 100.0,
+      "currency": "USD",
+      "engines": ["analytic"]
+    },
+    {
+      "trade_id": "DIG-AON-002",
+      "instrument_type": "digital_option",
+      "underlying": "AAPL",
+      "strike": 200.0,
+      "expiry": "2025-07-15",
+      "option_type": "put",
+      "digital_type": "asset_or_nothing",
+      "currency": "USD",
+      "engines": ["analytic"]
+    },
+    {
+      "trade_id": "ASIAN-ARITH-001",
+      "instrument_type": "asian_option",
+      "underlying": "AAPL",
+      "strike": 185.0,
+      "expiry": "2026-01-15",
+      "option_type": "call",
+      "average_type": "arithmetic",
+      "strike_type": "fixed",
+      "averaging_start": "2025-01-15",
+      "fixing_frequency": "monthly",
+      "currency": "USD",
+      "engines": ["monte_carlo"]
+    },
+    {
+      "trade_id": "ASIAN-GEOM-002",
+      "instrument_type": "asian_option",
+      "underlying": "SPX",
+      "strike": 5800.0,
+      "expiry": "2026-01-15",
+      "option_type": "call",
+      "average_type": "geometric",
+      "strike_type": "fixed",
+      "averaging_start": "2025-01-15",
+      "fixing_frequency": "monthly",
+      "currency": "USD",
+      "engines": ["analytic", "monte_carlo"]
+    },
+    {
+      "trade_id": "LB-FLOAT-001",
+      "instrument_type": "lookback_option",
+      "underlying": "TSLA",
+      "expiry": "2025-07-15",
+      "option_type": "call",
+      "strike_type": "floating",
+      "currency": "USD",
+      "engines": ["analytic", "monte_carlo"]
+    },
+    {
+      "trade_id": "LB-FIXED-002",
+      "instrument_type": "lookback_option",
+      "underlying": "AAPL",
+      "strike": 185.0,
+      "expiry": "2025-07-15",
+      "option_type": "put",
+      "strike_type": "fixed",
+      "currency": "USD",
+      "engines": ["analytic"]
+    }
+  ],
+
+  "engine_params": {
+    "analytic": {},
+    "finite_difference": {
+      "time_steps": 200,
+      "spot_steps": 400
+    },
+    "monte_carlo": {
+      "num_paths": 100000,
+      "time_steps": 252
+    },
+    "binomial": {
+      "steps": 500,
+      "tree_type": "crr"
+    }
+  }
+}
