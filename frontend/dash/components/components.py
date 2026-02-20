@@ -17,10 +17,11 @@ from dash import html, dcc
 # ═══════════════════════════════════════════════════════════════════
 
 NAV_ITEMS = [
-    {"id": "pricer",    "label": "⚡ Pricer",     "href": "/"},
-    {"id": "risk",      "label": "⚠ Risk Lab",    "href": "/risk"},
-    {"id": "portfolio", "label": "📋 Portfolio",   "href": "/portfolio"},
-    {"id": "registry",  "label": "▦ Registry",    "href": "/registry"},
+    {"id": "pricer",    "label": "⚡ Pricer",       "href": "/"},
+    {"id": "risk",      "label": "⚠ Risk Lab",      "href": "/risk"},
+    {"id": "portfolio", "label": "📋 Portfolio",     "href": "/portfolio"},
+    {"id": "market",    "label": "📈 Market Tools",  "href": "/market"},
+    {"id": "registry",  "label": "▦ Registry",      "href": "/registry"},
 ]
 
 

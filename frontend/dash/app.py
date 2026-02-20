@@ -13,12 +13,13 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
 
 from components.components import sidebar
-from pages import pricer, registry, risk_lab, portfolio
+from pages import pricer, registry, risk_lab, portfolio, market_tools
 
 import callbacks.pricer_callbacks    # noqa: F401
 import callbacks.registry_callbacks  # noqa: F401
 import callbacks.risk_callbacks      # noqa: F401
 import callbacks.portfolio_callbacks # noqa: F401
+import callbacks.market_callbacks    # noqa: F401
 
 
 app = dash.Dash(
@@ -50,6 +51,8 @@ def display_page(pathname):
         return risk_lab.layout()
     elif pathname == "/portfolio":
         return portfolio.layout()
+    elif pathname == "/market":
+        return market_tools.layout()
     return pricer.layout()
 
 
@@ -57,24 +60,20 @@ def display_page(pathname):
     Output("nav-pricer", "className"),
     Output("nav-risk", "className"),
     Output("nav-portfolio", "className"),
+    Output("nav-market", "className"),
     Output("nav-registry", "className"),
     Input("url", "pathname"),
 )
 def update_nav_active(pathname):
     base = "sidebar-link"
     active = "sidebar-link active"
-    states = [base, base, base, base]
+    s = [base] * 5
 
-    if pathname == "/risk":
-        states[1] = active
-    elif pathname == "/portfolio":
-        states[2] = active
-    elif pathname == "/registry":
-        states[3] = active
-    else:
-        states[0] = active
+    mapping = {"/risk": 1, "/portfolio": 2, "/market": 3, "/registry": 4}
+    idx = mapping.get(pathname, 0)
+    s[idx] = active
 
-    return tuple(states)
+    return tuple(s)
 
 
 if __name__ == "__main__":
