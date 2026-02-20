@@ -1,0 +1,35 @@
+pytest tests/regression/test_equity_pricing.py -v
+
+pytest tests/regression/test_fd_convergence.py -v
+
+uvicorn api.app:app --reload --port 8000
+
+python examples/risk_demo.py
+
+python examples/vol_surface_demo.py
+
+python examples/run_trades.py
+
+
+uvicorn api.app:app --reload --port 8000
+
+(quantlib-pricing) C:\Users\Abhishek\Quantdiva>cd quantlib-pricing
+
+(quantlib-pricing) C:\Users\Abhishek\Quantdiva\quantlib-pricing>cd frontend
+
+(quantlib-pricing) C:\Users\Abhishek\Quantdiva\quantlib-pricing\frontend>npm run dev
+
+
+
+
+Try this workflow:
+
+Go to Portfolio → Build tab
+Add: 100x buy vanilla call K=185
+Add: 50x buy vanilla put K=180
+Add: 200x sell digital call K=190
+Go to Valuation tab → Value Portfolio
+Go to Stress Test tab → Run Stress Test
+
+
+git commit -m "Added Portfolio"
