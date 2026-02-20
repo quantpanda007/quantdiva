@@ -2,17 +2,19 @@
 Pricer page callbacks.
 
 Uses pattern-matching callbacks to read dynamic instrument form fields.
+Supports engine-specific params (MC simulations, FD grid, etc.)
 """
 
 from __future__ import annotations
 
-from dash import Input, Output, State, callback, html, no_update, ctx, ALL
+from dash import Input, Output, State, callback, html, dcc, no_update, ctx, ALL
 import dash_bootstrap_components as dbc
 
 from components.components import (
     INSTRUMENT_FIELDS, NUMERIC_FIELDS,
     build_instrument_form, collect_market_data,
     npv_card, greeks_display, compare_table, error_alert,
+    form_field,
 )
 from services.api_client import api_client, APIError
 
@@ -50,6 +52,93 @@ def update_engine_options(inst_type):
         return [{"label": "analytic", "value": "analytic"}], "analytic"
 
 
+# --- Show/hide engine-specific params ---
+
+MC_SIMULATION_OPTIONS = [
+    {"label": "1,000",    "value": 1000},
+    {"label": "5,000",    "value": 5000},
+    {"label": "10,000",   "value": 10000},
+    {"label": "50,000",   "value": 50000},
+    {"label": "100,000",  "value": 100000},
+    {"label": "500,000",  "value": 500000},
+]
+
+FD_GRID_OPTIONS = [
+    {"label": "Coarse (50)",   "value": 50},
+    {"label": "Medium (100)",  "value": 100},
+    {"label": "Fine (200)",    "value": 200},
+    {"label": "Ultra (500)",   "value": 500},
+]
+
+@callback(
+    Output("engine-params-container", "children"),
+    Input("engine-select", "value"),
+)
+def show_engine_params(engine):
+    if not engine:
+        return html.Div()
+
+    eng = str(engine).lower()
+
+    if "monte_carlo" in eng or "mc" in eng:
+        return dbc.Row([
+            dbc.Col(form_field(
+                "Simulations",
+                dcc.Dropdown(
+                    id="vis-mc-num-paths",
+                    options=MC_SIMULATION_OPTIONS,
+                    value=10000,
+                    clearable=False,
+                    style={"background": "var(--bg)"},
+                ),
+            ), width=6),
+            dbc.Col(form_field(
+                "RNG Type",
+                dcc.Dropdown(
+                    id="vis-mc-rng-type",
+                    options=[
+                        {"label": "Pseudo-Random", "value": "pseudorandom"},
+                        {"label": "Sobol (Quasi)", "value": "sobol"},
+                    ],
+                    value="pseudorandom",
+                    clearable=False,
+                    style={"background": "var(--bg)"},
+                ),
+            ), width=6),
+        ], style={"marginTop": "10px"})
+
+    elif "finite_difference" in eng or "fd" in eng:
+        return dbc.Row([
+            dbc.Col(form_field(
+                "Grid Points",
+                dcc.Dropdown(
+                    id="vis-fd-grid-points",
+                    options=FD_GRID_OPTIONS,
+                    value=100,
+                    clearable=False,
+                    style={"background": "var(--bg)"},
+                ),
+            ), width=6),
+        ], style={"marginTop": "10px"})
+
+    return html.Div()
+
+
+# --- Sync visible engine params to hidden stores ---
+
+@callback(Output("mc-num-paths", "data"), Input("vis-mc-num-paths", "value"),
+          prevent_initial_call=True)
+def sync_mc_paths(v): return v
+
+@callback(Output("mc-rng-type", "data"), Input("vis-mc-rng-type", "value"),
+          prevent_initial_call=True)
+def sync_mc_rng(v): return v
+
+@callback(Output("fd-grid-points", "data"), Input("vis-fd-grid-points", "value"),
+          prevent_initial_call=True)
+def sync_fd_grid(v): return v
+
+
 # --- Price / Greeks / Compare ---
 
 @callback(
@@ -57,33 +146,33 @@ def update_engine_options(inst_type):
     Input("btn-price", "n_clicks"),
     Input("btn-greeks", "n_clicks"),
     Input("btn-compare", "n_clicks"),
-    # Instrument type
     State("inst-type", "value"),
-    # All dynamic instrument fields (pattern-matching)
     State({"type": "inst-field", "field": ALL}, "value"),
-    # Model & engine
     State("model-select", "value"),
     State("engine-select", "value"),
-    # Market data
     State("mkt-pricing-date", "value"),
     State("mkt-rate", "value"),
     State("mkt-spot", "value"),
     State("mkt-vol", "value"),
     State("mkt-div", "value"),
+    # Engine-specific params from stores
+    State("mc-num-paths", "data"),
+    State("mc-rng-type", "data"),
+    State("fd-grid-points", "data"),
     prevent_initial_call=True,
 )
 def handle_action(
     price_clicks, greeks_clicks, compare_clicks,
-    inst_type, field_values,
-    model, engine,
+    inst_type, field_values, model, engine,
     pricing_date, rate, spot, vol, div_yield,
+    mc_num_paths, mc_rng_type, fd_grid_points,
 ):
     """Handle Price / Greeks / Compare button clicks."""
     triggered = ctx.triggered_id
     if not triggered:
         return no_update
 
-    # -- Collect instrument params from pattern-matching fields --
+    # Collect instrument params
     fields = INSTRUMENT_FIELDS.get(inst_type, [])
     params = {}
     for i, (name, ftype, default) in enumerate(fields):
@@ -91,30 +180,38 @@ def handle_action(
             val = field_values[i]
         else:
             val = default[0] if isinstance(default, list) else default
-
         if name in NUMERIC_FIELDS and val is not None:
             try:
                 val = float(val)
             except (ValueError, TypeError):
                 val = 0.0
-
         params[name] = val
 
-    # -- Build market data --
     underlying = params.get("underlying", "AAPL")
     market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield, underlying)
 
-    # -- Build payload --
+    # Build engine params
+    eng = str(engine or "").lower()
+    engine_params = {}
+    if "monte_carlo" in eng or "mc" in eng:
+        engine_params["num_paths"] = int(mc_num_paths or 10000)
+        if mc_rng_type:
+            engine_params["rng_type"] = mc_rng_type
+    elif "finite_difference" in eng or "fd" in eng:
+        engine_params["grid_points"] = int(fd_grid_points or 100)
+
     payload = {
         "instrument": {"type": inst_type, "params": params},
         "market_data": market_data,
         "model": model or "black_scholes",
         "engine": engine or "analytic",
     }
+    if engine_params:
+        payload["engine_params"] = engine_params
 
     try:
         if triggered == "btn-price":
-            return _handle_price(payload)
+            return _handle_price(payload, engine_params)
         elif triggered == "btn-greeks":
             return _handle_greeks(payload)
         elif triggered == "btn-compare":
@@ -128,7 +225,7 @@ def handle_action(
         return error_alert(str(e))
 
 
-def _handle_price(payload):
+def _handle_price(payload, engine_params=None):
     """Price single + fetch Greeks."""
     result = api_client.price_single(payload)
 
@@ -140,7 +237,27 @@ def _handle_price(payload):
     except Exception:
         pass
 
-    children = [npv_card(result)]
+    meta_parts = [
+        result.get("trade_id", ""),
+        result.get("model", ""),
+        result.get("engine", ""),
+        f"{result.get('elapsed_ms', 0)}ms",
+    ]
+    if engine_params:
+        if "num_paths" in engine_params:
+            meta_parts.append(f"{engine_params['num_paths']:,} paths")
+        if "rng_type" in engine_params:
+            meta_parts.append(engine_params["rng_type"])
+        if "grid_points" in engine_params:
+            meta_parts.append(f"{engine_params['grid_points']} grid pts")
+
+    npv_card_el = html.Div(className="npv-header", children=[
+        html.Div("NET PRESENT VALUE", className="npv-label"),
+        html.Div(f"${result.get('npv', 0):,.4f}", className="npv-value"),
+        html.Div(" \u00b7 ".join(meta_parts), className="npv-meta"),
+    ])
+
+    children = [npv_card_el]
     if greeks:
         children.append(greeks_display(greeks))
 
@@ -181,7 +298,7 @@ def _handle_compare(payload, inst_type):
                 className="npv-value",
             ),
             html.Div(
-                f"{result.get('trade_id', '')} · ref: {result.get('reference_engine', '')}",
+                f"{result.get('trade_id', '')} \u00b7 ref: {result.get('reference_engine', '')}",
                 className="npv-meta",
             ),
         ]),

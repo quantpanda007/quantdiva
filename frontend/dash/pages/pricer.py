@@ -56,6 +56,8 @@ def layout():
                             "analytic",
                         )), width=6),
                     ]),
+                    # Engine-specific params (shown conditionally)
+                    html.Div(id="engine-params-container"),
                 ]),
             ]),
 
@@ -99,4 +101,11 @@ def layout():
         dcc.Store(id="store-price-result"),
         dcc.Store(id="store-greeks-result"),
         dcc.Store(id="store-compare-result"),
+
+        # Hidden defaults for engine-specific params (always in DOM)
+        html.Div(style={"display": "none"}, children=[
+            dcc.Store(id="mc-num-paths", data=10000),
+            dcc.Store(id="mc-rng-type", data="pseudorandom"),
+            dcc.Store(id="fd-grid-points", data=100),
+        ]),
     ])
