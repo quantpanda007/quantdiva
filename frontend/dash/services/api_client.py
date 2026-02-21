@@ -170,7 +170,18 @@ class APIClient:
 
     # ── Health ────────────────────────────────────────────────────
     def health(self) -> Dict:
-        return self._get("/health")
+        """Health check is at root, not under /api/v1."""
+        try:
+            r = self.session.get(
+                self.base_url.replace("/api/v1", "") + "/health",
+                timeout=TIMEOUT,
+            )
+            if not r.ok:
+                detail = r.json().get("detail", r.text) if r.text else r.reason
+                raise APIError(r.status_code, detail)
+            return r.json()
+        except requests.ConnectionError:
+            raise APIError(0, f"Cannot connect to backend at {self.base_url}")
 
 
 # Global singleton

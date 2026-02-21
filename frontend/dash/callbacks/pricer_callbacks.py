@@ -16,6 +16,7 @@ from components.components import (
     npv_card, greeks_display, compare_table, error_alert,
     form_field,
 )
+from pages.pricer import equity_market_data, rates_market_data, RATES_INSTRUMENTS
 from services.api_client import api_client, APIError
 
 
@@ -23,12 +24,21 @@ from services.api_client import api_client, APIError
 
 @callback(
     Output("instrument-form-container", "children"),
+    Output("market-data-container", "children"),
     Input("inst-type", "value"),
 )
 def update_instrument_form(inst_type):
     if not inst_type:
-        return no_update
-    return build_instrument_form(inst_type)
+        return no_update, no_update
+
+    form = build_instrument_form(inst_type, page="pricer")
+
+    if inst_type in RATES_INSTRUMENTS:
+        mkt = rates_market_data()
+    else:
+        mkt = equity_market_data()
+
+    return form, mkt
 
 
 # --- Update engine dropdown based on instrument type ---
@@ -147,7 +157,7 @@ def sync_fd_grid(v): return v
     Input("btn-greeks", "n_clicks"),
     Input("btn-compare", "n_clicks"),
     State("inst-type", "value"),
-    State({"type": "inst-field", "field": ALL}, "value"),
+    State({"type": "pricer-inst-field", "field": ALL}, "value"),
     State("model-select", "value"),
     State("engine-select", "value"),
     State("mkt-pricing-date", "value"),
@@ -187,7 +197,7 @@ def handle_action(
                 val = 0.0
         params[name] = val
 
-    underlying = params.get("underlying", "AAPL")
+    underlying = params.get("underlying") or "USD"
     market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield, underlying)
 
     # Build engine params

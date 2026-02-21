@@ -13,13 +13,14 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, callback
 
 from components.components import sidebar
-from pages import pricer, registry, risk_lab, portfolio, market_tools
+from pages import dashboard, pricer, registry, risk_lab, portfolio, market_tools
 
-import callbacks.pricer_callbacks    # noqa: F401
-import callbacks.registry_callbacks  # noqa: F401
-import callbacks.risk_callbacks      # noqa: F401
-import callbacks.portfolio_callbacks # noqa: F401
-import callbacks.market_callbacks    # noqa: F401
+import callbacks.dashboard_callbacks  # noqa: F401
+import callbacks.pricer_callbacks     # noqa: F401
+import callbacks.registry_callbacks   # noqa: F401
+import callbacks.risk_callbacks       # noqa: F401
+import callbacks.portfolio_callbacks  # noqa: F401
+import callbacks.market_callbacks     # noqa: F401
 
 
 app = dash.Dash(
@@ -43,7 +44,9 @@ app.layout = html.Div([
     Input("url", "pathname"),
 )
 def display_page(pathname):
-    if pathname == "/" or pathname == "/pricer":
+    if pathname == "/" or pathname == "/dashboard":
+        return dashboard.layout()
+    elif pathname == "/pricer":
         return pricer.layout()
     elif pathname == "/registry":
         return registry.layout()
@@ -53,10 +56,11 @@ def display_page(pathname):
         return portfolio.layout()
     elif pathname == "/market":
         return market_tools.layout()
-    return pricer.layout()
+    return dashboard.layout()
 
 
 @callback(
+    Output("nav-dashboard", "className"),
     Output("nav-pricer", "className"),
     Output("nav-risk", "className"),
     Output("nav-portfolio", "className"),
@@ -67,9 +71,12 @@ def display_page(pathname):
 def update_nav_active(pathname):
     base = "sidebar-link"
     active = "sidebar-link active"
-    s = [base] * 5
+    s = [base] * 6
 
-    mapping = {"/risk": 1, "/portfolio": 2, "/market": 3, "/registry": 4}
+    mapping = {
+        "/pricer": 1, "/risk": 2, "/portfolio": 3,
+        "/market": 4, "/registry": 5,
+    }
     idx = mapping.get(pathname, 0)
     s[idx] = active
 

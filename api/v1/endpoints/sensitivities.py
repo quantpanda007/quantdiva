@@ -34,7 +34,7 @@ def compute_greeks(req: GreeksRequest):
     """Compute Greeks for any instrument via bump-and-reprice."""
     try:
         instrument = build_instrument_from_request(req.instrument)
-        underlying = getattr(instrument, "underlying", "")
+        underlying = getattr(instrument, "underlying", None) or (list(req.market_data.underlyings.keys())[0] if req.market_data.underlyings else None)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         greeks_svc = BumpAndRepriceGreeks(pricing_service=ps)
@@ -67,7 +67,7 @@ def run_ladder(req: LadderRequest):
     try:
         instruments = build_instruments_from_request(req.instruments)
         # Build env for first instrument's underlying
-        underlying = getattr(instruments[0], "underlying", "") if instruments else ""
+        underlying = (getattr(instruments[0], "underlying", None) if instruments else None) or (list(req.market_data.underlyings.keys())[0] if req.market_data.underlyings else None)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         engine = ScenarioEngine(
@@ -114,7 +114,7 @@ def run_matrix(req: MatrixRequest):
     """
     try:
         instruments = build_instruments_from_request(req.instruments)
-        underlying = getattr(instruments[0], "underlying", "") if instruments else ""
+        underlying = (getattr(instruments[0], "underlying", None) if instruments else None) or (list(req.market_data.underlyings.keys())[0] if req.market_data.underlyings else None)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         engine = ScenarioEngine(

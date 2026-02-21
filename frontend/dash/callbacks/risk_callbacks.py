@@ -26,7 +26,7 @@ from services.api_client import api_client, APIError
 def update_risk_instrument_form(inst_type):
     if not inst_type:
         return no_update
-    return build_instrument_form(inst_type)
+    return build_instrument_form(inst_type, page="risk")
 
 
 # --- Update engine dropdown ---
@@ -134,7 +134,7 @@ def sync_scenario_vol(v): return v
     Input("btn-run-risk", "n_clicks"),
     State("risk-tabs", "active_tab"),
     State("risk-inst-type", "value"),
-    State({"type": "inst-field", "field": ALL}, "value"),
+    State({"type": "risk-inst-field", "field": ALL}, "value"),
     State("risk-model-select", "value"),
     State("risk-engine-select", "value"),
     State("risk-pricing-date", "value"),

@@ -19,6 +19,12 @@ INSTRUMENT_TYPES = [
     {"label": "DIGITAL OPTION",   "value": "digital_option"},
     {"label": "ASIAN OPTION",     "value": "asian_option"},
     {"label": "LOOKBACK OPTION",  "value": "lookback_option"},
+    {"label": "INTEREST RATE SWAP", "value": "irs"},
+    {"label": "FIXED RATE BOND",  "value": "bond"},
+    {"label": "FRA",                "value": "fra"},
+    {"label": "CAP / FLOOR",       "value": "cap_floor"},
+    {"label": "SWAPTION",          "value": "swaption"},
+    {"label": "CDS",               "value": "cds"},
 ]
 
 
@@ -37,7 +43,7 @@ def layout():
                         dropdown("risk-inst-type", INSTRUMENT_TYPES, "vanilla_option"),
                     ),
                     html.Div(id="risk-instrument-form-container",
-                             children=build_instrument_form("vanilla_option")),
+                             children=build_instrument_form("vanilla_option", page="risk")),
                     dbc.Row([
                         dbc.Col(form_field("Model", dropdown(
                             "risk-model-select", ["black_scholes", "heston"], "black_scholes",

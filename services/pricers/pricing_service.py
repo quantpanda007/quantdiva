@@ -125,7 +125,14 @@ class PricingService:
 
             # 4. Build QuantLib instrument
             ql_instrument = instrument.build(market_env)
-            ql_instrument.setPricingEngine(ql_engine)
+
+            # Set pricing engine (some instruments like FRA compute
+            # NPV directly from their curves and don't need an engine)
+            try:
+                ql_instrument.setPricingEngine(ql_engine)
+            except (AttributeError, RuntimeError):
+                # FRA and similar instruments price via their index curve
+                pass
 
             # 5. Extract results
             npv = ql_instrument.NPV()
@@ -232,7 +239,10 @@ class PricingService:
             engine_instance = self._build_engine(EngineClass, {})
             ql_engine = engine_instance.build(model, market_env)
             ql_inst = instrument.build(market_env)
-            ql_inst.setPricingEngine(ql_engine)
+            try:
+                ql_inst.setPricingEngine(ql_engine)
+            except (AttributeError, RuntimeError):
+                pass
 
             if RiskMeasure.DELTA in measures:
                 try:

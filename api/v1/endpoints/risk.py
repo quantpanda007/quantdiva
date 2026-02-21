@@ -40,7 +40,7 @@ def run_scenario(req: ScenarioRequest):
     """Run a custom scenario with arbitrary shocks."""
     try:
         instruments = build_instruments_from_request(req.instruments)
-        underlying = getattr(instruments[0], "underlying", "") if instruments else ""
+        underlying = (getattr(instruments[0], "underlying", None) if instruments else None) or (list(req.market_data.underlyings.keys())[0] if req.market_data.underlyings else None)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         scenario = Scenario(
@@ -81,7 +81,7 @@ def run_stress_test(req: StressTestRequest):
     """Run predefined or named stress scenarios."""
     try:
         instruments = build_instruments_from_request(req.instruments)
-        underlying = getattr(instruments[0], "underlying", "") if instruments else ""
+        underlying = (getattr(instruments[0], "underlying", None) if instruments else None) or (list(req.market_data.underlyings.keys())[0] if req.market_data.underlyings else None)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         engine = ScenarioEngine(
@@ -135,7 +135,7 @@ def pnl_explain(req: PnLExplainRequest):
     """P&L explain between two market environments."""
     try:
         instruments = build_instruments_from_request(req.instruments)
-        underlying = getattr(instruments[0], "underlying", "") if instruments else ""
+        underlying = (getattr(instruments[0], "underlying", None) if instruments else None) or (list(req.market_data.underlyings.keys())[0] if req.market_data.underlyings else None)
 
         base_env = build_market_env_from_request(req.base_market, underlying=underlying)
         current_env = build_market_env_from_request(req.current_market, underlying=underlying)
@@ -170,7 +170,7 @@ def compute_var(req: VaRRequest):
     """Compute Value-at-Risk (parametric, historical, or Monte Carlo)."""
     try:
         instruments = build_instruments_from_request(req.instruments)
-        underlying = getattr(instruments[0], "underlying", "") if instruments else ""
+        underlying = (getattr(instruments[0], "underlying", None) if instruments else None) or (list(req.market_data.underlyings.keys())[0] if req.market_data.underlyings else None)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         var_engine = VaREngine(

@@ -17,11 +17,12 @@ from dash import html, dcc
 # ═══════════════════════════════════════════════════════════════════
 
 NAV_ITEMS = [
-    {"id": "pricer",    "label": "⚡ Pricer",       "href": "/"},
-    {"id": "risk",      "label": "⚠ Risk Lab",      "href": "/risk"},
-    {"id": "portfolio", "label": "📋 Portfolio",     "href": "/portfolio"},
-    {"id": "market",    "label": "📈 Market Tools",  "href": "/market"},
-    {"id": "registry",  "label": "▦ Registry",      "href": "/registry"},
+    {"id": "dashboard", "label": "◉ Dashboard",     "href": "/"},
+    {"id": "pricer",    "label": "⚡ Pricer",        "href": "/pricer"},
+    {"id": "risk",      "label": "⚠ Risk Lab",       "href": "/risk"},
+    {"id": "portfolio", "label": "📋 Portfolio",      "href": "/portfolio"},
+    {"id": "market",    "label": "📈 Market Tools",   "href": "/market"},
+    {"id": "registry",  "label": "▦ Registry",       "href": "/registry"},
 ]
 
 
@@ -146,20 +147,99 @@ INSTRUMENT_FIELDS = {
         ("option_type", "select", ["call", "put"]),
         ("strike_type", "select", ["fixed", "floating"]),
     ],
+    "irs": [
+        ("trade_id",            "text",   "IRS-001"),
+        ("notional",            "number", "1000000"),
+        ("currency",            "text",   "USD"),
+        ("start_date",          "text",   "2025-01-15"),
+        ("end_date",            "text",   "2030-01-15"),
+        ("fixed_rate",          "number", "0.04"),
+        ("direction",           "select", ["pay", "receive"]),
+        ("fixed_leg_frequency", "select", ["semiannual", "annual", "quarterly"]),
+        ("float_leg_frequency", "select", ["quarterly", "semiannual", "monthly"]),
+        ("float_index_tenor",   "select", ["3M", "6M", "1M"]),
+    ],
+    "bond": [
+        ("trade_id",         "text",   "BOND-001"),
+        ("face_value",       "number", "100"),
+        ("coupon_rate",      "number", "0.05"),
+        ("issue_date",       "text",   "2024-01-15"),
+        ("maturity_date",    "text",   "2034-01-15"),
+        ("coupon_frequency", "select", ["semiannual", "annual", "quarterly"]),
+        ("day_count",        "select", ["ACT/ACT", "30/360", "ACT/360", "ACT/365"]),
+        ("currency",         "text",   "USD"),
+    ],
+    "fra": [
+        ("trade_id",          "text",   "FRA-001"),
+        ("notional",          "number", "1000000"),
+        ("currency",          "text",   "USD"),
+        ("start_date",        "text",   "2025-04-15"),
+        ("end_date",          "text",   "2025-07-15"),
+        ("fixed_rate",        "number", "0.045"),
+        ("direction",         "select", ["pay", "receive"]),
+        ("float_index_tenor", "select", ["3M", "6M", "1M"]),
+        ("day_count",         "select", ["ACT/360", "ACT/365", "30/360"]),
+    ],
+    "cap_floor": [
+        ("trade_id",          "text",   "CAP-001"),
+        ("notional",          "number", "1000000"),
+        ("currency",          "text",   "USD"),
+        ("start_date",        "text",   "2025-01-15"),
+        ("end_date",          "text",   "2030-01-15"),
+        ("strike",            "number", "0.05"),
+        ("cap_or_floor",      "select", ["cap", "floor"]),
+        ("float_frequency",   "select", ["quarterly", "semiannual", "monthly"]),
+        ("float_index_tenor", "select", ["3M", "6M", "1M"]),
+        ("vol",               "number", "0.20"),
+    ],
+    "swaption": [
+        ("trade_id",            "text",   "SWPN-001"),
+        ("notional",            "number", "1000000"),
+        ("currency",            "text",   "USD"),
+        ("expiry_date",         "text",   "2026-01-15"),
+        ("swap_end",            "text",   "2031-01-15"),
+        ("strike",              "number", "0.04"),
+        ("swaption_type",       "select", ["payer", "receiver"]),
+        ("fixed_leg_frequency", "select", ["semiannual", "annual", "quarterly"]),
+        ("float_leg_frequency", "select", ["quarterly", "semiannual", "monthly"]),
+        ("float_index_tenor",   "select", ["3M", "6M", "1M"]),
+        ("settlement_type",     "select", ["physical", "cash"]),
+        ("vol",                 "number", "0.20"),
+    ],
+    "cds": [
+        ("trade_id",          "text",   "CDS-001"),
+        ("notional",          "number", "10000000"),
+        ("currency",          "text",   "USD"),
+        ("start_date",        "text",   "2025-01-15"),
+        ("maturity_date",     "text",   "2030-01-15"),
+        ("spread",            "number", "0.01"),
+        ("direction",         "select", ["buy", "sell"]),
+        ("recovery_rate",     "number", "0.40"),
+        ("hazard_rate",       "number", "0.02"),
+        ("payment_frequency", "select", ["quarterly", "semiannual", "annual"]),
+    ],
 }
 
-NUMERIC_FIELDS = {"strike", "barrier_level", "rebate", "cash_payoff"}
+NUMERIC_FIELDS = {
+    "strike", "barrier_level", "rebate", "cash_payoff",
+    "notional", "fixed_rate", "face_value", "coupon_rate", "vol",
+    "spread", "recovery_rate", "hazard_rate",
+}
 
 
-def build_instrument_form(instrument_type: str):
-    """Build form fields for a given instrument type."""
+def build_instrument_form(instrument_type: str, page: str = "pricer"):
+    """Build form fields for a given instrument type.
+
+    Args:
+        instrument_type: e.g. 'vanilla_option'
+        page: page prefix to avoid ID collisions ('pricer', 'risk', 'pf')
+    """
     fields = INSTRUMENT_FIELDS.get(instrument_type, [])
     children = []
 
     for name, ftype, default in fields:
         label = name.replace("_", " ").upper()
-        # Pattern-matching ID: {"type": "inst-field", "field": "strike"}
-        fid = {"type": "inst-field", "field": name}
+        fid = {"type": f"{page}-inst-field", "field": name}
 
         if ftype == "select":
             ctrl = dcc.Dropdown(
@@ -229,9 +309,18 @@ def market_data_form(prefix: str = "mkt"):
 
 
 def collect_market_data(pricing_date, rate, spot, vol, div_yield, underlying="AAPL"):
-    """Build market_data dict from form values."""
+    """Build market_data dict from form values.
+
+    For rates instruments (IRS, Bond) where underlying may be empty,
+    we use 'USD' as the key and still provide spot/vol even though
+    the rates engine only needs the discount curve.
+    """
+    # Default underlying for rates instruments
+    if not underlying or underlying.strip() == "":
+        underlying = "USD"
+
     return {
-        "pricing_date": pricing_date,
+        "pricing_date": pricing_date or "2025-01-15",
         "underlyings": {
             underlying: {
                 "spot": float(spot or 100),
@@ -268,28 +357,85 @@ def npv_card(result: Dict) -> html.Div:
 
 
 def greeks_display(greeks: Dict) -> html.Div:
-    """Greeks grid display."""
+    """Greeks grid display — adapts for equity vs rates measures."""
     if not greeks:
         return html.Div()
 
-    cells = []
-    for name, val in greeks.items():
-        if val is not None:
-            css = "greek-positive" if val >= 0 else "greek-negative"
-            display = f"{val:.6f}"
-        else:
-            css = "greek-na"
-            display = "N/A"
+    # Separate equity greeks from rates measures
+    equity_keys = {"delta", "gamma", "vega", "theta", "rho"}
+    rates_keys = {"dv01", "duration", "convexity"}
 
-        cells.append(html.Div(className="greek-cell", children=[
-            html.Div(name.upper(), className="greek-name"),
-            html.Div(display, className=f"greek-value {css}"),
-        ]))
+    has_equity = any(k in greeks for k in equity_keys if greeks.get(k) is not None)
+    has_rates = any(k in greeks for k in rates_keys if greeks.get(k) is not None)
 
-    return html.Div([
-        html.Div("GREEKS", className="panel-header", style={"padding": "16px 28px 0"}),
-        html.Div(className="greeks-grid", children=cells),
-    ])
+    # Format helpers
+    FORMATS = {
+        "dv01": lambda v: f"{v*10000:.4f} bp",  # display in bps
+        "duration": lambda v: f"{v:.4f} yrs",
+        "convexity": lambda v: f"{v:.2f}",
+    }
+    LABELS = {
+        "dv01": "DV01",
+        "duration": "MOD DURATION",
+        "convexity": "CONVEXITY",
+        "delta": "DELTA",
+        "gamma": "GAMMA",
+        "vega": "VEGA",
+        "theta": "THETA",
+        "rho": "RHO",
+    }
+
+    sections = []
+
+    if has_equity:
+        cells = []
+        for name in ["delta", "gamma", "vega", "theta", "rho"]:
+            val = greeks.get(name)
+            if val is None and name not in greeks:
+                continue
+            if val is not None:
+                css = "greek-positive" if val >= 0 else "greek-negative"
+                display = f"{val:.6f}"
+            else:
+                css = "greek-na"
+                display = "N/A"
+            cells.append(html.Div(className="greek-cell", children=[
+                html.Div(LABELS.get(name, name.upper()), className="greek-name"),
+                html.Div(display, className=f"greek-value {css}"),
+            ]))
+        if cells:
+            sections.append(
+                html.Div("GREEKS", className="panel-header",
+                         style={"padding": "16px 28px 0"})
+            )
+            sections.append(html.Div(className="greeks-grid", children=cells))
+
+    if has_rates:
+        cells = []
+        for name in ["dv01", "duration", "convexity", "rho", "theta"]:
+            val = greeks.get(name)
+            if val is None and name not in greeks:
+                continue
+            if val is not None:
+                css = "greek-positive" if val >= 0 else "greek-negative"
+                fmt = FORMATS.get(name)
+                display = fmt(val) if fmt else f"{val:.6f}"
+            else:
+                css = "greek-na"
+                display = "N/A"
+            cells.append(html.Div(className="greek-cell", children=[
+                html.Div(LABELS.get(name, name.upper()), className="greek-name"),
+                html.Div(display, className=f"greek-value {css}"),
+            ]))
+        if cells:
+            label = "RATES SENSITIVITIES" if not has_equity else "RATES MEASURES"
+            sections.append(
+                html.Div(label, className="panel-header",
+                         style={"padding": "16px 28px 0"})
+            )
+            sections.append(html.Div(className="greeks-grid", children=cells))
+
+    return html.Div(sections) if sections else html.Div()
 
 
 def compare_table(results: List[Dict]) -> html.Div:

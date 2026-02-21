@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import QuantLib as ql
 
@@ -63,6 +63,8 @@ class InterestRateSwap(BaseInstrument):
 
     def build(self, market_env: MarketEnvironment) -> ql.VanillaSwap:
         try:
+            market_env.set_evaluation_date()
+
             ql_start = ql.Date(self.start_date.day, self.start_date.month, self.start_date.year)
             ql_end = ql.Date(self.end_date.day, self.end_date.month, self.end_date.year)
 
@@ -99,6 +101,29 @@ class InterestRateSwap(BaseInstrument):
 
             # Float index
             index = self._get_ibor_index(market_env)
+
+            # Add past fixings — QuantLib requires fixings for all past
+            # floating leg reset dates. Use the flat rate from the curve.
+            eval_date = ql.Settings.instance().evaluationDate
+            flat_rate = market_env.discount_curves.get(
+                self._currency,
+                list(market_env.discount_curves.values())[0] if market_env.discount_curves else None,
+            )
+            if flat_rate:
+                fixing_rate = flat_rate.zeroRate(
+                    0.25, ql.Continuous, ql.Annual
+                ).rate()
+            else:
+                fixing_rate = self.fixed_rate
+
+            # Add fixings for all past dates
+            for i in range(len(float_schedule) - 1):
+                reset_date = index.fixingDate(float_schedule[i])
+                if reset_date < eval_date:
+                    try:
+                        index.addFixing(reset_date, fixing_rate)
+                    except RuntimeError:
+                        pass  # Fixing already added
 
             # Swap type
             swap_type = ql.VanillaSwap.Payer if self.direction == "pay" else ql.VanillaSwap.Receiver
@@ -158,3 +183,28 @@ class InterestRateSwap(BaseInstrument):
             "direction": self.direction,
         })
         return base
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> InterestRateSwap:
+        """Deserialize from dictionary."""
+        def parse_date(d):
+            if d is None:
+                return None
+            if isinstance(d, date):
+                return d
+            return date.fromisoformat(str(d))
+
+        return cls(
+            _trade_id=data.get("trade_id", "IRS-001"),
+            notional=float(data.get("notional", 1_000_000)),
+            _currency=data.get("currency", "USD"),
+            start_date=parse_date(data.get("start_date")),
+            end_date=parse_date(data.get("end_date")),
+            fixed_rate=float(data.get("fixed_rate", 0.0)),
+            fixed_leg_frequency=data.get("fixed_leg_frequency", "semiannual"),
+            float_leg_frequency=data.get("float_leg_frequency", "quarterly"),
+            fixed_day_count=data.get("fixed_day_count", "30/360"),
+            float_day_count=data.get("float_day_count", "ACT/360"),
+            direction=data.get("direction", "pay"),
+            float_index_tenor=data.get("float_index_tenor", "3M"),
+        )

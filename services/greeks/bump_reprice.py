@@ -229,16 +229,21 @@ class BumpAndRepriceGreeks:
         if measures is None:
             measures = ["delta", "gamma", "vega", "theta", "rho"]
 
-        underlying = getattr(instrument, "underlying", "")
+        underlying = getattr(instrument, "underlying", None) or ""
         engine_params = engine_params or {}
+
+        # Detect if this is a rates instrument (no underlying / no spot)
+        is_rates = not underlying or underlying.strip() == ""
 
         # Base price
         base_npv = self._price(instrument, market_env, model_type, engine_type, engine_params)
 
         result = BumpGreeksResult(base_npv=base_npv)
 
-        # Delta: ∂V/∂S via central difference
-        if "delta" in measures:
+        # --- Equity Greeks (only for instruments with an underlying) ---
+
+        # Delta: dV/dS via central difference
+        if "delta" in measures and not is_rates:
             delta, details = self._first_order_greek(
                 instrument, market_env, model_type, engine_type, engine_params,
                 bumper=lambda env, h: _bump_spot(env, underlying, h),
@@ -248,8 +253,8 @@ class BumpAndRepriceGreeks:
             result.greeks["delta"] = delta
             result.bump_details["delta"] = details
 
-        # Gamma: ∂²V/∂S² via second order
-        if "gamma" in measures:
+        # Gamma: d2V/dS2 via second order
+        if "gamma" in measures and not is_rates:
             gamma, details = self._second_order_greek(
                 instrument, market_env, model_type, engine_type, engine_params,
                 bumper=lambda env, h: _bump_spot(env, underlying, h),
@@ -259,8 +264,8 @@ class BumpAndRepriceGreeks:
             result.greeks["gamma"] = gamma
             result.bump_details["gamma"] = details
 
-        # Vega: ∂V/∂σ (per 1% vol move)
-        if "vega" in measures:
+        # Vega: dV/dvol (per 1% vol move)
+        if "vega" in measures and not is_rates:
             vega, details = self._first_order_greek(
                 instrument, market_env, model_type, engine_type, engine_params,
                 bumper=lambda env, h: _bump_vol(env, underlying, h),
@@ -270,7 +275,7 @@ class BumpAndRepriceGreeks:
             result.greeks["vega"] = vega
             result.bump_details["vega"] = details
 
-        # Rho: ∂V/∂r (per 1bp rate move, scaled to per 1%)
+        # Rho: dV/dr (per 1bp rate move, scaled to per 1%)
         if "rho" in measures:
             rho_raw, details = self._first_order_greek(
                 instrument, market_env, model_type, engine_type, engine_params,
@@ -278,7 +283,6 @@ class BumpAndRepriceGreeks:
                 bump_size=self.rate_bump,
                 base_npv=base_npv,
             )
-            # Scale: raw is per 1bp, we want per 1% = per 100bp
             result.greeks["rho"] = rho_raw * 100 if rho_raw is not None else None
             result.bump_details["rho"] = details
 
@@ -291,7 +295,7 @@ class BumpAndRepriceGreeks:
             result.greeks["theta"] = theta
 
         # Dividend sensitivity
-        if "div_sensitivity" in measures:
+        if "div_sensitivity" in measures and not is_rates:
             div_sens, details = self._first_order_greek(
                 instrument, market_env, model_type, engine_type, engine_params,
                 bumper=lambda env, h: _bump_div(env, underlying, h),
@@ -301,7 +305,50 @@ class BumpAndRepriceGreeks:
             result.greeks["div_sensitivity"] = div_sens
             result.bump_details["div_sensitivity"] = details
 
+        # --- Rates-specific measures ---
+
+        # DV01: value change for 1bp parallel rate shift
+        if "dv01" in measures or is_rates:
+            dv01_raw, details = self._first_order_greek(
+                instrument, market_env, model_type, engine_type, engine_params,
+                bumper=lambda env, h: _bump_rate(env, h),
+                bump_size=0.0001,
+                base_npv=base_npv,
+            )
+            # DV01 = |dV for +1bp| (positive convention)
+            result.greeks["dv01"] = abs(dv01_raw * 0.0001) if dv01_raw is not None else None
+            result.bump_details["dv01"] = details
+
+        # Modified Duration: -(1/V) * dV/dr
+        if "duration" in measures or is_rates:
+            dur_raw, details = self._first_order_greek(
+                instrument, market_env, model_type, engine_type, engine_params,
+                bumper=lambda env, h: _bump_rate(env, h),
+                bump_size=0.0001,
+                base_npv=base_npv,
+            )
+            if dur_raw is not None and abs(base_npv) > 1e-10:
+                result.greeks["duration"] = abs(dur_raw / base_npv)
+            else:
+                result.greeks["duration"] = None
+            result.bump_details["duration"] = details
+
+        # Convexity: (1/V) * d2V/dr2
+        if "convexity" in measures or is_rates:
+            conv_raw, details = self._second_order_greek(
+                instrument, market_env, model_type, engine_type, engine_params,
+                bumper=lambda env, h: _bump_rate(env, h),
+                bump_size=0.0001,
+                base_npv=base_npv,
+            )
+            if conv_raw is not None and abs(base_npv) > 1e-10:
+                result.greeks["convexity"] = conv_raw / base_npv
+            else:
+                result.greeks["convexity"] = None
+            result.bump_details["convexity"] = details
+
         return result
+
 
     # -------------------------------------------------------------------
     # Core methods

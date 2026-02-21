@@ -19,6 +19,12 @@ INSTRUMENT_TYPES = [
     {"label": "DIGITAL OPTION",   "value": "digital_option"},
     {"label": "ASIAN OPTION",     "value": "asian_option"},
     {"label": "LOOKBACK OPTION",  "value": "lookback_option"},
+    {"label": "INTEREST RATE SWAP", "value": "irs"},
+    {"label": "FIXED RATE BOND",  "value": "bond"},
+    {"label": "FRA",                "value": "fra"},
+    {"label": "CAP / FLOOR",       "value": "cap_floor"},
+    {"label": "SWAPTION",          "value": "swaption"},
+    {"label": "CDS",               "value": "cds"},
 ]
 
 
@@ -55,7 +61,7 @@ def build_tab_layout():
                         dropdown("pf-inst-type", INSTRUMENT_TYPES, "vanilla_option"),
                     ),
                     html.Div(id="pf-instrument-form-container",
-                             children=build_instrument_form("vanilla_option")),
+                             children=build_instrument_form("vanilla_option", page="pf")),
                     dbc.Row([
                         dbc.Col(form_field("Quantity",
                             text_input("pf-quantity", "100", type="number")), width=4),

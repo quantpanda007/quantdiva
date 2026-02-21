@@ -29,13 +29,26 @@ router = APIRouter()
 ps = PricingService()
 
 
+def _resolve_underlying(instrument, market_data_req):
+    """Get the underlying key for market env lookup.
+    For equity instruments: use instrument.underlying (e.g. 'AAPL')
+    For rates instruments: use first key from market_data.underlyings
+    """
+    und = getattr(instrument, "underlying", None)
+    # Handle empty strings, None
+    if not und or (isinstance(und, str) and und.strip() == ""):
+        if market_data_req.underlyings:
+            und = list(market_data_req.underlyings.keys())[0]
+    return und or None
+
+
 @router.post("/single", response_model=PricingResponse)
 def price_single(req: PricingRequest):
     """Price a single instrument of any type."""
     t0 = time.perf_counter()
     try:
         instrument = build_instrument_from_request(req.instrument)
-        underlying = getattr(instrument, "underlying", "")
+        underlying = _resolve_underlying(instrument, req.market_data)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         result = ps.price(
@@ -81,7 +94,7 @@ def price_batch(req: BatchPricingRequest):
     for inst_req in req.instruments:
         try:
             instrument = build_instrument_from_request(inst_req)
-            underlying = getattr(instrument, "underlying", "")
+            underlying = _resolve_underlying(instrument, req.market_data)
             market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
             result = ps.price(
@@ -115,7 +128,7 @@ def compare_engines(req: CompareRequest):
     """Compare pricing across multiple engines for the same instrument."""
     try:
         instrument = build_instrument_from_request(req.instrument)
-        underlying = getattr(instrument, "underlying", "")
+        underlying = _resolve_underlying(instrument, req.market_data)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
 
         comparator = EngineComparator()

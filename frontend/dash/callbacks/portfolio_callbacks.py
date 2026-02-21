@@ -45,7 +45,7 @@ def render_portfolio_tab(active_tab):
 def update_pf_instrument_form(inst_type):
     if not inst_type:
         return no_update
-    return build_instrument_form(inst_type)
+    return build_instrument_form(inst_type, page="pf")
 
 
 # --- Add position to store ---
@@ -56,7 +56,7 @@ def update_pf_instrument_form(inst_type):
     Input("btn-clear-positions", "n_clicks"),
     State("pf-positions-store", "data"),
     State("pf-inst-type", "value"),
-    State({"type": "inst-field", "field": ALL}, "value"),
+    State({"type": "pf-inst-field", "field": ALL}, "value"),
     State("pf-quantity", "value"),
     State("pf-direction", "value"),
     State("pf-book", "value"),

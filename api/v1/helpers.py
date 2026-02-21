@@ -62,7 +62,9 @@ def build_instrument_from_request(req: InstrumentRequest) -> BaseInstrument:
             constructor_params[k] = v
 
     # Parse date strings
-    for date_field in ["expiry", "exercise_start", "averaging_start"]:
+    for date_field in ["expiry", "exercise_start", "averaging_start",
+                       "start_date", "end_date", "issue_date", "maturity_date",
+                       "expiry_date", "swap_start", "swap_end"]:
         if date_field in constructor_params and isinstance(constructor_params[date_field], str):
             constructor_params[date_field] = date.fromisoformat(constructor_params[date_field])
 
@@ -137,7 +139,7 @@ def build_market_env_from_request(
     if not req.underlyings:
         raise ValueError("At least one underlying is required in market_data")
 
-    if underlying is None:
+    if underlying is None or underlying.strip() == "":
         underlying = list(req.underlyings.keys())[0]
 
     und_data = req.underlyings.get(underlying)
