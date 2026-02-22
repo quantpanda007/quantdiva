@@ -183,6 +183,29 @@ class APIClient:
         except requests.ConnectionError:
             raise APIError(0, f"Cannot connect to backend at {self.base_url}")
 
+    # ── Live Market Data ───────────────────────────────────────────
+    def get_live_equity(self, symbol: str) -> Dict:
+        return self._get(f"/market-data/equity/quote?symbol={symbol}")
+
+    def get_live_fx(self, pair: str) -> Dict:
+        return self._get(f"/market-data/fx/rate?pair={pair}")
+
+    def get_live_yield_curve(self, currency: str = "USD") -> Dict:
+        return self._get(f"/market-data/yield-curve?currency={currency}")
+
+    def get_live_snapshot(
+        self, underlying: str = None, ccy_pair: str = None, currency: str = "USD"
+    ) -> Dict:
+        params = [f"currency={currency}"]
+        if underlying:
+            params.append(f"underlying={underlying}")
+        if ccy_pair:
+            params.append(f"ccy_pair={ccy_pair}")
+        return self._get(f"/market-data/snapshot?{'&'.join(params)}")
+
+    def get_provider_status(self) -> Dict:
+        return self._get("/market-data/status")
+
 
 # Global singleton
 api_client = APIClient()

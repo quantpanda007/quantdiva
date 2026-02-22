@@ -25,6 +25,8 @@ INSTRUMENT_TYPES = [
     {"label": "CAP / FLOOR",       "value": "cap_floor"},
     {"label": "SWAPTION",          "value": "swaption"},
     {"label": "CDS",               "value": "cds"},
+    {"label": "FX FORWARD",        "value": "fx_forward"},
+    {"label": "FX OPTION",         "value": "fx_option"},
 ]
 
 

@@ -29,10 +29,13 @@ INSTRUMENT_TYPES = [
     {"label": "CAP / FLOOR",       "value": "cap_floor"},
     {"label": "SWAPTION",          "value": "swaption"},
     {"label": "CDS",               "value": "cds"},
+    {"label": "FX FORWARD",        "value": "fx_forward"},
+    {"label": "FX OPTION",         "value": "fx_option"},
 ]
 
-# Instrument types that are rates products (no spot/vol needed)
+# Instruments that don't need the equity market data panel
 RATES_INSTRUMENTS = {"irs", "bond", "fra", "cap_floor", "swaption", "cds"}
+FX_INSTRUMENTS = {"fx_forward", "fx_option"}
 
 
 def layout():
@@ -60,12 +63,22 @@ def layout():
                     dbc.Row([
                         dbc.Col(form_field("Model", dropdown(
                             "model-select",
-                            ["black_scholes", "heston"],
+                            [{"label": "Black-Scholes", "value": "black_scholes"},
+                             {"label": "Heston", "value": "heston"},
+                             {"label": "Hull-White 1F", "value": "hull_white_1f"}],
                             "black_scholes",
                         )), width=6),
                         dbc.Col(form_field("Engine", dropdown(
                             "engine-select",
-                            ["analytic"],
+                            [{"label": "Analytic (Black)", "value": "analytic"},
+                             {"label": "Bachelier (Normal)", "value": "bachelier"},
+                             {"label": "Hull-White (Tree)", "value": "hull_white"},
+                             {"label": "Heston", "value": "heston"},
+                             {"label": "Bootstrapped (Credit)", "value": "bootstrapped"},
+                             {"label": "ISDA (Credit)", "value": "isda"},
+                             {"label": "Monte Carlo", "value": "monte_carlo"},
+                             {"label": "Finite Difference", "value": "finite_difference"},
+                             {"label": "Binomial", "value": "binomial"}],
                             "analytic",
                         )), width=6),
                     ]),
@@ -81,6 +94,19 @@ def layout():
                     html.Div(id="market-data-container", children=[
                         equity_market_data(),
                     ]),
+                    # Live data button
+                    dbc.Button(
+                        "📡 Load Live Data",
+                        id="btn-load-live",
+                        color="info",
+                        size="sm",
+                        outline=True,
+                        style={"width": "100%", "marginTop": "8px",
+                               "fontSize": "12px", "letterSpacing": "1px"},
+                    ),
+                    html.Div(id="live-data-status",
+                             style={"fontSize": "11px", "color": "var(--text-muted)",
+                                    "marginTop": "4px", "textAlign": "center"}),
                 ]),
 
                 # Action buttons
@@ -170,5 +196,31 @@ def rates_market_data():
             dbc.Input(id="mkt-spot", value="100", type="hidden"),
             dbc.Input(id="mkt-vol", value="0.2", type="hidden"),
             dbc.Input(id="mkt-div", value="0", type="hidden"),
+        ]),
+    ])
+
+
+def fx_market_data():
+    """Market data form for FX instruments — spot from pair, rates/vol in form."""
+    return html.Div([
+        html.Div("MARKET DATA — FX", className="panel-header"),
+        dbc.Row([
+            dbc.Col(form_field("Pricing Date",
+                text_input("mkt-pricing-date", "2025-01-15")), width=6),
+            dbc.Col(form_field("FX Spot Rate",
+                text_input("mkt-spot", "1.08", type="number")), width=6),
+        ]),
+        html.Div(style={
+            "padding": "12px 0", "fontSize": "12px",
+            "color": "var(--text-muted)", "fontStyle": "italic",
+        }, children=[
+            "FX rates (domestic/foreign) and vol are set in the instrument form. ",
+            "Spot rate = price of 1 unit of foreign ccy in domestic ccy.",
+        ]),
+        # Hidden fields for callbacks
+        html.Div(style={"display": "none"}, children=[
+            dbc.Input(id="mkt-rate", value="0.045", type="hidden"),
+            dbc.Input(id="mkt-vol", value="0.08", type="hidden"),
+            dbc.Input(id="mkt-div", value="0.035", type="hidden"),
         ]),
     ])

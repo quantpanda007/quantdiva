@@ -16,7 +16,7 @@ from components.components import (
     npv_card, greeks_display, compare_table, error_alert,
     form_field,
 )
-from pages.pricer import equity_market_data, rates_market_data, RATES_INSTRUMENTS
+from pages.pricer import equity_market_data, rates_market_data, fx_market_data, RATES_INSTRUMENTS, FX_INSTRUMENTS
 from services.api_client import api_client, APIError
 
 
@@ -33,7 +33,9 @@ def update_instrument_form(inst_type):
 
     form = build_instrument_form(inst_type, page="pricer")
 
-    if inst_type in RATES_INSTRUMENTS:
+    if inst_type in FX_INSTRUMENTS:
+        mkt = fx_market_data()
+    elif inst_type in RATES_INSTRUMENTS:
         mkt = rates_market_data()
     else:
         mkt = equity_market_data()
@@ -197,7 +199,13 @@ def handle_action(
                 val = 0.0
         params[name] = val
 
-    underlying = params.get("underlying") or "USD"
+    # Determine underlying key for market data
+    # FX uses ccy_pair as key, equity uses underlying, rates use USD
+    underlying = (
+        params.get("ccy_pair")
+        or params.get("underlying")
+        or "USD"
+    )
     market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield, underlying)
 
     # Build engine params
@@ -314,3 +322,82 @@ def _handle_compare(payload, inst_type):
         ]),
         compare_table(result.get("results", [])),
     ])
+
+
+# --- Load Live Market Data ---
+
+@callback(
+    Output("mkt-spot", "value"),
+    Output("mkt-vol", "value"),
+    Output("mkt-rate", "value"),
+    Output("mkt-div", "value"),
+    Output("mkt-pricing-date", "value"),
+    Output("live-data-status", "children"),
+    Input("btn-load-live", "n_clicks"),
+    State("inst-type", "value"),
+    State({"type": "pricer-inst-field", "field": ALL}, "value"),
+    prevent_initial_call=True,
+)
+def load_live_data(n_clicks, inst_type, field_values):
+    """Fetch live market data and populate form fields."""
+    from datetime import date as dt_date
+
+    if not n_clicks:
+        return no_update, no_update, no_update, no_update, no_update, no_update
+
+    fields = INSTRUMENT_FIELDS.get(inst_type, [])
+    params = {}
+    for i, (name, ftype, default) in enumerate(fields):
+        if i < len(field_values):
+            params[name] = field_values[i]
+
+    # Determine what to fetch
+    underlying = params.get("underlying")
+    ccy_pair = params.get("ccy_pair")
+
+    try:
+        if underlying:
+            # Equity instrument — get spot, vol, rate
+            data = api_client.get_live_snapshot(underlying=underlying)
+            und_data = data.get("underlyings", {}).get(underlying, {})
+            spot = und_data.get("spot", "")
+            vol = und_data.get("vol", "")
+            rate = data.get("rate", "")
+            div_yield = und_data.get("div_yield", "")
+            pricing_date = data.get("pricing_date", dt_date.today().isoformat())
+            source = data.get("source", "")
+
+            status = f"✓ {underlying} ${spot:.2f} | vol={vol:.2%} | rate={rate:.4f} — {source}"
+            return str(spot), str(vol), str(rate), str(div_yield), pricing_date, status
+
+        elif ccy_pair:
+            # FX instrument — get FX rate
+            data = api_client.get_live_snapshot(ccy_pair=ccy_pair)
+            fx_data = data.get("underlyings", {}).get(ccy_pair, {})
+            spot = fx_data.get("spot", "")
+            rate = data.get("rate", "")
+            pricing_date = data.get("pricing_date", dt_date.today().isoformat())
+            source = data.get("source", "")
+
+            status = f"✓ {ccy_pair} {spot:.4f} | rate={rate:.4f} — {source}"
+            return str(spot), no_update, str(rate), no_update, pricing_date, status
+
+        else:
+            # Rates instrument — get yield curve rate
+            data = api_client.get_live_snapshot(currency="USD")
+            rate = data.get("rate", "")
+            pricing_date = data.get("pricing_date", dt_date.today().isoformat())
+            source = data.get("source", "")
+
+            # Show curve info if available
+            yc = data.get("yield_curve", [])
+            curve_info = ""
+            if yc:
+                tenors = [f"{p['maturity']}={p['rate']:.3%}" for p in yc[:4]]
+                curve_info = " | " + " ".join(tenors)
+
+            status = f"✓ Rate={rate:.4f}{curve_info} — {source}"
+            return no_update, no_update, str(rate), no_update, pricing_date, status
+
+    except Exception as e:
+        return no_update, no_update, no_update, no_update, no_update, f"✗ {str(e)[:60]}"

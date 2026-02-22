@@ -3,6 +3,9 @@ Portfolio page callbacks.
 
 Manages portfolio positions client-side via dcc.Store,
 then sends to backend for valuation and stress testing.
+
+Handles all instrument types: equity options, rates (IRS, Bond, FRA,
+Cap/Floor, Swaption), and credit (CDS).
 """
 
 from __future__ import annotations
@@ -15,9 +18,155 @@ import plotly.graph_objects as go
 from components.components import (
     INSTRUMENT_FIELDS, NUMERIC_FIELDS,
     build_instrument_form, collect_market_data, error_alert,
+    greeks_display,
 )
 from services.api_client import api_client, APIError
 from pages.portfolio import build_tab_layout, valuation_tab_layout, stress_tab_layout
+
+
+# Instrument classification
+RATES_TYPES = {"irs", "bond", "fra", "cap_floor", "swaption"}
+CREDIT_TYPES = {"cds"}
+FX_TYPES = {"fx_forward", "fx_option"}
+EQUITY_TYPES = {"vanilla_option", "barrier_option", "digital_option",
+                "asian_option", "lookback_option"}
+
+
+def _instrument_summary(inst_type: str, params: dict) -> str:
+    """Build a human-readable summary line for any instrument type."""
+    parts = []
+
+    if inst_type in EQUITY_TYPES:
+        if "underlying" in params and params["underlying"]:
+            parts.append(params["underlying"])
+        if "strike" in params:
+            parts.append(f"K={params['strike']}")
+        if "expiry" in params:
+            parts.append(params["expiry"])
+        if "option_type" in params:
+            parts.append(params["option_type"].upper())
+        if "barrier_type" in params:
+            parts.append(params["barrier_type"])
+        if "barrier_level" in params:
+            parts.append(f"B={params['barrier_level']}")
+
+    elif inst_type == "irs":
+        if "fixed_rate" in params:
+            parts.append(f"{float(params['fixed_rate'])*100:.2f}%")
+        if "direction" in params:
+            parts.append(params["direction"].upper())
+        if "start_date" in params and "end_date" in params:
+            parts.append(f"{params['start_date']}→{params['end_date']}")
+        if "notional" in params:
+            parts.append(f"N={float(params['notional']):,.0f}")
+
+    elif inst_type == "bond":
+        if "coupon_rate" in params:
+            parts.append(f"C={float(params['coupon_rate'])*100:.1f}%")
+        if "maturity_date" in params:
+            parts.append(f"mat={params['maturity_date']}")
+        if "face_value" in params:
+            parts.append(f"FV={params['face_value']}")
+
+    elif inst_type == "fra":
+        if "fixed_rate" in params:
+            parts.append(f"{float(params['fixed_rate'])*100:.2f}%")
+        if "start_date" in params and "end_date" in params:
+            parts.append(f"{params['start_date']}→{params['end_date']}")
+        if "direction" in params:
+            parts.append(params["direction"].upper())
+
+    elif inst_type == "cap_floor":
+        if "cap_or_floor" in params:
+            parts.append(params["cap_or_floor"].upper())
+        if "strike" in params:
+            parts.append(f"K={float(params['strike'])*100:.1f}%")
+        if "start_date" in params and "end_date" in params:
+            parts.append(f"{params['start_date']}→{params['end_date']}")
+
+    elif inst_type == "swaption":
+        if "swaption_type" in params:
+            parts.append(params["swaption_type"].upper())
+        if "strike" in params:
+            parts.append(f"K={float(params['strike'])*100:.1f}%")
+        if "expiry_date" in params:
+            parts.append(f"exp={params['expiry_date']}")
+        if "swap_end" in params:
+            parts.append(f"→{params['swap_end']}")
+
+    elif inst_type == "cds":
+        if "spread" in params:
+            parts.append(f"{float(params['spread'])*10000:.0f}bp")
+        if "direction" in params:
+            parts.append(params["direction"].upper())
+        if "recovery_rate" in params:
+            parts.append(f"R={float(params['recovery_rate'])*100:.0f}%")
+        if "maturity_date" in params:
+            parts.append(f"mat={params['maturity_date']}")
+
+    elif inst_type in ("fx_forward", "fx_option"):
+        if "ccy_pair" in params:
+            parts.append(params["ccy_pair"])
+        if "strike" in params:
+            parts.append(f"K={params['strike']}")
+        if "option_type" in params:
+            parts.append(params["option_type"].upper())
+        if "direction" in params:
+            parts.append(params["direction"].upper())
+        if "delivery_date" in params:
+            parts.append(params["delivery_date"])
+        if "expiry" in params:
+            parts.append(f"exp={params['expiry']}")
+        if "notional" in params:
+            parts.append(f"N={float(params['notional']):,.0f}")
+
+    else:
+        # Fallback: show key params
+        for k in ["strike", "notional", "fixed_rate", "spread"]:
+            if k in params:
+                parts.append(f"{k}={params[k]}")
+
+    return " · ".join(parts)
+
+
+def _instrument_label(inst_type: str) -> str:
+    """Clean display name for instrument type."""
+    labels = {
+        "vanilla_option": "VANILLA OPTION",
+        "barrier_option": "BARRIER OPTION",
+        "digital_option": "DIGITAL OPTION",
+        "asian_option": "ASIAN OPTION",
+        "lookback_option": "LOOKBACK OPTION",
+        "irs": "IRS",
+        "bond": "BOND",
+        "fra": "FRA",
+        "cap_floor": "CAP/FLOOR",
+        "swaption": "SWAPTION",
+        "cds": "CDS",
+        "fx_forward": "FX FORWARD",
+        "fx_option": "FX OPTION",
+    }
+    return labels.get(inst_type, inst_type.replace("_", " ").upper())
+
+
+def _asset_class_badge(inst_type: str) -> html.Span:
+    """Small colored badge showing asset class."""
+    if inst_type in EQUITY_TYPES:
+        color, label = "#3b82f6", "EQ"
+    elif inst_type in RATES_TYPES:
+        color, label = "#f59e0b", "RATES"
+    elif inst_type in CREDIT_TYPES:
+        color, label = "#ef4444", "CREDIT"
+    elif inst_type in FX_TYPES:
+        color, label = "#8b5cf6", "FX"
+    else:
+        color, label = "#6b7280", "OTHER"
+
+    return html.Span(label, style={
+        "fontSize": "9px", "padding": "2px 6px", "borderRadius": "3px",
+        "background": f"{color}22", "color": color,
+        "fontWeight": "600", "marginLeft": "6px",
+    })
 
 
 # --- Tab routing ---
@@ -113,7 +262,8 @@ def display_positions(positions):
     if not positions:
         return (
             html.Div("No positions yet. Add instruments from the left panel.",
-                     style={"color": "var(--text-muted)", "fontSize": "12px", "padding": "20px 0"}),
+                     style={"color": "var(--text-muted)", "fontSize": "12px",
+                            "padding": "20px 0"}),
             ""
         )
 
@@ -124,27 +274,13 @@ def display_positions(positions):
         qty = pos["quantity"]
         direction = pos["direction"]
         book = pos["book"]
+        inst_type = inst["type"]
 
         sign_color = "text-green" if direction == "buy" else "text-red"
         sign_label = f"+{qty:.0f}" if direction == "buy" else f"-{qty:.0f}"
 
-        # Summary line
-        inst_type = inst["type"].replace("_", " ").upper()
-        detail_parts = []
-        if "underlying" in params:
-            detail_parts.append(params["underlying"])
-        if "strike" in params:
-            detail_parts.append(f"K={params['strike']}")
-        if "expiry" in params:
-            detail_parts.append(params["expiry"])
-        if "option_type" in params:
-            detail_parts.append(params["option_type"].upper())
-        if "barrier_type" in params:
-            detail_parts.append(params["barrier_type"])
-        if "barrier_level" in params:
-            detail_parts.append(f"B={params['barrier_level']}")
-
-        detail = " · ".join(detail_parts)
+        label = _instrument_label(inst_type)
+        detail = _instrument_summary(inst_type, params)
 
         rows.append(html.Div(
             style={
@@ -157,18 +293,24 @@ def display_positions(positions):
             children=[
                 html.Div([
                     html.Div(
-                        style={"display": "flex", "alignItems": "center", "gap": "8px"},
+                        style={"display": "flex", "alignItems": "center",
+                               "gap": "8px"},
                         children=[
                             html.Span(sign_label, className=sign_color,
-                                     style={"fontWeight": "700", "fontSize": "14px",
+                                     style={"fontWeight": "700",
+                                            "fontSize": "14px",
                                             "minWidth": "50px"}),
-                            html.Span(inst_type,
-                                     style={"fontWeight": "600", "fontSize": "13px"}),
+                            html.Span(label,
+                                     style={"fontWeight": "600",
+                                            "fontSize": "13px"}),
+                            _asset_class_badge(inst_type),
                         ],
                     ),
                     html.Div(detail,
-                             style={"fontSize": "11px", "color": "var(--text-muted)",
-                                    "marginTop": "2px", "marginLeft": "58px"}),
+                             style={"fontSize": "11px",
+                                    "color": "var(--text-muted)",
+                                    "marginTop": "2px",
+                                    "marginLeft": "58px"}),
                 ]),
                 html.Span(book,
                           style={"fontSize": "10px", "padding": "3px 8px",
@@ -198,16 +340,19 @@ def show_positions_summary(active_tab, positions):
     for pos in positions:
         inst = pos["instrument"]
         params = inst["params"]
+        inst_type = inst["type"]
         sign = "+" if pos["direction"] == "buy" else "-"
         color = "text-green" if pos["direction"] == "buy" else "text-red"
-        label = f"{sign}{pos['quantity']:.0f} {inst['type'].replace('_', ' ')}"
-        if "strike" in params:
-            label += f" K={params['strike']}"
-        if "option_type" in params:
-            label += f" {params['option_type']}"
 
-        items.append(html.Div(label, className=color,
-                             style={"fontSize": "12px", "marginBottom": "4px"}))
+        label = f"{sign}{pos['quantity']:.0f} {_instrument_label(inst_type)}"
+        detail = _instrument_summary(inst_type, params)
+
+        items.append(html.Div([
+            html.Span(label, className=color,
+                     style={"fontSize": "12px", "fontWeight": "600"}),
+            html.Span(f"  {detail}",
+                     style={"fontSize": "10px", "color": "var(--text-muted)"}),
+        ], style={"marginBottom": "4px"}))
 
     return html.Div([
         html.Div("PORTFOLIO POSITIONS", className="panel-header"),
@@ -234,24 +379,28 @@ def value_portfolio(n_clicks, positions, pricing_date, rate, spot, vol, div_yiel
     if not positions:
         return error_alert("No positions to value. Add positions in the Build tab.")
 
-    underlying = "AAPL"
+    # Determine underlying — use first equity underlying, else "USD"
+    underlying = "USD"
     for pos in positions:
-        und = pos["instrument"]["params"].get("underlying", "AAPL")
-        if und:
+        und = pos["instrument"]["params"].get("underlying")
+        if und and und.strip():
             underlying = und
             break
 
-    market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield, underlying)
+    market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield,
+                                      underlying)
 
     try:
-        # Price each position individually and aggregate
         results = []
         total_npv = 0.0
         total_greeks = {}
 
         for pos in positions:
+            inst = pos["instrument"]
+            inst_type = inst["type"]
+
             payload = {
-                "instrument": pos["instrument"],
+                "instrument": inst,
                 "market_data": market_data,
                 "model": model or "black_scholes",
                 "engine": engine or "analytic",
@@ -262,7 +411,8 @@ def value_portfolio(n_clicks, positions, pricing_date, rate, spot, vol, div_yiel
                 unit_npv = price_result.get("npv", 0)
             except Exception as e:
                 results.append({
-                    "instrument": pos["instrument"]["type"],
+                    "instrument": inst_type,
+                    "params": inst.get("params", {}),
                     "quantity": pos["quantity"],
                     "direction": pos["direction"],
                     "unit_npv": 0,
@@ -275,10 +425,9 @@ def value_portfolio(n_clicks, positions, pricing_date, rate, spot, vol, div_yiel
             position_npv = unit_npv * pos["quantity"] * sign
             total_npv += position_npv
 
-            # Greeks
+            # Greeks — request appropriate measures per instrument type
             try:
-                greeks_payload = {**payload,
-                                 "measures": ["delta", "gamma", "vega", "theta", "rho"]}
+                greeks_payload = {**payload}
                 gr = api_client.compute_greeks(greeks_payload)
                 for g, v in gr.get("greeks", {}).items():
                     if v is not None:
@@ -288,8 +437,8 @@ def value_portfolio(n_clicks, positions, pricing_date, rate, spot, vol, div_yiel
                 pass
 
             results.append({
-                "instrument": pos["instrument"]["type"],
-                "params": pos["instrument"]["params"],
+                "instrument": inst_type,
+                "params": inst.get("params", {}),
                 "quantity": pos["quantity"],
                 "direction": pos["direction"],
                 "unit_npv": unit_npv,
@@ -307,30 +456,17 @@ def value_portfolio(n_clicks, positions, pricing_date, rate, spot, vol, div_yiel
 def _render_valuation(total_npv, total_greeks, results):
     """Render portfolio valuation results."""
     # Portfolio summary
+    npv_color = "text-green" if total_npv >= 0 else "text-red"
     summary = html.Div(className="npv-card", children=[
         html.Div(className="npv-header", children=[
             html.Div("PORTFOLIO NPV", className="npv-label"),
-            html.Div(f"${total_npv:,.4f}", className="npv-value"),
+            html.Div(f"${total_npv:,.4f}", className=f"npv-value {npv_color}"),
             html.Div(f"{len(results)} positions", className="npv-meta"),
         ]),
     ])
 
-    # Aggregated Greeks
-    greeks_el = html.Div()
-    if total_greeks:
-        cells = []
-        for name, val in total_greeks.items():
-            css = "greek-positive" if val >= 0 else "greek-negative"
-            cells.append(html.Div(className="greek-cell", children=[
-                html.Div(name.upper(), className="greek-name"),
-                html.Div(f"{val:.4f}", className=f"greek-value {css}"),
-            ]))
-
-        greeks_el = html.Div([
-            html.Div("PORTFOLIO GREEKS", className="panel-header",
-                     style={"padding": "16px 28px 0"}),
-            html.Div(className="greeks-grid", children=cells),
-        ])
+    # Aggregated Greeks — use the shared greeks_display component
+    greeks_el = greeks_display(total_greeks) if total_greeks else html.Div()
 
     # Position details table
     header = html.Thead(html.Tr([
@@ -340,46 +476,46 @@ def _render_valuation(total_npv, total_greeks, results):
 
     rows = []
     for r in results:
+        inst_type = r["instrument"]
+        params = r.get("params", {})
+
         if "error" in r:
             rows.append(html.Tr([
-                html.Td(r["instrument"].replace("_", " ")),
-                html.Td(""), html.Td(f"{r['quantity']:.0f}"),
+                html.Td(_instrument_label(inst_type)),
+                html.Td(_instrument_summary(inst_type, params),
+                        style={"color": "var(--text-muted)", "fontSize": "11px"}),
+                html.Td(f"{r['quantity']:.0f}"),
                 html.Td(r["direction"]),
                 html.Td("ERROR", className="text-red"),
-                html.Td(r.get("error", "")[:30], className="text-red"),
+                html.Td(str(r.get("error", ""))[:40], className="text-red",
+                        style={"fontSize": "10px"}),
             ]))
         else:
-            params = r.get("params", {})
-            detail_parts = []
-            if "underlying" in params:
-                detail_parts.append(params["underlying"])
-            if "strike" in params:
-                detail_parts.append(f"K={params['strike']}")
-            if "option_type" in params:
-                detail_parts.append(params["option_type"])
-            detail = " ".join(detail_parts)
-
+            detail = _instrument_summary(inst_type, params)
             pos_color = "text-green" if r["position_npv"] >= 0 else "text-red"
             dir_color = "text-green" if r["direction"] == "buy" else "text-red"
 
             rows.append(html.Tr([
-                html.Td(r["instrument"].replace("_", " ")),
-                html.Td(detail, style={"color": "var(--text-muted)"}),
+                html.Td(_instrument_label(inst_type)),
+                html.Td(detail, style={"color": "var(--text-muted)",
+                                       "fontSize": "11px",
+                                       "maxWidth": "250px"}),
                 html.Td(f"{r['quantity']:.0f}"),
                 html.Td(r["direction"], className=dir_color),
-                html.Td(f"${r['unit_npv']:.4f}"),
+                html.Td(f"${r['unit_npv']:,.4f}"),
                 html.Td(f"${r['position_npv']:+,.4f}", className=pos_color,
                         style={"fontWeight": "600"}),
             ]))
 
-    table_el = html.Div(className="panel",
-                        style={"padding": "0", "overflow": "hidden", "marginTop": "16px"},
-                        children=[
-        html.Div("POSITION DETAILS", className="panel-header",
-                 style={"padding": "16px 20px 8px"}),
-        dbc.Table([header, html.Tbody(rows)],
-                  bordered=False, hover=True, className="table"),
-    ])
+    table_el = html.Div(
+        className="panel",
+        style={"padding": "0", "overflow": "hidden", "marginTop": "16px"},
+        children=[
+            html.Div("POSITION DETAILS", className="panel-header",
+                     style={"padding": "16px 20px 8px"}),
+            dbc.Table([header, html.Tbody(rows)],
+                      bordered=False, hover=True, className="table"),
+        ])
 
     return html.Div([summary, greeks_el, table_el])
 
@@ -405,14 +541,15 @@ def portfolio_stress_test(n_clicks, positions,
     if not positions:
         return error_alert("No positions. Add positions in the Build tab.")
 
-    underlying = "AAPL"
+    underlying = "USD"
     for pos in positions:
         und = pos["instrument"]["params"].get("underlying")
-        if und:
+        if und and und.strip():
             underlying = und
             break
 
-    market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield, underlying)
+    market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield,
+                                      underlying)
 
     instruments = [pos["instrument"] for pos in positions]
 

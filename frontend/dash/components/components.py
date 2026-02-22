@@ -218,12 +218,34 @@ INSTRUMENT_FIELDS = {
         ("hazard_rate",       "number", "0.02"),
         ("payment_frequency", "select", ["quarterly", "semiannual", "annual"]),
     ],
+    "fx_forward": [
+        ("trade_id",       "text",   "FXFWD-001"),
+        ("ccy_pair",       "select", ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"]),
+        ("notional",       "number", "1000000"),
+        ("strike",         "number", "1.08"),
+        ("delivery_date",  "text",   "2025-07-15"),
+        ("direction",      "select", ["buy", "sell"]),
+        ("domestic_rate",  "number", "0.045"),
+        ("foreign_rate",   "number", "0.035"),
+    ],
+    "fx_option": [
+        ("trade_id",       "text",   "FXOPT-001"),
+        ("ccy_pair",       "select", ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"]),
+        ("notional",       "number", "1000000"),
+        ("strike",         "number", "1.08"),
+        ("expiry",         "text",   "2025-07-15"),
+        ("option_type",    "select", ["call", "put"]),
+        ("domestic_rate",  "number", "0.045"),
+        ("foreign_rate",   "number", "0.035"),
+        ("vol",            "number", "0.08"),
+    ],
 }
 
 NUMERIC_FIELDS = {
     "strike", "barrier_level", "rebate", "cash_payoff",
     "notional", "fixed_rate", "face_value", "coupon_rate", "vol",
     "spread", "recovery_rate", "hazard_rate",
+    "domestic_rate", "foreign_rate",
 }
 
 
@@ -365,6 +387,7 @@ def greeks_display(greeks: Dict) -> html.Div:
     equity_keys = {"delta", "gamma", "vega", "theta", "rho"}
     rates_keys = {"dv01", "duration", "convexity"}
 
+    rates_keys = {"dv01", "duration", "convexity", "cs01"}
     has_equity = any(k in greeks for k in equity_keys if greeks.get(k) is not None)
     has_rates = any(k in greeks for k in rates_keys if greeks.get(k) is not None)
 
@@ -373,11 +396,13 @@ def greeks_display(greeks: Dict) -> html.Div:
         "dv01": lambda v: f"{v*10000:.4f} bp",  # display in bps
         "duration": lambda v: f"{v:.4f} yrs",
         "convexity": lambda v: f"{v:.2f}",
+        "cs01": lambda v: f"{v:,.2f}",  # dollar value per 1bp spread move
     }
     LABELS = {
         "dv01": "DV01",
         "duration": "MOD DURATION",
         "convexity": "CONVEXITY",
+        "cs01": "CS01",
         "delta": "DELTA",
         "gamma": "GAMMA",
         "vega": "VEGA",
@@ -412,7 +437,7 @@ def greeks_display(greeks: Dict) -> html.Div:
 
     if has_rates:
         cells = []
-        for name in ["dv01", "duration", "convexity", "rho", "theta"]:
+        for name in ["dv01", "duration", "convexity", "cs01", "rho", "theta"]:
             val = greeks.get(name)
             if val is None and name not in greeks:
                 continue
