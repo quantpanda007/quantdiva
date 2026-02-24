@@ -206,6 +206,14 @@ class APIClient:
     def get_provider_status(self) -> Dict:
         return self._get("/market-data/status")
 
+    def export_pricing_excel(self, payload: Dict) -> bytes:
+        """Export pricing results to Excel. Returns raw bytes."""
+        url = f"{self.base_url}/export/pricing"
+        r = requests.post(url, json=payload, timeout=120)
+        if r.status_code != 200:
+            raise APIError(r.status_code, r.text)
+        return r.content
+
 
 # Global singleton
 api_client = APIClient()

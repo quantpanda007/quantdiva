@@ -809,6 +809,12 @@ def main():
     # Live market data
     run_test("GET /market-data/status", test_market_data_status)
 
+    # Historical market data
+    print("\n─── HISTORICAL DATA ─────────────────────────────")
+    run_test("GET /historical/status", test_historical_status)
+    run_test("POST /historical/import", test_historical_import)
+    run_test("POST /export/pricing (Excel)", test_export_excel)
+
     # Model extensions
     run_test("POST Cap/Floor (Bachelier)", test_cap_bachelier)
     run_test("POST Swaption (Bachelier)", test_swaption_bachelier)
@@ -988,6 +994,74 @@ def test_cds_isda():
     })
     assert "npv" in r, f"No npv: {r}"
     return f"NPV = {r['npv']:,.2f}"
+
+
+# === Historical Data Tests ===
+
+def test_historical_status():
+    """Test historical data status endpoint."""
+    import requests
+    r = requests.get(f"{api_client.base_url}/historical/status")
+    assert r.status_code == 200, f"Status {r.status_code}: {r.text}"
+    data = r.json()
+    assert "db_stats" in data, f"No db_stats: {data}"
+    db_size = data["db_stats"].get("db_size_mb", 0)
+    tables = len([k for k in data["db_stats"] if k != "db_size_mb"])
+    return f"DB: {db_size}MB, {tables} tables"
+
+
+def test_historical_import():
+    """Test importing external data via API."""
+    import requests
+    payload = {
+        "table": "equity_prices",
+        "source": "test",
+        "rows": [
+            {"symbol": "TEST", "date": "2025-01-15", "open": 100,
+             "high": 105, "low": 99, "close": 103, "volume": 1000},
+            {"symbol": "TEST", "date": "2025-01-16", "open": 103,
+             "high": 107, "low": 102, "close": 106, "volume": 1200},
+        ],
+    }
+    r = requests.post(f"{api_client.base_url}/historical/import", json=payload)
+    assert r.status_code == 200, f"Status {r.status_code}: {r.text}"
+    data = r.json()
+    assert data["rows_imported"] == 2, f"Expected 2, got {data}"
+    return f"Imported {data['rows_imported']} rows (source={data['source']})"
+
+def test_export_excel():
+    """Test Excel export endpoint using API client."""
+    payload = {
+        "instrument": VANILLA_INSTRUMENT,
+        "market_data": MARKET_DATA,
+        "model": "black_scholes",
+        "engine": "analytic",
+        "include_mc_data": False,
+    }
+
+    # Use the API client method (correct base URL handling)
+    content = api_client.export_pricing_excel(payload)
+
+    assert len(content) > 1000, f"File too small: {len(content)} bytes"
+
+    return f"Excel file: {len(content):,} bytes"
+
+def test_export_excel2():
+    """Test Excel export endpoint."""
+    import requests
+    payload = {
+        "instrument": VANILLA_INSTRUMENT,
+        "market_data": MARKET_DATA,
+        "model": "black_scholes",
+        "engine": "analytic",
+        "include_mc_data": False,
+    }
+    r = requests.post(f"{api_client.base_url}/api/v1/export/pricing", json=payload)
+    assert r.status_code == 200, f"Status {r.status_code}: {r.text}"
+    assert len(r.content) > 1000, f"File too small: {len(r.content)} bytes"
+    content_type = r.headers.get("content-type", "")
+    assert "spreadsheet" in content_type or "octet" in content_type, f"Bad content-type: {content_type}"
+    return f"Excel file: {len(r.content):,} bytes"
 
 
 if __name__ == "__main__":

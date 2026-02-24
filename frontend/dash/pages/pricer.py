@@ -127,9 +127,17 @@ def layout():
                         id="btn-greeks",
                         className="btn-secondary",
                     ),
+                    dbc.Button(
+                        "📥 Excel",
+                        id="btn-export-excel",
+                        className="btn-secondary",
+                    ),
                 ]),
             ]),
         ]),
+
+        # Download component (invisible)
+        dcc.Download(id="download-excel"),
 
         # ── Results area ──────────────────────────────────────────
         dcc.Loading(

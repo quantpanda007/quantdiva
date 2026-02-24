@@ -401,3 +401,80 @@ def load_live_data(n_clicks, inst_type, field_values):
 
     except Exception as e:
         return no_update, no_update, no_update, no_update, no_update, f"✗ {str(e)[:60]}"
+
+
+# ── Excel Export Callback ────────────────────────────────────
+
+@callback(
+    Output("download-excel", "data"),
+    Input("btn-export-excel", "n_clicks"),
+    State("inst-type", "value"),
+    State({"type": "pricer-inst-field", "field": ALL}, "value"),
+    State("model-select", "value"),
+    State("engine-select", "value"),
+    State("mkt-pricing-date", "value"),
+    State("mkt-rate", "value"),
+    State("mkt-spot", "value"),
+    State("mkt-vol", "value"),
+    State("mkt-div", "value"),
+    State("mc-num-paths", "data"),
+    State("mc-rng-type", "data"),
+    State("fd-grid-points", "data"),
+    prevent_initial_call=True,
+)
+def export_to_excel(
+    n_clicks,
+    inst_type, field_values, model, engine,
+    pricing_date, rate, spot, vol, div_yield,
+    mc_num_paths, mc_rng_type, fd_grid_points,
+):
+    """Export current pricing setup to Excel."""
+    if not n_clicks:
+        return no_update
+
+    # Build same payload as pricing
+    fields = INSTRUMENT_FIELDS.get(inst_type, [])
+    params = {}
+    for i, (name, ftype, default) in enumerate(fields):
+        if i < len(field_values):
+            val = field_values[i]
+        else:
+            val = default[0] if isinstance(default, list) else default
+        if name in NUMERIC_FIELDS and val is not None:
+            try:
+                val = float(val)
+            except (ValueError, TypeError):
+                val = 0.0
+        params[name] = val
+
+    underlying = params.get("ccy_pair") or params.get("underlying") or "USD"
+    market_data = collect_market_data(pricing_date, rate, spot, vol, div_yield, underlying)
+
+    eng = str(engine or "").lower()
+    engine_params = {}
+    if "monte_carlo" in eng or "mc" in eng:
+        engine_params["num_paths"] = int(mc_num_paths or 10000)
+        if mc_rng_type:
+            engine_params["rng_type"] = mc_rng_type
+    elif "finite_difference" in eng or "fd" in eng:
+        engine_params["grid_points"] = int(fd_grid_points or 100)
+
+    payload = {
+        "instrument": {"type": inst_type, "params": params},
+        "market_data": market_data,
+        "model": model or "black_scholes",
+        "engine": engine or "analytic",
+        "include_mc_data": True,
+    }
+    if engine_params:
+        payload["engine_params"] = engine_params
+
+    try:
+        xlsx_bytes = api_client.export_pricing_excel(payload)
+        import base64
+        b64 = base64.b64encode(xlsx_bytes).decode()
+        trade_id = params.get("trade_id", "export").replace(" ", "_")
+        filename = f"QuantPricer_{trade_id}_{engine or 'analytic'}.xlsx"
+        return dcc.send_bytes(xlsx_bytes, filename)
+    except Exception as e:
+        return no_update
