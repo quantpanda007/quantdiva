@@ -243,3 +243,204 @@ class BlackSwaptionEngine(BaseEngine):
 
         vol_handle = ql.QuoteHandle(ql.SimpleQuote(vol))
         return ql.BlackSwaptionEngine(curve, vol_handle)
+
+
+# ---------------------------------------------------------------------------
+# Cap/Floor — Bachelier (Normal Vol) engine
+# ---------------------------------------------------------------------------
+
+@engine_registry.register_decorator(
+    (InstrumentType.CAP_FLOOR.value, "bachelier"), overwrite=True
+)
+@dataclass
+class BachelierCapFloorEngine(BaseEngine):
+    """Bachelier (normal vol) engine for caps and floors.
+
+    Uses ql.BachelierCapFloorEngine. Required for negative rate environments
+    where lognormal (Black) vol breaks down. Vol is in absolute terms
+    (e.g. 0.005 = 50bp normal vol).
+    """
+
+    def engine_type(self) -> EngineType:
+        return EngineType.ANALYTIC
+
+    def supported_instruments(self) -> List[InstrumentType]:
+        return [InstrumentType.CAP_FLOOR]
+
+    def supported_models(self) -> List[ModelType]:
+        return [ModelType.BLACK_SCHOLES]
+
+    def build(
+        self,
+        model: BaseModel,
+        market_env: MarketEnvironment,
+        **kwargs,
+    ) -> ql.PricingEngine:
+        currency = kwargs.get("currency", "USD")
+        curve = market_env.discount_curves.get(currency)
+        if curve is None:
+            if market_env.discount_curves:
+                curve = list(market_env.discount_curves.values())[0]
+            else:
+                raise ValueError("No discount curve for Bachelier cap/floor")
+
+        instrument = kwargs.get("instrument")
+        vol = 0.005  # 50bp normal vol default
+        if instrument and hasattr(instrument, "vol"):
+            vol = instrument.vol
+
+        vol_handle = ql.QuoteHandle(ql.SimpleQuote(vol))
+        return ql.BachelierCapFloorEngine(curve, vol_handle)
+
+
+# ---------------------------------------------------------------------------
+# Swaption — Bachelier (Normal Vol) engine
+# ---------------------------------------------------------------------------
+
+@engine_registry.register_decorator(
+    (InstrumentType.SWAPTION.value, "bachelier"), overwrite=True
+)
+@dataclass
+class BachelierSwaptionEngine(BaseEngine):
+    """Bachelier (normal vol) engine for European swaptions.
+
+    Uses ql.BachelierSwaptionEngine. Standard in EUR and JPY markets
+    where negative rates make lognormal vol undefined.
+    """
+
+    def engine_type(self) -> EngineType:
+        return EngineType.ANALYTIC
+
+    def supported_instruments(self) -> List[InstrumentType]:
+        return [InstrumentType.SWAPTION]
+
+    def supported_models(self) -> List[ModelType]:
+        return [ModelType.BLACK_SCHOLES]
+
+    def build(
+        self,
+        model: BaseModel,
+        market_env: MarketEnvironment,
+        **kwargs,
+    ) -> ql.PricingEngine:
+        currency = kwargs.get("currency", "USD")
+        curve = market_env.discount_curves.get(currency)
+        if curve is None:
+            if market_env.discount_curves:
+                curve = list(market_env.discount_curves.values())[0]
+            else:
+                raise ValueError("No discount curve for Bachelier swaption")
+
+        instrument = kwargs.get("instrument")
+        vol = 0.005
+        if instrument and hasattr(instrument, "vol"):
+            vol = instrument.vol
+
+        vol_handle = ql.QuoteHandle(ql.SimpleQuote(vol))
+        return ql.BachelierSwaptionEngine(curve, vol_handle)
+
+
+# ---------------------------------------------------------------------------
+# Swaption — Hull-White Tree engine (1-factor)
+# ---------------------------------------------------------------------------
+
+@engine_registry.register_decorator(
+    (InstrumentType.SWAPTION.value, "hull_white"), overwrite=True
+)
+@dataclass
+class HullWhiteSwaptionEngine(BaseEngine):
+    """Hull-White 1-factor tree engine for swaptions.
+
+    Uses ql.TreeSwaptionEngine with a Hull-White short rate model.
+    Parameters:
+      - a (mean reversion speed): typically 0.01-0.10
+      - sigma (short rate vol): typically 0.005-0.02
+
+    This enables proper Bermudan swaption pricing and captures
+    the term structure dynamics that Black's model cannot.
+    """
+
+    def engine_type(self) -> EngineType:
+        return EngineType.ANALYTIC  # Tree-based but registered as analytic for simplicity
+
+    def supported_instruments(self) -> List[InstrumentType]:
+        return [InstrumentType.SWAPTION]
+
+    def supported_models(self) -> List[ModelType]:
+        return [ModelType.HULL_WHITE_1F]
+
+    def build(
+        self,
+        model: BaseModel,
+        market_env: MarketEnvironment,
+        **kwargs,
+    ) -> ql.PricingEngine:
+        currency = kwargs.get("currency", "USD")
+        curve = market_env.discount_curves.get(currency)
+        if curve is None:
+            if market_env.discount_curves:
+                curve = list(market_env.discount_curves.values())[0]
+            else:
+                raise ValueError("No discount curve for Hull-White swaption")
+
+        # Hull-White parameters from engine_params or defaults
+        instrument = kwargs.get("instrument")
+        a = 0.05      # mean reversion
+        sigma = 0.01  # short rate vol
+
+        if instrument:
+            a = getattr(instrument, "hw_a", a)
+            sigma = getattr(instrument, "hw_sigma", sigma)
+
+        hw_model = ql.HullWhite(curve, a, sigma)
+        grid_points = 50
+        return ql.TreeSwaptionEngine(hw_model, grid_points)
+
+
+# ---------------------------------------------------------------------------
+# Cap/Floor — Hull-White Tree engine (1-factor)
+# ---------------------------------------------------------------------------
+
+@engine_registry.register_decorator(
+    (InstrumentType.CAP_FLOOR.value, "hull_white"), overwrite=True
+)
+@dataclass
+class HullWhiteCapFloorEngine(BaseEngine):
+    """Hull-White 1-factor tree engine for caps/floors.
+
+    Analogous to TreeSwaptionEngine but for cap/floor pricing.
+    """
+
+    def engine_type(self) -> EngineType:
+        return EngineType.ANALYTIC
+
+    def supported_instruments(self) -> List[InstrumentType]:
+        return [InstrumentType.CAP_FLOOR]
+
+    def supported_models(self) -> List[ModelType]:
+        return [ModelType.HULL_WHITE_1F]
+
+    def build(
+        self,
+        model: BaseModel,
+        market_env: MarketEnvironment,
+        **kwargs,
+    ) -> ql.PricingEngine:
+        currency = kwargs.get("currency", "USD")
+        curve = market_env.discount_curves.get(currency)
+        if curve is None:
+            if market_env.discount_curves:
+                curve = list(market_env.discount_curves.values())[0]
+            else:
+                raise ValueError("No discount curve for Hull-White cap/floor")
+
+        instrument = kwargs.get("instrument")
+        a = 0.05
+        sigma = 0.01
+        if instrument:
+            a = getattr(instrument, "hw_a", a)
+            sigma = getattr(instrument, "hw_sigma", sigma)
+
+        hw_model = ql.HullWhite(curve, a, sigma)
+        grid_points = 50
+        return ql.TreeCapFloorEngine(hw_model, grid_points)

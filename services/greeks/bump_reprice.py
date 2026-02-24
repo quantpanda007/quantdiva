@@ -347,6 +347,32 @@ class BumpAndRepriceGreeks:
                 result.greeks["convexity"] = None
             result.bump_details["convexity"] = details
 
+        # CS01: credit spread sensitivity — value change for 1bp spread bump
+        # Only for CDS instruments
+        if is_rates and hasattr(instrument, "spread"):
+            try:
+                original_spread = instrument.spread
+
+                # Bump spread up
+                instrument.spread = original_spread + 0.0001
+                npv_up = self._price(
+                    instrument, market_env, model_type, engine_type, engine_params
+                )
+
+                # Bump spread down
+                instrument.spread = original_spread - 0.0001
+                npv_down = self._price(
+                    instrument, market_env, model_type, engine_type, engine_params
+                )
+
+                # Restore
+                instrument.spread = original_spread
+
+                cs01 = (npv_up - npv_down) / 2.0
+                result.greeks["cs01"] = cs01
+            except Exception:
+                result.greeks["cs01"] = None
+
         return result
 
 

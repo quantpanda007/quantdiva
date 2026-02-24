@@ -1,8 +1,8 @@
 # QuantPricer
 
-**QuantLib-based derivatives pricing platform with FastAPI backend and Dash frontend.**
+**Multi-asset derivatives pricing platform built on QuantLib, with FastAPI backend and Dash frontend.**
 
-A production-grade pricing library covering vanilla and exotic options, multiple pricing engines, risk analytics, and interactive visualization.
+Covers **13 instruments** across **4 asset classes** (Equity, Rates, Credit, FX), with multiple pricing engines, bump-and-reprice risk analytics, and an interactive dark-themed dashboard.
 
 ---
 
@@ -11,26 +11,42 @@ A production-grade pricing library covering vanilla and exotic options, multiple
 ```
 quantlib-pricing/
 ├── core/                          # Domain layer
-│   ├── instruments/               # Vanilla, Barrier, Digital, Asian, Lookback
-│   ├── engines/                   # Analytic, FD, Binomial, Monte Carlo
-│   ├── models/                    # Black-Scholes, Heston
-│   ├── portfolio.py               # Portfolio with aggregated valuation
-│   └── greeks/                    # Bump-and-reprice sensitivities
+│   ├── enums/                     # InstrumentType, AssetClass, EngineType, etc.
+│   ├── interfaces/                # BaseInstrument, BaseEngine, MarketEnvironment
+│   ├── types/                     # Value objects (PricingDate, TradeId, etc.)
+│   └── exceptions/                # Typed exceptions
 │
-├── market/                        # Market data layer
-│   ├── environment.py             # MarketEnvironment (curves, surfaces)
-│   ├── volatility/                # SVI vol surface, local vol, SABR
-│   └── snapshots/                 # Market data versioning + checksums
+├── instruments/                   # Instrument wrappers
+│   ├── equity/                    # Vanilla, Barrier, Digital, Asian, Lookback
+│   ├── rates/                     # IRS, Bond, FRA, Cap/Floor, Swaption
+│   ├── credit/                    # CDS
+│   └── fx/                        # FX Forward, FX Option
+│
+├── engines/                       # Pricing engines
+│   ├── analytic/                  # BSM, Barrier/Digital, Asian, Lookback,
+│   │                              #   Rates (Discounting, Black), Credit, FX (GK)
+│   ├── finite_difference/         # Crank-Nicolson PDE
+│   ├── lattice/                   # CRR Binomial tree
+│   └── monte_carlo/               # GBM simulation, variance reduction
+│
+├── models/                        # Stochastic models
+│   └── equity/                    # Black-Scholes, Heston
 │
 ├── services/                      # Application services
+│   ├── pricers/                   # PricingService (dispatch + execution)
+│   ├── greeks/                    # Bump-and-reprice Greeks + DV01/Duration
+│   ├── risk/                      # Scenarios, stress tests, VaR, P&L explain
 │   ├── calibration/               # Heston calibration, implied vol solver
 │   ├── comparison/                # Engine comparison framework
-│   ├── risk/                      # Scenarios, stress tests, VaR, P&L explain
-│   └── jobs/                      # Async job execution (submit → poll → retrieve)
+│   └── jobs/                      # Async job execution
 │
-├── registry/                      # Plugin-style instrument/engine registry
+├── market/                        # Market data layer
+│   ├── volatility/                # SVI vol surface, local vol
+│   └── snapshots/                 # Market data versioning + checksums
+│
+├── registry/                      # Plugin-style dispatch
 │   ├── __init__.py                # Generic Registry class
-│   └── bootstrap.py               # Registers all instruments, engines, models
+│   └── bootstrap.py               # Auto-registers all instruments/engines/models
 │
 ├── api/                           # FastAPI backend
 │   ├── app.py                     # Entry point
@@ -47,7 +63,7 @@ quantlib-pricing/
 │   ├── pages/                     # 6 pages
 │   └── callbacks/                 # Callback modules per page
 │
-└── tests/                         # Regression + integration tests
+└── tests/                         # 36 integration tests
 ```
 
 ## Tech Stack
@@ -63,48 +79,85 @@ quantlib-pricing/
 
 ## Instruments
 
-| Type | Engines | Models |
-|---|---|---|
-| **Vanilla Option** | Analytic, FD, Binomial, MC, Heston | BSM, Heston |
-| **Barrier Option** | Analytic, FD, MC | BSM |
-| **Digital Option** | Analytic, FD | BSM |
-| **Asian Option** | MC | BSM |
-| **Lookback Option** | MC | BSM |
+### Equity Derivatives
+
+| Instrument | QuantLib Class | Engines | Models |
+|---|---|---|---|
+| **Vanilla Option** | `VanillaOption` | Analytic, FD, Binomial, MC, Heston | BSM, Heston |
+| **Barrier Option** | `BarrierOption` | Analytic, FD, MC | BSM |
+| **Digital Option** | `VanillaOption` (CashOrNothing) | Analytic, FD | BSM |
+| **Asian Option** | `DiscreteAveragingAsianOption` | MC | BSM |
+| **Lookback Option** | `ContinuousFloatingLookbackOption` | MC | BSM |
+
+### Rates
+
+| Instrument | QuantLib Class | Engine | Description |
+|---|---|---|---|
+| **Interest Rate Swap** | `VanillaSwap` | DiscountingSwapEngine | Fixed vs float, pay/receive |
+| **Fixed Rate Bond** | `FixedRateBond` | DiscountingBondEngine | Coupon bond valuation |
+| **FRA** | `VanillaSwap` (single-period) | DiscountingSwapEngine | Forward rate agreement |
+| **Cap / Floor** | `Cap`, `Floor` | BlackCapFloorEngine | Interest rate caps and floors |
+| **Swaption** | `Swaption` | BlackSwaptionEngine | European payer/receiver swaption |
+
+### Credit
+
+| Instrument | QuantLib Class | Engine | Description |
+|---|---|---|---|
+| **CDS** | `CreditDefaultSwap` | MidPointCdsEngine | Buy/sell protection, flat hazard curve |
+
+### FX
+
+| Instrument | QuantLib Class | Engine | Description |
+|---|---|---|---|
+| **FX Forward** | `VanillaOption` | Garman-Kohlhagen (BSM) | Forward exchange agreement |
+| **FX Option** | `VanillaOption` | Garman-Kohlhagen (BSM) | European call/put on FX rate |
 
 Engine compatibility is registry-driven — adding a new instrument requires zero API or frontend changes.
 
 ## Pricing Engines
 
-| Engine | Method | Speed | Accuracy |
+| Engine | Method | Speed | Instruments |
 |---|---|---|---|
-| `analytic` | Closed-form BSM | <5ms | Reference |
-| `finite_difference` | Crank-Nicolson PDE | ~10ms | <1bps |
-| `binomial` | CRR tree | ~5ms | <5bps |
-| `monte_carlo` | GBM simulation | 1-30s | Depends on paths |
-| `heston_analytic` | Semi-analytic Heston | ~20ms | Reference (Heston) |
-| `fd_heston` | ADI PDE solver | ~50ms | <2bps |
+| `analytic` | Closed-form BSM / Black | <5ms | All 13 instruments |
+| `finite_difference` | Crank-Nicolson PDE | ~10ms | Vanilla, Barrier |
+| `binomial` | CRR tree | ~5ms | Vanilla |
+| `monte_carlo` | GBM simulation | 1-30s | Vanilla, Barrier, Asian, Lookback |
+| `heston_analytic` | Semi-analytic Heston | ~20ms | Vanilla |
+| `discounting` | Curve discounting | <5ms | IRS, Bond, FRA |
+| `black` | Black's formula | <5ms | Cap/Floor, Swaption |
+| `midpoint` | Default probability integration | <5ms | CDS |
+| `garman_kohlhagen` | BSM + foreign rate | <5ms | FX Forward, FX Option |
 
 ## Risk Analytics
 
-- **Greeks**: Delta, Gamma, Vega, Theta, Rho (bump-and-reprice)
-- **Spot/Vol Ladders**: Configurable bump sizes
-- **Spot x Vol Matrix**: 2D sensitivity heatmap
-- **12 Predefined Scenarios**: Market crash, vol spike, rate shock, etc.
-- **Custom Scenarios**: Arbitrary spot/vol/rate shocks
-- **Stress Testing**: All scenarios with worst/best identification
-- **P&L Explain**: Taylor expansion decomposition
-- **VaR**: Parametric, Historical, Monte Carlo
+### Equity Greeks
+Delta, Gamma, Vega, Theta, Rho — computed via bump-and-reprice (central difference).
+
+### Rates Sensitivities
+DV01, Modified Duration, Convexity — automatically computed for IRS, Bond, FRA, Cap/Floor, Swaption, CDS.
+
+### Scenario Analysis
+- 12 predefined scenarios (market crash, vol spike, rate shock, etc.)
+- Custom scenarios with arbitrary spot/vol/rate shocks
+- Stress testing with worst/best identification
+- P&L explain via Taylor expansion decomposition
+- VaR: Parametric, Historical, Monte Carlo
 
 ## Frontend Pages
 
 | Page | Features |
 |---|---|
 | **Dashboard** | System health, quick pricer, navigation |
-| **Pricer** | Any instrument, dynamic form, MC/FD params, Greeks, engine comparison |
+| **Pricer** | All 13 instruments, adaptive market data panel (equity/rates/FX), Greeks, engine comparison |
 | **Risk Lab** | Spot/vol ladders with charts, stress test table, custom scenarios |
-| **Portfolio** | Build trade books, aggregated NPV + Greeks, portfolio stress test |
+| **Portfolio** | Multi-asset trade books with asset class badges, aggregated NPV + Greeks, stress test |
 | **Market Tools** | 3D vol surface (SVI), yield curve charts, implied vol solver |
-| **Registry** | Engine compatibility matrix, instruments, scenarios |
+| **Registry** | Engine compatibility matrix, registered instruments, scenarios |
+
+The UI automatically adapts based on instrument type:
+- **Equity options**: Spot, Vol, Div Yield market data panel
+- **Rates/Credit**: Discount Rate only (curves built internally)
+- **FX**: FX Spot Rate (domestic/foreign rates in instrument form)
 
 ## Setup
 
@@ -157,15 +210,15 @@ cd frontend/dash
 python test_integration.py
 ```
 
-Runs 28 tests across all endpoints. Requires backend on port 8000.
+Runs 36 tests across all endpoints. Requires backend on port 8000.
 
 ## API Endpoints
 
 | Group | Endpoints | Description |
 |---|---|---|
 | System | `GET /health` | Health check |
-| Pricing | `POST /api/v1/pricing/single, /batch, /compare` | Price instruments |
-| Sensitivities | `POST /api/v1/sensitivities/greeks, /ladder, /matrix` | Greeks and ladders |
+| Pricing | `POST /api/v1/pricing/single, /batch, /compare` | Price any instrument |
+| Sensitivities | `POST /api/v1/sensitivities/greeks, /ladder, /matrix` | Greeks, DV01, Duration |
 | Risk | `POST /api/v1/risk/scenario, /stress-test, /pnl-explain, /var` | Risk analytics |
 | Calibration | `POST /api/v1/calibration/model, /implied-vol` | Model calibration |
 | Market Data | `POST /api/v1/market/vol-surface/*, /yield-curve/*` | Market tools |
@@ -176,19 +229,19 @@ Runs 28 tests across all endpoints. Requires backend on port 8000.
 
 ## Design Principles
 
-1. **Instrument-agnostic API**: `{"type": "vanilla_option", "params": {...}}` — works for any registered type
-2. **Registry-driven dispatch**: Adding a new product = register it. Zero code changes elsewhere.
-3. **Risk factor as string key**: `"spot"`, `"vol"`, `"rate"` — extensible to any asset class
-4. **Model as string key**: `"black_scholes"`, `"heston"` — pluggable
-5. **Versioned API**: `/api/v1/` prefix for evolution
-6. **Market environment as first-class object**: Curves, surfaces, snapshots with checksums
+1. **Multi-asset from the ground up**: Same API handles equity options, rate swaps, CDS, and FX — `{"type": "cds", "params": {...}}`
+2. **Registry-driven dispatch**: Adding a new product = instrument class + engine + `@register_decorator`. Zero changes to API or frontend.
+3. **Instrument-aware risk**: Equity gets Delta/Gamma/Vega; rates get DV01/Duration/Convexity — automatic detection.
+4. **Adaptive UI**: Market data panel, Greeks display, and position cards all adapt to the instrument type.
+5. **Versioned API**: `/api/v1/` prefix for backward-compatible evolution.
+6. **Market environment as first-class object**: Discount curves, vol surfaces, hazard curves, forecast curves — all in `MarketEnvironment`.
 
 ## Integration Test Results
 
 ```
-28/28 (100%)
+36/36 (100%)
 
-Health 1/1 | Registry 5/5 | Pricing 8/8
+Health 1/1 | Registry 5/5 | Pricing 13/13
 Sensitivities 4/4 | Risk 4/4 | Calibration 1/1
-Market Data 2/2 | E2E Flows 3/3
+Market Data 2/2 | E2E Flows 6/6
 ```

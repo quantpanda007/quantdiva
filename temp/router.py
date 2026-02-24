@@ -41,13 +41,8 @@ except Exception as e:
     print(f"[router] Historical market data endpoints not loaded: {e}")
 
 # Excel export
-from api.v1.endpoints.export import router as export_router
-api_v1_router.include_router(export_router, tags=["export"])
-'''
 try:
     from api.v1.endpoints.export import router as export_router
     api_v1_router.include_router(export_router, tags=["export"])
 except Exception as e:
     print(f"[router] Export endpoints not loaded: {e}")
-'''
-

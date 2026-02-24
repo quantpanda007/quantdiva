@@ -216,6 +216,43 @@ CDS_INSTRUMENT = {
     },
 }
 
+FX_FWD_INSTRUMENT = {
+    "type": "fx_forward",
+    "params": {
+        "trade_id": "TEST-FXFWD-001",
+        "ccy_pair": "EURUSD",
+        "notional": 1000000,
+        "strike": 1.08,
+        "delivery_date": "2025-07-15",
+        "direction": "buy",
+        "domestic_rate": 0.045,
+        "foreign_rate": 0.035,
+    },
+}
+
+FX_OPT_INSTRUMENT = {
+    "type": "fx_option",
+    "params": {
+        "trade_id": "TEST-FXOPT-001",
+        "ccy_pair": "EURUSD",
+        "notional": 1000000,
+        "strike": 1.08,
+        "expiry": "2025-07-15",
+        "option_type": "call",
+        "domestic_rate": 0.045,
+        "foreign_rate": 0.035,
+        "vol": 0.08,
+    },
+}
+
+FX_MARKET_DATA = {
+    "pricing_date": "2025-01-15",
+    "underlyings": {
+        "EURUSD": {"spot": 1.08, "vol": 0.08, "div_yield": 0.035}
+    },
+    "rate": 0.045,
+}
+
 MARKET_DATA = {
     "pricing_date": "2025-01-15",
     "underlyings": {
@@ -415,6 +452,29 @@ def test_price_cds():
     })
     assert "npv" in r, f"No npv in response: {r}"
     return f"NPV = {r['npv']:,.2f}"
+
+
+def test_price_fx_fwd():
+    r = api_client.price_single({
+        "instrument": FX_FWD_INSTRUMENT,
+        "market_data": FX_MARKET_DATA,
+        "model": "black_scholes",
+        "engine": "analytic",
+    })
+    assert "npv" in r, f"No npv in response: {r}"
+    return f"NPV = {r['npv']:.6f}"
+
+
+def test_price_fx_opt():
+    r = api_client.price_single({
+        "instrument": FX_OPT_INSTRUMENT,
+        "market_data": FX_MARKET_DATA,
+        "model": "black_scholes",
+        "engine": "analytic",
+    })
+    assert "npv" in r, f"No npv in response: {r}"
+    assert r["npv"] >= 0, f"FX Option NPV should be non-negative: {r['npv']}"
+    return f"NPV = {r['npv']:.6f}"
 
 
 def test_batch_pricing():
@@ -743,6 +803,25 @@ def main():
     run_test("POST /pricing/single (Cap)", test_price_cap)
     run_test("POST /pricing/single (Swaption)", test_price_swaption)
     run_test("POST /pricing/single (CDS)", test_price_cds)
+    run_test("POST /pricing/single (FX Forward)", test_price_fx_fwd)
+    run_test("POST /pricing/single (FX Option)", test_price_fx_opt)
+
+    # Live market data
+    run_test("GET /market-data/status", test_market_data_status)
+
+    # Historical market data
+    print("\n─── HISTORICAL DATA ─────────────────────────────")
+    run_test("GET /historical/status", test_historical_status)
+    run_test("POST /historical/import", test_historical_import)
+    run_test("POST /export/pricing (Excel)", test_export_excel)
+
+    # Model extensions
+    run_test("POST Cap/Floor (Bachelier)", test_cap_bachelier)
+    run_test("POST Swaption (Bachelier)", test_swaption_bachelier)
+    run_test("POST Swaption (Hull-White)", test_swaption_hull_white)
+    run_test("POST FX Option (Heston)", test_fx_option_heston)
+    run_test("POST CDS (Bootstrapped)", test_cds_bootstrapped)
+    run_test("POST CDS (ISDA)", test_cds_isda)
     run_test("POST /pricing/batch (2 instruments)", test_batch_pricing)
     run_test("POST /pricing/compare (all engines)", test_engine_compare)
 
@@ -805,6 +884,168 @@ def _print_summary():
     print(f"\n  Total time: {total_time:.0f}ms")
     print(f"\n  Score: {passed}/{total} ({passed/total*100:.0f}%)")
     print("=" * 60 + "\n")
+
+
+# === Live Market Data Tests ===
+
+def test_market_data_status():
+    r = api_client.get_provider_status()
+    assert "providers" in r, f"No providers in response: {r}"
+    names = [p["name"] for p in r["providers"]]
+    return f"Providers: {', '.join(names) if names else 'none installed'}"
+
+
+# === Model Extension Tests ===
+
+def test_cap_bachelier():
+    """Test Cap pricing with Bachelier (normal vol) engine."""
+    r = api_client.price_single({
+        "instrument": CAP_INSTRUMENT,
+        "market_data": MARKET_DATA,
+        "model": "black_scholes",
+        "engine": "bachelier",
+    })
+    assert "npv" in r, f"No npv: {r}"
+    assert r["npv"] >= 0, f"Cap NPV should be non-negative: {r['npv']}"
+    return f"NPV = {r['npv']:,.4f}"
+
+
+def test_swaption_bachelier():
+    """Test Swaption pricing with Bachelier engine."""
+    r = api_client.price_single({
+        "instrument": SWAPTION_INSTRUMENT,
+        "market_data": MARKET_DATA,
+        "model": "black_scholes",
+        "engine": "bachelier",
+    })
+    assert "npv" in r, f"No npv: {r}"
+    assert r["npv"] >= 0, f"Swaption NPV should be non-negative: {r['npv']}"
+    return f"NPV = {r['npv']:,.4f}"
+
+
+def test_swaption_hull_white():
+    """Test Swaption pricing with Hull-White tree engine."""
+    r = api_client.price_single({
+        "instrument": SWAPTION_INSTRUMENT,
+        "market_data": MARKET_DATA,
+        "model": "hull_white_1f",
+        "engine": "hull_white",
+    })
+    assert "npv" in r, f"No npv: {r}"
+    assert r["npv"] >= 0, f"Swaption NPV should be non-negative: {r['npv']}"
+    return f"NPV = {r['npv']:,.4f}"
+
+
+def test_fx_option_heston():
+    """Test FX Option pricing with Heston stochastic vol."""
+    r = api_client.price_single({
+        "instrument": FX_OPT_INSTRUMENT,
+        "market_data": FX_MARKET_DATA,
+        "model": "heston",
+        "engine": "heston",
+    })
+    assert "npv" in r, f"No npv: {r}"
+    assert r["npv"] >= 0, f"FX Option Heston NPV should be non-negative: {r['npv']}"
+    return f"NPV = {r['npv']:.6f}"
+
+
+# === Credit Extension Tests ===
+
+def test_cds_bootstrapped():
+    """Test CDS with bootstrapped hazard curve from spread tenors."""
+    cds_with_curve = {
+        "type": "cds",
+        "params": {
+            "trade_id": "TEST-CDS-BOOT",
+            "notional": 10000000,
+            "currency": "USD",
+            "start_date": "2025-03-20",
+            "maturity_date": "2030-03-20",
+            "spread": 0.01,
+            "direction": "buy",
+            "recovery_rate": 0.40,
+            "hazard_rate": 0.02,
+            "spread_curve": {
+                "1Y": 0.005,
+                "3Y": 0.008,
+                "5Y": 0.010,
+                "7Y": 0.012,
+                "10Y": 0.015,
+            },
+        },
+    }
+    r = api_client.price_single({
+        "instrument": cds_with_curve,
+        "market_data": MARKET_DATA,
+        "model": "hazard_rate",
+        "engine": "bootstrapped",
+    })
+    assert "npv" in r, f"No npv: {r}"
+    return f"NPV = {r['npv']:,.2f}"
+
+
+def test_cds_isda():
+    """Test CDS with ISDA standard engine."""
+    r = api_client.price_single({
+        "instrument": CDS_INSTRUMENT,
+        "market_data": MARKET_DATA,
+        "model": "hazard_rate",
+        "engine": "isda",
+    })
+    assert "npv" in r, f"No npv: {r}"
+    return f"NPV = {r['npv']:,.2f}"
+
+
+# === Historical Data Tests ===
+
+def test_historical_status():
+    """Test historical data status endpoint."""
+    import requests
+    r = requests.get(f"{api_client.base_url}/historical/status")
+    assert r.status_code == 200, f"Status {r.status_code}: {r.text}"
+    data = r.json()
+    assert "db_stats" in data, f"No db_stats: {data}"
+    db_size = data["db_stats"].get("db_size_mb", 0)
+    tables = len([k for k in data["db_stats"] if k != "db_size_mb"])
+    return f"DB: {db_size}MB, {tables} tables"
+
+
+def test_historical_import():
+    """Test importing external data via API."""
+    import requests
+    payload = {
+        "table": "equity_prices",
+        "source": "test",
+        "rows": [
+            {"symbol": "TEST", "date": "2025-01-15", "open": 100,
+             "high": 105, "low": 99, "close": 103, "volume": 1000},
+            {"symbol": "TEST", "date": "2025-01-16", "open": 103,
+             "high": 107, "low": 102, "close": 106, "volume": 1200},
+        ],
+    }
+    r = requests.post(f"{api_client.base_url}/historical/import", json=payload)
+    assert r.status_code == 200, f"Status {r.status_code}: {r.text}"
+    data = r.json()
+    assert data["rows_imported"] == 2, f"Expected 2, got {data}"
+    return f"Imported {data['rows_imported']} rows (source={data['source']})"
+
+
+def test_export_excel():
+    """Test Excel export endpoint."""
+    import requests
+    payload = {
+        "instrument": VANILLA_INSTRUMENT,
+        "market_data": MARKET_DATA,
+        "model": "black_scholes",
+        "engine": "analytic",
+        "include_mc_data": False,
+    }
+    r = requests.post(f"{api_client.base_url}/export/pricing", json=payload)
+    assert r.status_code == 200, f"Status {r.status_code}: {r.text}"
+    assert len(r.content) > 1000, f"File too small: {len(r.content)} bytes"
+    content_type = r.headers.get("content-type", "")
+    assert "spreadsheet" in content_type or "octet" in content_type, f"Bad content-type: {content_type}"
+    return f"Excel file: {len(r.content):,} bytes"
 
 
 if __name__ == "__main__":

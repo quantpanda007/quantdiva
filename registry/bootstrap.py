@@ -23,6 +23,10 @@ import instruments.rates.swaption                # noqa: F401
 # Credit
 import instruments.credit.cds                    # noqa: F401
 
+# FX
+import instruments.fx.fx_forward                 # noqa: F401
+import instruments.fx.fx_option                  # noqa: F401
+
 # --- Engines ---
 # Analytic
 import engines.analytic.bsm_engine              # noqa: F401
@@ -31,6 +35,7 @@ import engines.analytic.asian_engine             # noqa: F401
 import engines.analytic.lookback_engine          # noqa: F401
 import engines.analytic.rates_engines            # noqa: F401
 import engines.analytic.credit_engines           # noqa: F401
+import engines.analytic.fx_engines               # noqa: F401
 
 # Finite Difference
 try:
@@ -57,6 +62,7 @@ except ImportError:
 # --- Models ---
 try:
     import models.equity.black_scholes           # noqa: F401
+    import models.rates_credit_models            # noqa: F401
 except ImportError:
     pass
 

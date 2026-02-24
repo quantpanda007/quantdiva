@@ -28,7 +28,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.v1.router import api_v1_router
-from fastapi.middleware.cors import CORSMiddleware
 
 # ---------------------------------------------------------------------------
 # App
@@ -75,3 +74,25 @@ def root():
         "docs": "/docs",
         "api": "/api/v1",
     }
+
+
+# ---------------------------------------------------------------------------
+# Scheduler — daily market data refresh
+# ---------------------------------------------------------------------------
+
+@app.on_event("startup")
+def startup_scheduler():
+    try:
+        from market.historical.scheduler import start_scheduler
+        start_scheduler()
+    except Exception:
+        pass  # APScheduler not installed or config disabled
+
+
+@app.on_event("shutdown")
+def shutdown_scheduler():
+    try:
+        from market.historical.scheduler import stop_scheduler
+        stop_scheduler()
+    except Exception:
+        pass

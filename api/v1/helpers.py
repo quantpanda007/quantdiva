@@ -64,7 +64,7 @@ def build_instrument_from_request(req: InstrumentRequest) -> BaseInstrument:
     # Parse date strings
     for date_field in ["expiry", "exercise_start", "averaging_start",
                        "start_date", "end_date", "issue_date", "maturity_date",
-                       "expiry_date", "swap_start", "swap_end"]:
+                       "expiry_date", "swap_start", "swap_end", "delivery_date"]:
         if date_field in constructor_params and isinstance(constructor_params[date_field], str):
             constructor_params[date_field] = date.fromisoformat(constructor_params[date_field])
 

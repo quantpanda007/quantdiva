@@ -1,0 +1,33 @@
+What you get:
+Storage: SQLite database at data/market_data.db with 5 tables — every row has a source column so you can inject Bloomberg, Refinitiv, CSV, or any other data alongside OpenBB/yfinance.
+Three ways to refresh data:
+
+CLI script (manual or scheduled):
+
+python -m market.historical.refresh_data --all
+python -m market.historical.refresh_data --equity --fx --days 730
+python -m market.historical.refresh_data --stats
+
+
+Auto-scheduler (runs inside FastAPI): Daily at 6:30 PM EST, Mon-Fri. Configurable in assets.py.
+API endpoint: POST /api/v1/historical/refresh?all=true
+
+
+External data injection:
+
+python -m market.historical.refresh_data --import-csv 
+bloomberg_data.csv --table equity_prices --source bloomberg
+
+
+Or via API:
+
+POST /api/v1/historical/import
+{"table": "equity_prices", "source": "bloomberg", "rows": [...]}
+
+Windows Task Scheduler setup:
+
+Program: C:\Users\Abhishek\...\python.exe
+Arguments: -m market.historical.refresh_data --all
+Start in: C:\Users\Abhishek\Quantdiva\quantlib-pricing
+Trigger: Daily at 6:30 PM
+   

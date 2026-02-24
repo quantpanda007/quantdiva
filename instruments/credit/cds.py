@@ -63,6 +63,8 @@ class CreditDefaultSwap(BaseInstrument):
     payment_frequency: str = "quarterly"
     day_count: str = "ACT/360"
     hazard_rate: float = 0.02  # 2% annual default probability
+    # Spread curve for bootstrapped engine: {"1Y": 0.005, "3Y": 0.008, ...}
+    spread_curve: Optional[Dict[str, float]] = None
 
     def trade_id(self) -> TradeId:
         return TradeId(self._trade_id)
@@ -174,6 +176,7 @@ class CreditDefaultSwap(BaseInstrument):
             payment_frequency=data.get("payment_frequency", "quarterly"),
             day_count=data.get("day_count", "ACT/360"),
             hazard_rate=float(data.get("hazard_rate", 0.02)),
+            spread_curve=data.get("spread_curve"),
         )
 
     def to_dict(self) -> dict:
@@ -184,6 +187,7 @@ class CreditDefaultSwap(BaseInstrument):
             "direction": self.direction,
             "recovery_rate": self.recovery_rate,
             "hazard_rate": self.hazard_rate,
+            "spread_curve": self.spread_curve,
             "start_date": self.start_date.isoformat() if self.start_date else None,
             "maturity_date": self.maturity_date.isoformat() if self.maturity_date else None,
         })
