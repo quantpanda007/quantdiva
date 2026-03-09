@@ -46,6 +46,8 @@ class InstrumentType(str, Enum):
     FX_OPTION = "fx_option"
     FX_SWAP = "fx_swap"
     FX_BARRIER = "fx_barrier"
+    FX_RANGE_FORWARD = "fx_range_forward"
+
 
     # Rates
     IRS = "irs"

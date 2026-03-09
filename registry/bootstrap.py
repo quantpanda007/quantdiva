@@ -26,6 +26,7 @@ import instruments.credit.cds                    # noqa: F401
 # FX
 import instruments.fx.fx_forward                 # noqa: F401
 import instruments.fx.fx_option                  # noqa: F401
+import instruments.fx.fx_range_forward           # noqa: F401
 
 # --- Engines ---
 # Analytic
@@ -66,5 +67,12 @@ try:
 except ImportError:
     pass
 
+# --- Range Forward engine registration ---
+from registry import engine_registry
+try:
+    _fx_eng = engine_registry.get(("fx_option", "analytic"))
+    engine_registry.register(("fx_range_forward", "analytic"), _fx_eng, overwrite=True)
+except Exception:
+    pass
 
 print("[bootstrap] Registry loaded: instruments, engines, models")

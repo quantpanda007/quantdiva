@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Optima — Derivatives Valuation Platform</title>
+<style>
+:root {
+  --bg: #0a0f1a;
+  --panel: #0f1629;
+  --card: #151d30;
+  --card-hover: #1a2540;
+  --border: #1e2d4a;
+  --border-accent: #2e4a7a;
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+  --accent: #f59e0b;
+  --accent-glow: rgba(245,158,11,0.15);
+  --green: #10b981;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --eq-badge: #3b82f6;
+  --rates-badge: #f59e0b;
+  --credit-badge: #ef4444;
+  --fx-badge: #8b5cf6;
+  --cmdty-badge: #10b981;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 13.5px/1.5 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+/* ═══ Header ═══════════════════════════════════ */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(15,22,41,0.95) 100%);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.header-top {
+  display: flex; align-items: center; height: 48px; padding: 0 24px;
+}
+.logo {
+  font-size: 17px; font-weight: 700; color: var(--accent);
+  letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+}
+.logo span { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+.breadcrumb {
+  margin-left: 20px; display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-muted);
+}
+.breadcrumb .sep { color: var(--text-dim); }
+.breadcrumb .bc-link { color: var(--text-muted); cursor: pointer; text-decoration: none; }
+.breadcrumb .bc-link:hover { color: var(--text); }
+.breadcrumb .bc-current { color: var(--text); font-weight: 600; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.status-pill {
+  font-size: 11px; padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border); color: var(--text-muted); background: var(--card);
+}
+.status-pill.ok { border-color: var(--green); color: var(--green); }
+.btn-back {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text-muted); font-size: 12px;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-back:hover { background: var(--card-hover); color: var(--text); }
+
+/* ═══ Module Tab Bar ═══════════════════════════ */
+.mod-tabs {
+  display: flex; gap: 0; padding: 0 24px;
+  border-top: 1px solid var(--border);
+  overflow-x: auto;
+}
+.mod-tab {
+  padding: 10px 18px; font-size: 12px; font-weight: 500;
+  color: var(--text-muted); cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent; transition: all 0.15s;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.mod-tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+.mod-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+
+/* ═══ Layout ═══════════════════════════════════ */
+.page { display: none; padding: 24px; max-width: 1360px; margin: 0 auto; }
+.page.active { display: block; }
+.grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.g4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+/* ═══ Cards ════════════════════════════════════ */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+.card-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-muted);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+/* ═══ Forms ════════════════════════════════════ */
+label {
+  display: block; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-muted); margin: 8px 0 4px;
+}
+select, input {
+  width: 100%; padding: 9px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 13px; font-family: inherit;
+  transition: border-color 0.2s;
+}
+select:focus, input:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+input::placeholder { color: var(--text-dim); }
+
+/* ═══ Buttons ══════════════════════════════════ */
+.btn {
+  padding: 10px 20px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 13px;
+  font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit;
+}
+.btn:hover { background: var(--card-hover); border-color: var(--border-accent); }
+.btn-primary { background: var(--accent); color: #1a1000; border-color: transparent; font-weight: 700; }
+.btn-primary:hover { background: #d97706; }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ═══ Badges ═══════════════════════════════════ */
+.badge {
+  display: inline-flex; align-items: center; padding: 3px 8px;
+  border-radius: 4px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-eq { background: rgba(59,130,246,0.15); color: var(--eq-badge); }
+.badge-rates { background: rgba(245,158,11,0.15); color: var(--rates-badge); }
+.badge-credit { background: rgba(239,68,68,0.15); color: var(--credit-badge); }
+.badge-fx { background: rgba(139,92,246,0.15); color: var(--fx-badge); }
+.badge-cmdty { background: rgba(16,185,129,0.15); color: var(--cmdty-badge); }
+
+/* ═══ NPV Display ══════════════════════════════ */
+.npv-display {
+  text-align: center; padding: 20px;
+  background: linear-gradient(135deg, var(--card) 0%, #1a2540 100%);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.npv-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); }
+.npv-value { font-size: 36px; font-weight: 700; color: var(--accent); margin: 6px 0; font-variant-numeric: tabular-nums; }
+.npv-meta { font-size: 11px; color: var(--text-dim); }
+
+/* ═══ KPI Tiles ════════════════════════════════ */
+.kpi-grid { display: grid; gap: 8px; }
+.kpi-tile {
+  background: var(--bg); border: 1px dashed var(--border);
+  border-radius: 8px; padding: 10px; text-align: center;
+}
+.kpi-tile .kpi-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+.kpi-tile .kpi-val { font-size: 16px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* ═══ Tables ═══════════════════════════════════ */
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
+td { padding: 8px 10px; font-size: 13px; border-bottom: 1px solid rgba(30,45,74,0.5); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* ═══ Asset Class Links ════════════════════════ */
+.asset-links {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;
+}
+.asset-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 28px; border-radius: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s; flex: 1; min-width: 180px;
+}
+.asset-link:hover {
+  border-color: var(--accent); background: var(--card-hover);
+  transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.asset-link .al-label { font-size: 15px; font-weight: 600; }
+.asset-link .al-count { font-size: 11px; color: var(--text-muted); }
+
+/* ═══ FX Category Layout ══════════════════════ */
+.fx-categories {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 16px; align-items: start;
+}
+.fx-cat-col {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+}
+.fx-cat-header {
+  padding: 12px 16px; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--accent); border-bottom: 1px solid var(--border);
+  background: rgba(245,158,11,0.05);
+}
+.fx-card {
+  display: block; padding: 12px 16px;
+  color: var(--text); cursor: pointer; transition: all 0.15s;
+  border-bottom: 1px solid rgba(30,45,74,0.3);
+  font-size: 13px; font-weight: 500;
+}
+.fx-card:last-child { border-bottom: none; }
+.fx-card:hover { background: var(--card-hover); color: var(--accent); }
+.fx-card .fx-card-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+
+/* ═══ Collapsible (generic) ════════════════════ */
+details.ws-section { border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; background: var(--card); }
+details.ws-section > summary {
+  cursor: pointer; padding: 12px 16px; list-style: none;
+  font-size: 12px; font-weight: 600; color: var(--cyan);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+details.ws-section > summary::-webkit-details-marker { display: none; }
+details.ws-section > summary::before { content: '▸'; font-size: 11px; color: var(--text-muted); display: inline-block; transition: transform 0.2s; }
+details.ws-section[open] > summary::before { transform: rotate(90deg); }
+details.ws-section[open] > summary { border-bottom: 1px solid var(--border); }
+details.ws-section > .ws-body { padding: 14px 16px; }
+
+/* ═══ Coming Soon ══════════════════════════════ */
+.coming-soon {
+  text-align: center; padding: 80px 20px;
+  color: var(--text-dim); font-size: 16px;
+}
+.coming-soon h2 { color: var(--text-muted); font-size: 20px; margin-bottom: 8px; }
+
+/* ═══ Scrollbar ════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ═══ Grouped Workspace ═══════════════════════ */
+.ws-grouped-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.field-group { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.field-group.full-width { grid-column: 1 / -1; }
+.field-group-header { padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); border-bottom: 1px solid var(--border); background: rgba(245,158,11,0.04); }
+.field-group-body { padding: 6px 14px 14px; }
+.field-group-body label { font-size: 10.5px; margin: 6px 0 3px; color: var(--accent); opacity: 0.85; }
+.field-group-body input, .field-group-body select { padding: 7px 10px; font-size: 12.5px; }
+.sub-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--cyan); margin: 12px 0 4px; padding-top: 8px; border-top: 1px solid rgba(30,45,74,0.5); }
+.sub-group-title:first-of-type { border-top: none; margin-top: 4px; }
+.fg-row { display: grid; gap: 10px; }
+.fg-row.r2 { grid-template-columns: 1fr 1fr; }
+.fg-row.r3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* ═══ Results Strip ═══════════════════════════ */
+.results-strip { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-top: 16px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; border-top: 2px solid var(--accent); }
+.results-strip .rs-title { grid-column: 1 / -1; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 4px; }
+.rs-cell { text-align: center; }
+.rs-cell .rs-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.rs-cell .rs-val { font-size: 22px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* ═══ Login Page ═══════════════════════════════ */
+.login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: radial-gradient(ellipse at 30% 20%, rgba(245,158,11,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%), var(--bg); }
+.login-box { width: 380px; padding: 40px 36px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo .logo-mark { font-size: 32px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+.login-logo .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+.login-box label { margin-top: 16px; }
+.login-error { color: var(--red); font-size: 12px; min-height: 18px; margin: 10px 0 4px; text-align: center; }
+.login-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #1a1000; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; margin-top: 4px; }
+.login-btn:hover { background: #d97706; }
+
+/* ═══ Module Boxes ═════════════════════════════ */
+.module-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 960px; margin: 0 auto; padding: 50px 24px 40px; }
+.module-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+.module-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); opacity: 0; transition: opacity 0.25s; }
+.module-box:hover { border-color: var(--accent); background: var(--card-hover); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.module-box:hover::before { opacity: 1; }
+.module-box.disabled { opacity: 0.4; cursor: default; }
+.module-box.disabled:hover { border-color: var(--border); background: var(--card); transform: none; box-shadow: none; }
+.module-box.disabled:hover::before { opacity: 0; }
+.mb-icon { font-size: 28px; margin-bottom: 10px; }
+.mb-label { font-size: 14px; font-weight: 600; }
+.mb-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.mb-coming { display: inline-block; margin-top: 8px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); padding: 2px 8px; border: 1px solid var(--border); border-radius: 10px; }
+
+/* ═══ Valuation Sections (vertical expandable) ═ */
+.val-sections { max-width: 1000px; margin: 0 auto; padding: 24px; }
+.val-section { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; background: var(--card); overflow: hidden; }
+.val-section-toggle { cursor: pointer; padding: 16px 20px; list-style: none; display: flex; align-items: center; gap: 12px; transition: background 0.15s; }
+.val-section-toggle:hover { background: rgba(255,255,255,0.02); }
+.val-section-toggle::-webkit-details-marker { display: none; }
+.val-section-toggle::after { content: '▸'; margin-left: auto; color: var(--text-dim); font-size: 12px; transition: transform 0.2s; }
+details.val-section[open] > .val-section-toggle::after { transform: rotate(90deg); }
+details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(--border); }
+.val-section-name { font-size: 15px; font-weight: 600; }
+.val-section-count { font-size: 11px; color: var(--text-dim); }
+.val-section-body { padding: 14px 20px; }
+
+/* ═══ Bulk Upload Bar ═════════════════════════ */
+.bulk-upload-bar {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  border-left: 3px solid var(--accent);
+}
+.bulk-left { flex: 1; }
+.bulk-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.bulk-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.bulk-rates { display: flex; gap: 12px; }
+.bulk-rates label { font-size: 10px; color: var(--accent); }
+.bulk-rates input { text-align: center; }
+.bulk-actions { display: flex; gap: 8px; align-items: center; }
+.bulk-upload-btn { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.bulk-status {
+  margin: -8px 0 16px; padding: 12px 16px;
+  border-radius: 8px; font-size: 13px;
+  border: 1px solid var(--border);
+}
+.bulk-status.success { background: rgba(16,185,129,0.08); border-color: var(--green); color: var(--green); }
+.bulk-status.error { background: rgba(239,68,68,0.08); border-color: var(--red); color: var(--red); }
+.bulk-status.loading { background: rgba(245,158,11,0.08); border-color: var(--accent); color: var(--accent); }
+
+/* ═══ Workspace Mode Toggle ═══════════════════ */
+.mode-toggle {
+  display: flex; gap: 0; margin-bottom: 16px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; width: fit-content;
+}
+.mode-btn {
+  padding: 10px 24px; font-size: 13px; font-weight: 600;
+  border: none; background: transparent; color: var(--text-dim);
+  cursor: pointer; font-family: inherit; transition: all 0.2s;
+  border-right: 1px solid var(--border);
+}
+.mode-btn:last-child { border-right: none; }
+.mode-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.mode-btn.active {
+  background: var(--accent); color: #1a1000; font-weight: 700;
+}
+
+/* ═══ Bulk Drop Zone ══════════════════════════ */
+.bulk-upload-area { margin-top: 0; }
+.bulk-drop-zone {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 40px 20px; text-align: center; cursor: pointer;
+  margin: 16px 0; transition: all 0.25s;
+  background: rgba(245,158,11,0.02);
+}
+.bulk-drop-zone:hover, .bulk-drop-zone.dragover {
+  border-color: var(--accent); background: rgba(245,158,11,0.06);
+}
+.bulk-drop-icon { font-size: 36px; margin-bottom: 8px; }
+.bulk-drop-text { font-size: 14px; font-weight: 600; color: var(--text); }
+.bulk-drop-hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+.bulk-bar-actions { margin-top: 8px; }
+.bulk-results-table { width: 100%; margin-top: 12px; }
+.bulk-results-table th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--accent); padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.bulk-results-table td {
+  padding: 6px 10px; font-size: 12px; border-bottom: 1px solid rgba(30,45,74,0.3);
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN SCREEN ═══════════ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-mark">◈ Optima</div>
+      <div class="logo-sub">Derivatives Valuation Platform</div>
+    </div>
+    <label>Username</label>
+    <input type="text" id="login-user" placeholder="Enter username" autofocus/>
+    <label>Password</label>
+    <input type="password" id="login-pass" placeholder="Enter password"/>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" id="login-btn">Sign In</button>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN APP (hidden until login) ═══════════ -->
+<div id="app-shell" style="display:none">
+
+<header id="app-header">
+  <div class="header-top">
+    <div class="logo" id="logo-home">◈ Optima <span>v0.6.0</span></div>
+    <div class="breadcrumb" id="breadcrumb" style="display:none">
+      <a class="bc-link" id="bc-home">Home</a>
+      <span class="sep">›</span>
+      <span class="bc-current" id="bc-module"></span>
+      <span class="sep" id="bc-sep2" style="display:none">›</span>
+      <span class="bc-current" id="bc-asset" style="display:none"></span>
+      <span class="sep" id="bc-sep3" style="display:none">›</span>
+      <span class="bc-current" id="bc-inst" style="display:none"></span>
+    </div>
+    <div class="header-right">
+      <button class="btn-back" id="btn-go-back" style="display:none">← Back</button>
+      <div class="status-pill" id="api-status">⏳ Connecting...</div>
+      <button class="btn-back" id="btn-logout">⏻ Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ MODULE BOXES (post-login landing) ═══ -->
+<div class="page active" id="page-modules">
+  <div style="text-align:center;padding-top:30px;margin-bottom:10px">
+    <h2 style="font-size:20px;color:var(--text);font-weight:600">Welcome to Optima</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-top:4px">Select a module to get started</p>
+  </div>
+  <div class="module-grid">
+    <div class="module-box" data-module="valuation"><div class="mb-icon">📊</div><div class="mb-label">Valuation</div><div class="mb-desc">Mark-to-market & deal pricing</div></div>
+    <div class="module-box disabled"><div class="mb-icon">📈</div><div class="mb-label">Fixed Income</div><div class="mb-desc">Bond analytics & yield curves</div><div class="mb-coming">Coming Soon</div></div>
+    <div class="module-box disabled"><div class="mb-icon">🔗</div><div class="mb-label">Correlation Matrices</div><div class="mb-desc">Cross-asset correlations</div><div class="mb-coming">Coming Soon</div></div>
+    <div class="module-box disabled"><div class="mb-icon">📉</div><div class="mb-label">HET</div><div class="mb-desc">Hedge effectiveness testing</div><div class="mb-coming">Coming Soon</div></div>
+    <div class="module-box disabled"><div class="mb-icon">⚠️</div><div class="mb-label">ECL</div><div class="mb-desc">Expected credit loss</div><div class="mb-coming">Coming Soon</div></div>
+    <div class="module-box disabled"><div class="mb-icon">🎯</div><div class="mb-label">VaR</div><div class="mb-desc">Value at Risk analytics</div><div class="mb-coming">Coming Soon</div></div>
+    <div class="module-box disabled"><div class="mb-icon">💰</div><div class="mb-label">Cash Management</div><div class="mb-desc">Liquidity & cash flow</div><div class="mb-coming">Coming Soon</div></div>
+    <div class="module-box disabled"><div class="mb-icon">⚖️</div><div class="mb-label">ALM</div><div class="mb-desc">Asset-liability management</div><div class="mb-coming">Coming Soon</div></div>
+  </div>
+</div>
+
+<!-- ═══ VALUATION — Vertical expandable sections ═══ -->
+<div class="page" id="page-valuation">
+  <div class="val-sections">
+    <h2 style="font-size:18px;margin-bottom:16px;color:var(--text)">Valuation — Select Instrument</h2>
+    <details class="val-section">
+      <summary class="val-section-toggle"><span class="badge badge-fx">FX</span><span class="val-section-name">Foreign Exchange</span><span class="val-section-count">15 instruments</span></summary>
+      <div class="val-section-body">
+        <div class="fx-categories">
+          <div class="fx-cat-col"><div class="fx-cat-header">Forwards</div><div class="fx-card" data-inst="fx_forward" data-label="Vanilla Forward">Vanilla Forward<div class="fx-card-sub">FX forward on export/import receivables</div></div><div class="fx-card" data-inst="fx_range_forward" data-label="Range Forward">Range Forward<div class="fx-card-sub">Bounded forward with upper & lower rates</div></div></div>
+          <div class="fx-cat-col"><div class="fx-cat-header">Options</div><div class="fx-card" data-inst="fx_option" data-label="Buy Call (BC)" data-preset='{"option_type":"call","direction":"buy"}'>Buy Call (BC)<div class="fx-card-sub">Long call — importer hedge</div></div><div class="fx-card" data-inst="fx_option" data-label="Sell Call (SC)" data-preset='{"option_type":"call","direction":"sell"}'>Sell Call (SC)<div class="fx-card-sub">Short call — premium income</div></div><div class="fx-card" data-inst="fx_option" data-label="Sell Put (SP)" data-preset='{"option_type":"put","direction":"sell"}'>Sell Put (SP)<div class="fx-card-sub">Short put — premium income</div></div><div class="fx-card" data-inst="fx_option" data-label="Buy Put (BP)" data-preset='{"option_type":"put","direction":"buy"}'>Buy Put (BP)<div class="fx-card-sub">Long put — exporter hedge</div></div><div class="fx-card" data-inst="fx_seagull" data-label="Seagull">Seagull<div class="fx-card-sub">Three-legged FX structure</div></div><div class="fx-card" data-inst="fx_call_spread" data-label="Call Spread">Call Spread<div class="fx-card-sub">Long call + short call</div></div><div class="fx-card" data-inst="fx_put_spread" data-label="Put Spread">Put Spread<div class="fx-card-sub">Long put + short put</div></div><div class="fx-card" data-inst="fx_range_forward_opt" data-label="Range Forward (Opt)">Range Forward<div class="fx-card-sub">Zero-cost collar</div></div></div>
+          <div class="fx-cat-col"><div class="fx-cat-header">Swaps</div><div class="fx-card" data-inst="principal_only_swap" data-label="POS">POS<div class="fx-card-sub">Principal Only Swap</div></div><div class="fx-card" data-inst="ccirs" data-label="CCIRS">CCIRS<div class="fx-card-sub">Cross Currency IRS</div></div></div>
+          <div class="fx-cat-col"><div class="fx-cat-header">Exotics</div><div class="fx-card" data-inst="fx_swaption" data-label="FX Swaption">Swaption<div class="fx-card-sub">Option on FX swap</div></div><div class="fx-card" data-inst="fx_digital" data-label="Digital Option">Digital Option<div class="fx-card-sub">Cash-or-nothing</div></div><div class="fx-card" data-inst="fx_barrier" data-label="Barrier Option">Barrier Option<div class="fx-card-sub">Knock-in/out</div></div></div>
+        </div>
+      </div>
+    </details>
+    <details class="val-section">
+      <summary class="val-section-toggle"><span class="badge badge-rates">RATES</span><span class="val-section-name">Interest Rate Derivatives</span><span class="val-section-count">8 instruments</span></summary>
+      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="irs"><div class="ic-name">Interest Rate Swap</div><div class="ic-desc">Fixed vs floating</div></a><a class="inst-card" data-inst="cos"><div class="ic-name">Coupon Only Swap</div><div class="ic-desc">Float leg coupon</div></a><a class="inst-card" data-inst="cap_floor"><div class="ic-name">Cap</div><div class="ic-desc">Interest rate cap</div></a><a class="inst-card" data-inst="floor"><div class="ic-name">Floor</div><div class="ic-desc">Interest rate floor</div></a><a class="inst-card" data-inst="ir_collar"><div class="ic-name">Collar</div><div class="ic-desc">Cap + Floor</div></a><a class="inst-card" data-inst="swaption"><div class="ic-name">Swaption</div><div class="ic-desc">Option on IRS</div></a><a class="inst-card" data-inst="fra"><div class="ic-name">FRA</div><div class="ic-desc">Forward rate agreement</div></a><a class="inst-card" data-inst="bond"><div class="ic-name">Bond / G-Sec</div><div class="ic-desc">Fixed rate bond</div></a></div></div>
+    </details>
+    <details class="val-section">
+      <summary class="val-section-toggle"><span class="badge badge-eq">EQ</span><span class="val-section-name">Equity Derivatives</span><span class="val-section-count">7 instruments</span></summary>
+      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="equity_swap"><div class="ic-name">Equity Swap</div><div class="ic-desc">Total/price return</div></a><a class="inst-card" data-inst="esop"><div class="ic-name">ESOP</div><div class="ic-desc">Employee stock option</div></a><a class="inst-card" data-inst="vanilla_option"><div class="ic-name">Vanilla Option</div><div class="ic-desc">European call/put</div></a><a class="inst-card" data-inst="barrier_option"><div class="ic-name">Barrier Option</div><div class="ic-desc">Knock-in/out</div></a><a class="inst-card" data-inst="digital_option"><div class="ic-name">Digital Option</div><div class="ic-desc">Cash-or-nothing</div></a><a class="inst-card" data-inst="asian_option"><div class="ic-name">Asian Option</div><div class="ic-desc">Average price</div></a><a class="inst-card" data-inst="lookback_option"><div class="ic-name">Lookback Option</div><div class="ic-desc">Floating strike</div></a></div></div>
+    </details>
+    <details class="val-section">
+      <summary class="val-section-toggle"><span class="badge badge-cmdty">CMDTY</span><span class="val-section-name">Commodity Derivatives</span><span class="val-section-count">4 instruments</span></summary>
+      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="commodity_future"><div class="ic-name">Commodity Future</div><div class="ic-desc">Exchange-traded</div></a><a class="inst-card" data-inst="commodity_swap"><div class="ic-name">Commodity Swap</div><div class="ic-desc">Fixed vs floating</div></a><a class="inst-card" data-inst="commodity_asian_option"><div class="ic-name">Asian Option</div><div class="ic-desc">Average strike</div></a><a class="inst-card" data-inst="commodity_spot_avg_option"><div class="ic-name">Spot Avg Option</div><div class="ic-desc">Spot average strike</div></a></div></div>
+    </details>
+    <details class="val-section">
+      <summary class="val-section-toggle"><span class="badge badge-credit">CREDIT</span><span class="val-section-name">Credit Derivatives</span><span class="val-section-count">1 instrument</span></summary>
+      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="cds"><div class="ic-name">Credit Default Swap</div><div class="ic-desc">Protection against default</div></a></div></div>
+    </details>
+  </div>
+</div>
+
+<!-- ═══════════ WORKSPACE ═══════════ -->
+<div class="page" id="page-workspace">
+
+  <!-- ═══ MODE TOGGLE (only visible for instruments that support bulk) ═══ -->
+  <div id="ws-mode-toggle" class="mode-toggle" style="display:none">
+    <button class="mode-btn active" data-mode="single">● Single Deal</button>
+    <button class="mode-btn" data-mode="bulk">⬆ Bulk Upload</button>
+  </div>
+
+  <!-- ═══ SINGLE DEAL MODE ═══ -->
+  <div id="ws-single-mode">
+
+    <!-- ═══ GROUPED FIELD LAYOUT (3 columns) ═══ -->
+    <div id="ws-grouped-fields" class="ws-grouped-layout" style="display:none"></div>
+
+    <!-- ═══ FLAT LAYOUT (original 2-column) ═══ -->
+    <div class="grid g2" id="ws-flat-left">
+    <div>
+      <div class="card" id="ws-trade-card">
+        <div class="card-title"><div class="dot"></div><span id="ws-trade-title">Trade Inputs</span></div>
+        <div class="grid g2" id="ws-trade-fields"></div>
+      </div>
+      <div class="card" style="margin-top:14px" id="ws-md-card">
+        <div class="card-title"><div class="dot"></div>Market Data</div>
+        <div class="grid g3" id="ws-md-fields"></div>
+      </div>
+    </div>
+    <div>
+      <div class="npv-display" id="ws-npv-flat">
+        <div class="npv-label">Net Present Value</div>
+        <div class="npv-value" id="npv-value">—</div>
+        <div class="npv-meta" id="npv-meta">Configure and click Price</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODEL & ENGINE (always visible) ═══ -->
+  <div class="card" style="margin-top:14px" id="ws-engine-card">
+    <div class="card-title"><div class="dot"></div>Model & Engine</div>
+    <div class="grid g4">
+      <div><label>Model</label><select id="f-model"></select></div>
+      <div><label>Engine</label><select id="f-engine"></select></div>
+      <div id="ws-engine-params"></div>
+      <div class="actions" style="margin-top:0;align-items:flex-end;display:flex">
+        <button class="btn btn-primary" id="btn-price">⚡ Price</button>
+        <button class="btn" id="btn-compare">▦ Compare</button>
+        <button class="btn" id="btn-export">📥 Excel</button>
+        <button class="btn" id="btn-clear">✕ Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VALUATION RESULTS STRIP (shown only for grouped layout) ═══ -->
+  <div id="ws-results-strip" class="results-strip" style="display:none">
+    <div class="rs-title">Valuation Results</div>
+    <div class="rs-cell"><div class="rs-label">CCY</div><div><select id="rs-ccy" style="width:80px;text-align:center;padding:4px"><option>INR</option><option>USD</option></select></div></div>
+    <div class="rs-cell"><div class="rs-label">MTM / NPV</div><div class="rs-val" id="rs-npv">—</div></div>
+    <div class="rs-cell"><div class="rs-label">Long Term</div><div class="rs-val" id="rs-long-term">—</div></div>
+    <div class="rs-cell"><div class="rs-label">Short Term</div><div class="rs-val" id="rs-short-term">—</div></div>
+  </div>
+
+  <!-- ═══ SENSITIVITIES (always visible) ═══ -->
+  <div class="card" style="margin-top:14px" id="ws-greeks-card">
+    <div class="card-title"><div class="dot"></div>Sensitivities</div>
+    <div class="kpi-grid" id="ws-greeks-grid"></div>
+  </div>
+
+  <!-- ═══ Compare / Diagnostics ═══ -->
+  <div class="card" style="margin-top:14px;display:none" id="compare-card">
+    <div class="card-title"><div class="dot"></div>Engine Comparison</div>
+    <table><thead><tr><th>Engine</th><th>NPV</th><th>Diff (bp)</th><th>Time (ms)</th></tr></thead><tbody id="compare-body"></tbody></table>
+  </div>
+  <details class="ws-section" style="margin-top:14px">
+    <summary>Diagnostics</summary>
+    <div class="ws-body"><pre id="diagnostics" style="font-size:12px;color:var(--text-dim);white-space:pre-wrap;">Run a pricing to see diagnostics.</pre></div>
+  </details>
+
+  <!-- ═══ Output panels (same as before) ═══ -->
+  <details class="ws-section" id="ws-payoff-section" style="display:none"><summary>Payoff Diagram</summary><div class="ws-body"><div id="payoff-chart"></div></div></details>
+  <details class="ws-section" id="ws-cashflows-section" style="display:none"><summary>Cashflow Schedule</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-cashflows" style="margin-bottom:10px">Load Cashflows</button><div id="cashflows-body"></div></div></details>
+  <details class="ws-section" id="ws-risk-section" style="display:none"><summary>Risk — DV01 by Bucket</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-risk-ladder" style="margin-bottom:10px">Compute Risk Ladder</button><div class="grid g2"><div id="risk-ladder-body"></div><div id="risk-ladder-chart"></div></div></div></details>
+  <details class="ws-section" id="ws-curves-section" style="display:none"><summary>Curve Data</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-curves" style="margin-bottom:10px">Load Curves</button><div class="grid g2"><div id="curves-body"></div><div id="curves-chart"></div></div></div></details>
+  <details class="ws-section" id="ws-resets-section" style="display:none"><summary>Resets (Fixings)</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-resets" style="margin-bottom:10px">Load Resets</button><div id="resets-body"></div></div></details>
+  <details class="ws-section" id="ws-analysis-section"><summary>Analysis</summary><div class="ws-body"><div class="grid g2" id="ws-analysis-panels"></div></div></details>
+
+  </div><!-- /ws-single-mode -->
+
+  <!-- ═══ BULK UPLOAD MODE ═══ -->
+  <div id="ws-bulk-mode" style="display:none">
+    <div class="bulk-upload-area">
+      <div class="bulk-upload-bar">
+        <div class="bulk-left">
+          <div class="bulk-title">📁 Bulk Deal Upload — FX Vanilla Forward</div>
+          <div class="bulk-desc">Upload an Excel file matching the standard template. Each row = one FX forward deal.</div>
+        </div>
+        <div class="bulk-rates">
+          <div><label>Domestic Rate (%)</label><input type="number" id="bulk-rd" value="6.5" step="0.1" style="width:80px"/></div>
+          <div><label>Foreign Rate (%)</label><input type="number" id="bulk-rf" value="4.5" step="0.1" style="width:80px"/></div>
+        </div>
+      </div>
+      <div class="bulk-drop-zone" id="bulk-drop-zone">
+        <div class="bulk-drop-icon">📄</div>
+        <div class="bulk-drop-text">Drop .xlsx file here or click to browse</div>
+        <div class="bulk-drop-hint">Columns: Transaction Ref, Client, Ccy Pair, Strike, Notional, Maturity Date, Spot, ...</div>
+        <input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none"/>
+      </div>
+      <div class="bulk-bar-actions">
+        <button class="btn" id="bulk-template-btn">📥 Download Template</button>
+      </div>
+    </div>
+    <div id="bulk-status" class="bulk-status" style="display:none"></div>
+    <div id="bulk-results-preview" style="display:none"></div>
+  </div>
+
+</div><!-- /page-workspace -->
+
+</div><!-- /app-shell -->
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="/static/optima_schema.js"></script>
+<script src="/static/optima.js"></script>
+</body>
+</html>

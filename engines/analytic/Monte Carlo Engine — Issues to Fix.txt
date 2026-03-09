@@ -1,0 +1,168 @@
+Monte Carlo Engine — Issues to Fix
+Quantitative correctness
+
+Maturity hard-coded to T = 1.0 instead of deriving from instrument exercise date.
+
+Discounting and diffusion therefore numerically incorrect for real trades.
+
+Strike and option type not wired into pricing flow — intrinsic values computed only via manual call.
+
+Diagnostics NPV may diverge from QuantLib NPV or remain zero.
+
+Heston diagnostics simulated using GBM, causing model inconsistency.
+
+Market data consistency
+
+Rates/dividends/vol extracted using:
+
+zeroRate(1.0, …)
+
+blackVol(1.0, spot)
+
+Ignores:
+
+true maturity
+
+term structure
+
+strike dependence
+
+Diagnostics therefore not aligned with QuantLib pricing inputs.
+
+Numerical / performance gaps
+
+No control variates (e.g., analytic BSM) → slow convergence.
+
+Missing:
+
+Sobol / quasi-random RNG
+
+moment matching
+
+variance-reduction framework.
+
+Longstaff–Schwartz backward step:
+
+inefficient O(N²)-style loop for discounted cashflows.
+
+Should be vectorized.
+
+Risk / production completeness
+
+No MC Greeks implementation:
+
+pathwise delta
+
+likelihood-ratio vega
+
+bump-and-reprice hooks.
+
+Diagnostics simulation not fully integrated with PricingService lifecycle.
+
+Intrinsic/NPV computation should occur automatically inside engine workflow.
+
+Finite Difference Engine — Issues to Fix
+Numerical configurability
+
+FD scheme not exposed:
+
+Crank–Nicolson, Douglas, Hundsdorfer, Craig–Sneyd unavailable to user.
+
+Limits:
+
+stability tuning
+
+barrier handling
+
+short-maturity robustness.
+
+PDE domain / boundary control
+
+No configuration for:
+
+spot grid min/max
+
+boundary conditions
+
+extrapolation rules.
+
+Restricts:
+
+exotic readiness
+
+convergence diagnostics
+
+calibration stability.
+
+Greeks & smoothing
+
+No control over FD Greeks extraction:
+
+grid spacing for Greeks
+
+smoothing / differentiation method.
+
+Production FD typically needs different grids for price vs Greeks.
+
+Dividend realism
+
+Only continuous dividend via process supported.
+
+Missing:
+
+discrete dividend handling
+
+jump conditions at ex-div dates.
+
+Important for single-stock American options.
+
+Diagnostics & validation
+
+Unlike MC engine, FD engine provides no diagnostics:
+
+early-exercise boundary
+
+grid convergence
+
+PDE residuals.
+
+Limits model validation and debugging.
+
+Operational safeguards
+
+No:
+
+grid size warnings
+
+performance caps
+
+adaptive grid guidance.
+
+Risk of very slow runtime in production configs.
+
+Priority Order for Claude
+Fix MC first
+
+Derive maturity from instrument.
+
+Align diagnostics model with actual model (Heston vs GBM).
+
+Auto-compute intrinsic values & NPV inside pricing flow.
+
+Add control variates + variance reduction.
+
+Vectorize Longstaff–Schwartz regression.
+
+Implement MC Greeks framework.
+
+Then improve FD
+
+Expose FD scheme selection.
+
+Add grid/boundary configurability.
+
+Support discrete dividends.
+
+Provide Greek extraction controls.
+
+Add FD diagnostics & convergence info
