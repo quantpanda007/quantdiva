@@ -429,7 +429,7 @@ const SCHEMA = {
 const FIELDS = {
   // FX Forwards
   fx_forward:[{id:'ccy_pair',label:'Currency Pair',type:'text',val:'USDINR'},{id:'notional',label:'Notional',type:'number',val:1e6},{id:'strike',label:'Forward Rate',type:'number',val:84.50},{id:'expiry',label:'Maturity',type:'date',val:'2026-01-15'},{id:'direction',label:'Direction',type:'select',opts:['buy','sell'],val:'buy'}],
-  fx_range_forward:[{id:'ccy_pair',label:'Currency Pair',type:'text',val:'USDINR'},{id:'notional',label:'Notional',type:'number',val:1e6},{id:'lower_strike',label:'Lower Strike',type:'number',val:83},{id:'upper_strike',label:'Upper Strike',type:'number',val:86},{id:'expiry',label:'Expiry',type:'date',val:'2026-01-15'},{id:'direction',label:'Direction',type:'select',opts:['exporter','importer'],val:'exporter'}],
+  fx_range_forward:[{id:'ccy_pair',label:'Currency Pair',type:'text',val:'USDINR'},{id:'notional',label:'Notional',type:'number',val:1e6},{id:'strike',label:'Strike Rate',type:'number',val:86.88},{id:'expiry',label:'Maturity Date',type:'date',val:'2026-01-15'},{id:'direction',label:'Direction',type:'select',opts:['buy','sell'],val:'sell'}],
   // FX Options
   fx_option:[{id:'ccy_pair',label:'Currency Pair',type:'text',val:'USDINR'},{id:'notional',label:'Notional',type:'number',val:1e6},{id:'strike',label:'Strike',type:'number',val:84.50},{id:'expiry',label:'Expiry',type:'date',val:'2026-01-15'},{id:'option_type',label:'Option Type',type:'select',opts:['call','put'],val:'call'},{id:'direction',label:'Direction',type:'select',opts:['buy','sell'],val:'buy'}],
   fx_seagull:[{id:'ccy_pair',label:'Currency Pair',type:'text',val:'USDINR'},{id:'notional',label:'Notional',type:'number',val:1e6},{id:'put_strike',label:'Put Strike',type:'number',val:82.50},{id:'call_strike',label:'Call Strike',type:'number',val:85.50},{id:'call_spread_strike',label:'Call Spread Strike',type:'number',val:87},{id:'expiry',label:'Expiry',type:'date',val:'2026-01-15'},{id:'direction',label:'Direction',type:'select',opts:['exporter','importer'],val:'exporter'}],
@@ -576,7 +576,6 @@ const FIELD_GROUPS = {
           {id:'notional_2_position',label:'Position',type:'select',opts:['Buy','Sell'],val:'Buy'},
           {id:'notional_2_ccy',label:'Currency',type:'select',opts:['INR','USD','EUR','GBP','JPY'],val:'USD'},
           {id:'notional_2_amount',label:'Amount',type:'number',val:0,ph:'Derived from CCY1'},
-          {id:'maturity_date',label:'Maturity Date',type:'date',val:'2025-07-29'},
         ],
       },
       {
@@ -585,6 +584,7 @@ const FIELD_GROUPS = {
           {id:'transaction_date',label:'Transaction Date',type:'date',val:'2022-11-07'},
           {id:'effective_date',label:'Effective Date',type:'date',val:'2022-11-07'},
           {id:'reporting_date',label:'Valuation / Reporting Date',type:'date',val:''},
+          {id:'maturity_date',label:'Maturity Date',type:'date',val:'2025-07-29'},
         ],
       },
       {
@@ -660,32 +660,37 @@ const FIELD_GROUPS = {
     ],
   },
 
-  // ─── FX RANGE FORWARD ───
+  // ─── FX RANGE FORWARD (delivery window — same pricing as vanilla forward) ───
   fx_range_forward: {
     groups: [
       {
         id:'counterparty', label:'Counterparty Details',
         fields: [
           {id:'optima_id',label:'Optima ID',type:'text',val:'',ro:true},
-          {id:'client_name',label:'Client Name',type:'text',val:''},
+          {id:'client_name',label:'Client Name',type:'text',val:'',ph:'e.g. Balkrishna Industries'},
           {id:'transaction_ref',label:'Transaction Ref No.',type:'text',val:''},
           {id:'contract_type',label:'Type of Contract',type:'text',val:'Range Forward',ro:true},
           {sub:'Counterparty A'},
           {id:'cpty_a_name',label:'Name',type:'text',val:''},
           {id:'cpty_a_direction',label:'Direction',type:'select',opts:['Buy','Sell'],val:'Buy'},
+          {sub:'Counterparty B'},
+          {id:'cpty_b_name',label:'Name',type:'text',val:''},
+          {id:'cpty_b_direction',label:'Direction',type:'select',opts:['Buy','Sell'],val:'Sell'},
         ],
       },
       {
         id:'economic', label:'Economic Terms',
         fields: [
-          {id:'lower_strike',label:'Lower Strike (Put)',type:'number',val:83},
-          {id:'upper_strike',label:'Upper Strike (Call)',type:'number',val:86},
-          {id:'ccy_pair',label:'Currency Pair',type:'select',opts:['USDINR','EURINR','GBPINR'],val:'USDINR'},
-          {id:'direction',label:'Direction',type:'select',opts:['exporter','importer'],val:'exporter'},
+          {id:'strike',label:'Strike Rate',type:'number',val:86.88,ph:'Forward rate'},
+          {id:'ccy_pair',label:'Currency Pair',type:'select',opts:['USDINR','EURINR','GBPINR','EURUSD','GBPUSD','USDJPY'],val:'USDINR'},
           {sub:'Notional Currency 1'},
-          {id:'notional_1_ccy',label:'Currency',type:'select',opts:['INR','USD'],val:'INR'},
-          {id:'notional_1_amount',label:'Amount',type:'number',val:1000000},
-          {id:'maturity_date',label:'Maturity Date',type:'date',val:'2026-01-15'},
+          {id:'notional_1_position',label:'Position',type:'select',opts:['Buy','Sell'],val:'Sell'},
+          {id:'notional_1_ccy',label:'Currency',type:'select',opts:['INR','USD','EUR','GBP','JPY'],val:'INR'},
+          {id:'notional_1_amount',label:'Amount',type:'number',val:10000000,ph:'e.g. 10,00,000'},
+          {sub:'Notional Currency 2'},
+          {id:'notional_2_position',label:'Position',type:'select',opts:['Buy','Sell'],val:'Buy'},
+          {id:'notional_2_ccy',label:'Currency',type:'select',opts:['INR','USD','EUR','GBP','JPY'],val:'USD'},
+          {id:'notional_2_amount',label:'Amount',type:'number',val:0,ph:'Derived from CCY1'},
         ],
       },
       {
@@ -694,16 +699,25 @@ const FIELD_GROUPS = {
           {id:'transaction_date',label:'Transaction Date',type:'date',val:''},
           {id:'effective_date',label:'Effective Date',type:'date',val:''},
           {id:'reporting_date',label:'Valuation / Reporting Date',type:'date',val:''},
+          {sub:'Delivery Window'},
+          {id:'delivery_start_date',label:'Delivery Start Date',type:'date',val:'',ph:'From date'},
+          {id:'delivery_end_date',label:'Delivery End Date',type:'date',val:'',ph:'To date'},
+          {sub:'Computed Maturity'},
+          {id:'maturity_date',label:'Maturity Date',type:'date',val:'',ph:'Auto-computed from direction'},
+          {id:'maturity_hint',label:'',type:'hint',val:'Sell → start date, Buy → end date'},
         ],
       },
       {
         id:'market_data', label:'Market Data as on Valuation Date', fullWidth:true,
         fields: [
-          {id:'spot',label:'Spot',type:'number',val:85.47},
-          {id:'vol',label:'Volatility',type:'number',val:0.06},
-          {id:'forward_rate',label:'Forward Rate',type:'number',val:0},
-          {id:'discount_curve',label:'Discount Curve',type:'text',val:'INR.OIS'},
-          {id:'discount_factor',label:'Discount Factor',type:'number',val:0},
+          {id:'spot',label:'Spot',type:'number',val:85.47,ph:'e.g. 85.47'},
+          {id:'rate',label:'Domestic Rate',type:'number',val:0.065,ph:'e.g. 0.065'},
+          {id:'foreign_rate',label:'Foreign Rate',type:'number',val:0.045,ph:'e.g. 0.045'},
+          {id:'forward_curve',label:'Forward Curve',type:'text',val:'INR.MIFOR',ph:'Curve name'},
+          {id:'forward_rate',label:'Forward Rate',type:'number',val:0,ph:'Computed'},
+          {id:'discount_curve',label:'Discount Curve',type:'text',val:'INR.OIS',ph:'Curve name'},
+          {id:'discount_factor',label:'Discount Factor',type:'number',val:0,ph:'Computed'},
+          {id:'premium',label:'Premium',type:'number',val:0,ph:'0 for forwards'},
         ],
         layout:'r3',
       },

@@ -31,21 +31,14 @@ class MarketDataRequest(BaseModel):
 
     Generic enough for any asset class:
     - underlyings: spot/vol/div for equities, or spot/vol for FX
-    - rate: domestic risk-free rate (flat for now)
-    - foreign_rate: foreign risk-free rate (for FX instruments)
+    - rate: risk-free rate (flat for now)
     - Additional curves/surfaces can be added via extra_data
     """
     pricing_date: str = Field(..., description="ISO date string, e.g. '2025-01-15'")
     underlyings: Dict[str, UnderlyingData] = Field(
         ..., description="Map of underlying code → market data"
     )
-    rate: float = Field(0.05, description="Domestic risk-free rate")
-    rate_curve: Optional[List[Dict[str, Any]]] = Field(
-        None, description="Rate curve points [{tenor, rate}]. First point's rate overrides 'rate' field."
-    )
-    foreign_rate: Optional[float] = Field(
-        None, description="Foreign risk-free rate (for FX instruments, e.g. USD rate for USDINR)"
-    )
+    rate: float = Field(0.05, description="Risk-free rate")
     extra_data: Optional[Dict[str, Any]] = Field(
         None, description="Additional market data (yield curves, vol surfaces, etc.)"
     )

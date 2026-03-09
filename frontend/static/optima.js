@@ -421,6 +421,18 @@ function buildGroupedFields(instType, config) {
 
 function createGroupedField(f, today) {
   const wrap = document.createElement('div');
+
+  // Handle hint type — display-only text, no input
+  if (f.type === 'hint') {
+    const hint = document.createElement('div');
+    hint.className = 'field-hint';
+    hint.id = 'f-' + f.id;
+    hint.textContent = f.val || '';
+    hint.style.cssText = 'font-size:10px;color:var(--cyan);opacity:0.7;margin-top:-2px;font-style:italic;';
+    wrap.appendChild(hint);
+    return wrap;
+  }
+
   const lbl = document.createElement('label');
   lbl.textContent = f.label;
   wrap.appendChild(lbl);
@@ -451,8 +463,50 @@ function createGroupedField(f, today) {
   }
   el.id = 'f-' + f.id;
   if (val !== undefined && val !== '') el.value = val;
+
+  // Auto-compute maturity for range forward when delivery dates or direction change
+  if (currentInst === 'fx_range_forward' &&
+      (f.id === 'delivery_start_date' || f.id === 'delivery_end_date' || f.id === 'notional_1_position')) {
+    el.addEventListener('change', computeRangeForwardMaturity);
+  }
+
   wrap.appendChild(el);
   return wrap;
+}
+
+/**
+ * Range Forward: auto-compute maturity date from delivery window + direction.
+ * Sell → start date (earliest, worst for seller)
+ * Buy → end date (latest, worst for buyer)
+ */
+function computeRangeForwardMaturity() {
+  const startEl = $('f-delivery_start_date');
+  const endEl = $('f-delivery_end_date');
+  const posEl = $('f-notional_1_position');
+  const matEl = $('f-maturity_date');
+  const hintEl = $('f-maturity_hint');
+
+  if (!startEl || !endEl || !posEl || !matEl) return;
+
+  const start = startEl.value;
+  const end = endEl.value;
+  const position = posEl.value.toLowerCase();
+
+  if (!start && !end) return;
+
+  let maturity = '';
+  let hintText = '';
+
+  if (position === 'sell') {
+    maturity = start || end;
+    hintText = 'Auto: delivery start date (Sell → earliest)';
+  } else {
+    maturity = end || start;
+    hintText = 'Auto: delivery end date (Buy → latest)';
+  }
+
+  matEl.value = maturity;
+  if (hintEl) hintEl.textContent = hintText;
 }
 
 
@@ -714,6 +768,7 @@ function collectPayload() {
     'notional_1_position', 'notional_2_position',
     'notional_1_ccy', 'notional_2_ccy', 'notional_2_amount',
     'transaction_date', 'effective_date',
+    'delivery_start_date', 'delivery_end_date', 'maturity_hint',
     'forward_curve', 'discount_curve', 'discount_factor', 'forward_rate',
     'premium',
   ]);
@@ -722,7 +777,7 @@ function collectPayload() {
     // Collect ALL values from grouped fields
     grouped.groups.forEach(group => {
       group.fields.forEach(f => {
-        if (f.sub) return;
+        if (f.sub || f.type === 'hint') return;
         const el = $('f-' + f.id);
         if (!el) return;
         let val = el.value;
@@ -779,8 +834,11 @@ function collectPayload() {
     (($('f-md-pricing_date') || {}).value) ||
     new Date().toISOString().slice(0, 10);
 
+  // Map instrument type — range forward uses vanilla forward backend
+  const apiInstType = instType === 'fx_range_forward' ? 'fx_forward' : instType;
+
   const payload = {
-    instrument: { type: instType, params },
+    instrument: { type: apiInstType, params },
     market_data: {
       pricing_date: pricingDate,
       underlyings, rate_curve: rateCurve,

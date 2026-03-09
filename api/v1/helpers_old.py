@@ -133,10 +133,6 @@ def build_market_env_from_request(
 
     If underlying is specified, builds for that specific underlying.
     Otherwise builds for the first underlying in the request.
-
-    For FX instruments (ccy pair underlyings like USDINR):
-    - Builds separate domestic and foreign discount curves
-    - Foreign rate comes from req.foreign_rate or und_data.div_yield
     """
     pricing_date = PricingDate(date.fromisoformat(req.pricing_date))
 
@@ -153,87 +149,13 @@ def build_market_env_from_request(
             f"Available: {list(req.underlyings.keys())}"
         )
 
-    # Resolve domestic rate: rate_curve takes priority over flat rate
-    domestic_rate = req.rate
-    if req.rate_curve and len(req.rate_curve) > 0:
-        domestic_rate = req.rate_curve[0].get("rate", req.rate)
-
-    # Resolve foreign rate: explicit foreign_rate > div_yield > default
-    foreign_rate = req.foreign_rate if req.foreign_rate is not None else und_data.div_yield
-
-    # Check if this is an FX underlying (6-char ccy pair like USDINR)
-    is_fx = len(underlying) == 6 and underlying.isalpha()
-
-    if is_fx and foreign_rate:
-        # Build FX-specific market environment with separate curves
-        return _build_fx_market_env(
-            pricing_date=pricing_date,
-            spot=und_data.spot,
-            domestic_rate=domestic_rate,
-            foreign_rate=foreign_rate,
-            vol=und_data.vol,
-            ccy_pair=underlying,
-        )
-    else:
-        # Standard equity/rates market environment
-        return build_test_market_env(
-            pricing_date=pricing_date,
-            spot=und_data.spot,
-            rate=domestic_rate,
-            vol=und_data.vol,
-            div_yield=und_data.div_yield,
-            underlying=underlying,
-        )
-
-
-def _build_fx_market_env(
-    pricing_date: PricingDate,
-    spot: float,
-    domestic_rate: float,
-    foreign_rate: float,
-    vol: float,
-    ccy_pair: str,
-) -> MarketEnvironment:
-    """
-    Build a MarketEnvironment with separate domestic and foreign curves.
-
-    For USDINR: domestic=INR, foreign=USD.
-    Creates discount curves keyed by currency code so fx_forward's
-    _extract_rate("INR") and _extract_foreign_rate("USD") find them.
-    """
-    from market.curves.yield_curve import build_flat_curve, build_flat_vol
-
-    foreign_ccy = ccy_pair[:3]   # e.g., USD
-    domestic_ccy = ccy_pair[3:6]  # e.g., INR
-
-    ql_date = pricing_date.to_ql()
-    ql.Settings.instance().evaluationDate = ql_date
-
-    # Separate curves for each currency
-    domestic_curve = build_flat_curve(pricing_date, domestic_rate)
-    foreign_curve = build_flat_curve(pricing_date, foreign_rate)
-    vol_surface = build_flat_vol(pricing_date, vol)
-
-    # Also create a div_yield curve for BSM-style compatibility (FX options)
-    div_curve = ql.YieldTermStructureHandle(
-        ql.FlatForward(ql_date, foreign_rate, ql.Actual365Fixed())
-    )
-
-    return MarketEnvironment(
+    return build_test_market_env(
         pricing_date=pricing_date,
-        discount_curves={
-            domestic_ccy: domestic_curve,   # INR curve at 6.5%
-            foreign_ccy: foreign_curve,     # USD curve at 4.5%
-            ccy_pair: domestic_curve,        # USDINR → domestic (for BSM compat)
-            "USD": foreign_curve,            # Fallback key
-        },
-        forecast_curves={
-            domestic_ccy: domestic_curve,
-            foreign_ccy: foreign_curve,
-        },
-        vol_surfaces={ccy_pair: vol_surface},
-        spot_prices={ccy_pair: spot},
-        dividend_curves={f"{ccy_pair}_div": div_curve},
+        spot=und_data.spot,
+        rate=req.rate,
+        vol=und_data.vol,
+        div_yield=und_data.div_yield,
+        underlying=underlying,
     )
 
 
