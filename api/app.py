@@ -72,7 +72,7 @@ app.include_router(api_v1_router, prefix="/api/v1")
 # ---------------------------------------------------------------------------
 
 frontend_path = project_root / "frontend"
-templates_path = frontend_path / "templates"
+templates_path = frontend_path / "static"
 
 # Optional: serve static files if you later split CSS/JS into /frontend/static
 if frontend_path.exists():

@@ -272,34 +272,15 @@ def parse_market_data(wb: openpyxl.Workbook) -> Optional[MarketCurves]:
         fwd_date = None
         if date_col is not None and date_col < len(row) and row[date_col] is not None:
             fwd_date = _parse_date(row[date_col])
-            if fwd_date is None:
-                logger.warning(f"Forward sheet: failed to parse date '{row[date_col]}' for tenor {tenor_val}")
 
         if fwd_date is not None:
             curves.forward_points.append((fwd_date.toordinal(), fwd))
             curves.forward_dates.append(fwd_date)
         elif days_col is not None and days_col < len(row) and row[days_col] is not None:
-            # Fallback: store raw day count (only if Date column missing or unparseable)
             days = int(float(row[days_col]))
             curves.forward_points.append((days, fwd))
-            logger.warning(f"Forward sheet: using Days fallback ({days}) for tenor {tenor_val}")
 
     curves.forward_points.sort(key=lambda x: x[0])
-
-    # Log whether date-based or day-based
-    if curves.forward_dates:
-        print(f"[CURVES] Forward: DATE-BASED, {len(curves.forward_dates)} points, "
-              f"range {curves.forward_dates[0]} to {curves.forward_dates[-1]}")
-    elif curves.forward_points:
-        print(f"[CURVES] Forward: DAY-BASED FALLBACK, {len(curves.forward_points)} points")
-    
-    if curves.discount_dates:
-        print(f"[CURVES] Discount: DATE-BASED, {len(curves.discount_dates)} points")
-    elif curves.discount_points:
-        print(f"[CURVES] Discount: FALLBACK, {len(curves.discount_points)} points")
-    
-    # Print first 3 forward points to verify ordinals vs days
-    print(f"[CURVES] First 3 forward points: {curves.forward_points[:3]}")
 
     # --- Discount sheet ---
     ws_disc = wb[sheet_map["discount"]]
@@ -314,9 +295,6 @@ def parse_market_data(wb: openpyxl.Workbook) -> Optional[MarketCurves]:
         elif h in ("discount", "discount rate"):
             df_col = idx
 
-    print(f"[CURVES] Discount headers: {headers}")
-    print(f"[CURVES] Discount col indices: date={date_col_d}, term={term_col}, df={df_col}")
-
     if df_col is None:
         logger.warning("Discount sheet: missing 'Discount' column")
         return None
@@ -324,15 +302,8 @@ def parse_market_data(wb: openpyxl.Workbook) -> Optional[MarketCurves]:
         logger.warning("Discount sheet: missing both 'Date' and 'Term' columns")
         return None
 
-    first_disc_row = True
     for row in ws_disc.iter_rows(min_row=2, values_only=True):
         df_val = row[df_col] if df_col < len(row) else None
-        if first_disc_row:
-            print(f"[CURVES] Discount first row: {row}")
-            print(f"[CURVES] Discount df_val (col {df_col}): {df_val} (type={type(df_val).__name__})")
-            if date_col_d is not None and date_col_d < len(row):
-                print(f"[CURVES] Discount date_val (col {date_col_d}): {row[date_col_d]} (type={type(row[date_col_d]).__name__})")
-            first_disc_row = False
         if df_val is None:
             continue
 
@@ -342,7 +313,6 @@ def parse_market_data(wb: openpyxl.Workbook) -> Optional[MarketCurves]:
             disc_date = _parse_date(row[date_col_d])
 
         if disc_date is None and term_col is not None and term_col < len(row) and row[term_col] is not None:
-            # Try parsing Term as date first, then as "27 DY" format
             term_val = row[term_col]
             disc_date = _parse_date(term_val)
             if disc_date is None:
@@ -358,11 +328,6 @@ def parse_market_data(wb: openpyxl.Workbook) -> Optional[MarketCurves]:
         curves.discount_dates.append(disc_date)
 
     curves.discount_points.sort(key=lambda x: x[0])
-    
-    print(f"[CURVES] First 3 discount points: {curves.discount_points[:3]}")
-    if curves.discount_dates:
-        print(f"[CURVES] Discount: DATE-BASED, {len(curves.discount_dates)} points, "
-              f"range {curves.discount_dates[0]} to {curves.discount_dates[-1]}")
 
     if curves.has_curves():
         logger.info(
@@ -445,7 +410,6 @@ def parse_upload(file_bytes: bytes) -> Tuple[List[Dict], List[Dict], Optional[Ma
 
         # Range forward: auto-compute maturity from delivery window + direction
         # Sell → start date (worst for seller), Buy → end date (worst for buyer)
-        # Only if delivery dates exist AND maturity is not already set
         if deal["delivery_start_date"] and deal["delivery_end_date"]:
             direction = deal["direction_1"].lower()
             if direction in ("sell", "s"):
@@ -491,10 +455,6 @@ def price_deals_with_curves(
         try:
             pricing_date = deal["reporting_date"] or date.today()
             spot_date = _add_business_days(pricing_date, 2)
-
-            # Debug: print maturity for first deal
-            if deal == deals[0]:
-                print(f"[PRICING] Deal {deal['transaction_ref']}: maturity={deal['maturity_date']}, pricing={pricing_date}")
 
             if deal["maturity_date"] <= pricing_date:
                 results.append({
@@ -751,7 +711,7 @@ def generate_template():
         "L01SFWD000130", "EXL India", "EXL India", "Buy", "BOA", "Sell",
         "07-11-2022", "07-11-2022", "31-03-2025", "Forward",
         85.47, 86.88, "USDINR", 1000000, "Sell", 8687750, "Buy", "29-07-2025",
-        "", "",  # Delivery Start/End — blank for vanilla forward
+        "", "",
     ]
     for col, val in enumerate(sample, 1):
         ws.cell(row=2, column=col, value=val)
