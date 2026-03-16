@@ -110,7 +110,15 @@ def startup_scheduler():
         from market.historical.scheduler import start_scheduler
         start_scheduler()
     except Exception:
-        pass  # APScheduler not installed or config disabled
+        pass
+
+    # Warm up Ollama model in background
+    try:
+        import threading
+        from services.report.report_service import warmup_ollama
+        threading.Thread(target=warmup_ollama, daemon=True).start()
+    except Exception:
+        pass
 
 
 @app.on_event("shutdown")

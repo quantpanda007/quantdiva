@@ -70,3 +70,40 @@ const METADATA_KEYS = new Set([
   'forward_curve', 'discount_curve', 'discount_factor', 'forward_rate',
   'premium',
 ]);
+
+// ─── Optima ID Generator ──────────────────────────────────────────
+// Format: OPT-{ASSET}-{CCY}-{TXN_REF}-{YYYYMMDD}-{6-CHAR-HASH}
+// Hash: djb2 over pipe-separated deal inputs (6 base-36 chars)
+
+function _djb2Hash(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+}
+
+function _toBase36(n, len) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < len; i++) {
+    result += chars[n % 36];
+    n = Math.floor(n / 36);
+  }
+  return result;
+}
+
+function generateOptimaId({ asset, ccy_pair, transaction_ref, trade_date, cpty_a, cpty_b, notional, strike }) {
+  const assetPart  = (asset  || 'FX').toUpperCase();
+  const ccyPart    = (ccy_pair || 'USDINR').toUpperCase().replace('/', '');
+  const refPart    = (transaction_ref || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  // Normalise trade date to YYYYMMDD
+  const datePart   = (trade_date || '').replace(/[-\/]/g, '').slice(0, 8) || 'NODATE';
+  // Hash over all economic inputs
+  const hashInput  = [transaction_ref, cpty_a, cpty_b, notional, strike, ccy_pair, trade_date]
+    .map(v => (v === null || v === undefined) ? '' : String(v))
+    .join('|');
+  const hashPart   = _toBase36(_djb2Hash(hashInput), 6);
+  return `OPT-${assetPart}-${ccyPart}-${refPart}-${datePart}-${hashPart}`;
+}

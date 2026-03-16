@@ -83,6 +83,15 @@ class FXForward(BaseInstrument):
         if not self._currency and len(self.ccy_pair) == 6:
             self._currency = self.ccy_pair[3:6]
 
+
+    def setupArguments(self, args) -> None:
+        """Populate engine arguments from instrument trade data."""
+        args.ccy_pair      = self.ccy_pair
+        args.strike        = self.strike
+        args.notional      = self.notional
+        args.delivery_date = self.delivery_date
+        args.direction     = self.direction
+
     def trade_id(self) -> TradeId:
         return TradeId(self._trade_id)
 

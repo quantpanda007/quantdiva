@@ -155,8 +155,6 @@ $('bulk-file').addEventListener('change', (e) => {
 });
 
 let _lastBulkFile = null;  // store for Excel re-download
-let _lastBulkData = null;  // store for report generation
-let _lastReportMarkdown = '';
 
 // Stage a file — show filename, reveal Price button, don't call API yet
 function stageBulkFile(file) {
@@ -219,7 +217,6 @@ async function processBulkFile(file) {
     }
 
     const data = await resp.json();
-    _lastBulkData = data;
     renderBulkResults(data);
 
     statusDiv.className = 'bulk-status success';
@@ -282,7 +279,7 @@ function renderBulkResults(data) {
   });
 
   $('bulk-results-wrap').style.display = '';
-  $('bulk-excel-row').style.display = 'flex';
+  $('bulk-excel-row').style.display = '';
 }
 
 // Render parse-time validation errors in the results table
@@ -310,127 +307,6 @@ function renderBulkParseErrors(errors) {
   $('bs-errors').style.color = 'var(--red)';
   $('bulk-summary').style.display = '';
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// REPORT + PDF HANDLERS (event delegation — safe for dynamic elements)
-// ═══════════════════════════════════════════════════════════════════
-
-function _buildReportPayload() {
-  const firstResult = (_lastBulkData.results || [])[0] || {};
-  const valuationDate = firstResult.pricing_date || new Date().toISOString().slice(0, 10);
-  const clientNames = [...new Set((_lastBulkData.results || []).map(r => r.client).filter(Boolean))];
-  const resultsForReport = (_lastBulkData.results || []).map(r => ({
-    transaction_ref: r.ref,
-    client_name:     r.client,
-    ccy_pair:        r.ccy_pair,
-    strike:          r.strike,
-    maturity_date:   r.maturity,
-    forward_rate:    r.forward,
-    npv:             r.npv,
-    long_term:       r.long_term,
-    short_term:      r.short_term,
-    notional_1:      r.notional || 0,
-    direction_1:     r.direction || '',
-    cpty_a:          r.cpty_a || '',
-    cpty_b:          r.cpty_b || '',
-    status:          r.status,
-  }));
-  return {
-    results:        resultsForReport,
-    errors:         _lastBulkData.parse_errors || [],
-    valuation_date: valuationDate,
-    method:         _lastBulkData.method || 'flat',
-    client_name:    clientNames.join(', '),
-    report_type:    'portfolio',
-  };
-}
-
-document.addEventListener('click', async (e) => {
-  if (!e.target) return;
-
-  // ── Generate AI Report (markdown modal) ──────────────────────────
-  if (e.target.id === 'bulk-report-btn') {
-    if (!_lastBulkData) return;
-    const modal = $('report-modal');
-    const body  = $('report-modal-body');
-    modal.style.display = 'flex';
-    body.innerHTML = `<div class="report-loading"><div class="rl-spinner"></div><div>Generating report via Llama 3.1 8B...</div><div style="font-size:11px;color:var(--text-dim);margin-top:6px">This may take 20–40 seconds on CPU</div></div>`;
-    _lastReportMarkdown = '';
-    try {
-      const resp = await fetch(`${API}/reports/generate`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(_buildReportPayload()),
-      });
-      if (!resp.ok) { const err = await resp.json().catch(()=>({})); throw new Error(err.detail || `HTTP ${resp.status}`); }
-      const data = await resp.json();
-      _lastReportMarkdown = data.markdown;
-      const html = data.markdown
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^[*•-] (.+)$/gm, '<li>$1</li>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      body.innerHTML = `<div class="report-content">${html}</div>`;
-    } catch (err) {
-      body.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center"><div style="font-size:24px;margin-bottom:8px">✗</div><div style="font-weight:600;margin-bottom:4px">Report generation failed</div><div style="font-size:12px;color:var(--text-muted)">${err.message}</div><div style="font-size:11px;color:var(--text-dim);margin-top:8px">Make sure Ollama is running: <code>ollama serve</code></div></div>`;
-    }
-  }
-
-  // ── Download PDF Report ───────────────────────────────────────────
-  if (e.target.id === 'bulk-pdf-btn') {
-    if (!_lastBulkData) return;
-    const btn = e.target;
-    btn.textContent = '⏳ Generating PDF...';
-    btn.disabled = true;
-    try {
-      const resp = await fetch(`${API}/reports/generate-pdf`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(_buildReportPayload()),
-      });
-      if (!resp.ok) { const err = await resp.json().catch(()=>({})); throw new Error(err.detail || `HTTP ${resp.status}`); }
-      const blob = await resp.blob();
-      const cd   = resp.headers.get('Content-Disposition');
-      const match = cd && cd.match(/filename="?([^"]+)"?/);
-      const filename = match ? match[1] : 'Optima_Report.pdf';
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch (err) {
-      alert('PDF generation failed: ' + err.message);
-    } finally {
-      btn.textContent = '📄 Download PDF Report';
-      btn.disabled = false;
-    }
-  }
-
-  // ── Modal close ───────────────────────────────────────────────────
-  if (e.target.id === 'report-modal-close' || e.target.id === 'report-modal-close2' || e.target.id === 'report-modal') {
-    $('report-modal').style.display = 'none';
-  }
-
-  // ── Copy markdown ─────────────────────────────────────────────────
-  if (e.target.id === 'report-copy-btn') {
-    if (_lastReportMarkdown) {
-      navigator.clipboard.writeText(_lastReportMarkdown)
-        .then(() => { e.target.textContent = '✓ Copied!'; setTimeout(() => { e.target.textContent = '📋 Copy Markdown'; }, 2000); })
-        .catch(() => alert('Copy failed.'));
-    }
-  }
-
-  // ── Download markdown ─────────────────────────────────────────────
-  if (e.target.id === 'report-download-btn') {
-    if (!_lastReportMarkdown) return;
-    const blob = new Blob([_lastReportMarkdown], { type: 'text/markdown' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `Optima_Report_${new Date().toISOString().slice(0,10)}.md`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-  }
-});
 
 // Excel download button — uses stored file
 $('bulk-excel-btn')?.addEventListener('click', async () => {
@@ -487,15 +363,6 @@ let navStack = []; // tracks navigation history for back button
 
 function resetBulkUI() {
   _lastBulkFile = null;
-  _lastBulkData = null;
-  _lastReportMarkdown = '';
-  _lastFXSingleResult = null;
-  if ($('ws-fx-results')) $('ws-fx-results').style.display = 'none';
-  if ($('fx-single-tbody')) $('fx-single-tbody').innerHTML = '';
-  if ($('ws-results-strip'))   $('ws-results-strip').style.display   = '';
-if ($('ws-greeks-card'))     $('ws-greeks-card').style.display     = '';
-if ($('ws-analysis-section')) $('ws-analysis-section').style.display = '';
-if ($('ws-payoff-section')) $('ws-payoff-section').style.display = '';
   // Drop zone back to default
   const dz = $('bulk-drop-zone');
   if (dz) {
@@ -1231,128 +1098,6 @@ async function apiGet(path) {
 
 
 // ═══════════════════════════════════════════════════════════════════
-// FX SINGLE DEAL RESULTS TABLE
-// ═══════════════════════════════════════════════════════════════════
-
-let _lastFXSingleResult = null;
-
-function renderFXSingleResult(priceRes, payload) {
-  const el = $('ws-fx-results');
-  if (!el) return;
-
-  const allFields = {};
-  const instModule = INSTRUMENT_REGISTRY[currentInst];
-  if (instModule?.fieldGroups) {
-    instModule.fieldGroups.groups.forEach(g => {
-      g.fields.forEach(f => {
-        if (f.sub || f.type === 'hint') return;
-        const dom = $('f-' + f.id);
-        if (dom) allFields[f.id] = dom.value;
-      });
-    });
-  }
-
-  const fmt  = (n) => typeof n === 'number'
-    ? n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-    : '—';
-  const fmt4 = (n) => typeof n === 'number' ? n.toFixed(4) : '—';
-  const fmt6 = (n) => typeof n === 'number' ? n.toFixed(6) : '—';
-
-  const npv  = priceRes.npv ?? 0;
-  const diag = priceRes.diagnostics || {};
-  const fwd  = diag.forward_rate ?? null;
-  const df   = diag.disc_factor  ?? null;
-
-  const maturity    = allFields.maturity_date || allFields.expiry || '';
-  const pricingDate = allFields.reporting_date || payload?.market_data?.pricing_date || '';
-  const isLongTerm  = maturity && pricingDate
-    ? (new Date(maturity) - new Date(pricingDate)) / (1000*60*60*24*365) > 1
-    : false;
-  const lt = isLongTerm ? npv : 0;
-  const st = isLongTerm ? 0   : npv;
-
-  const ref    = allFields.transaction_ref || priceRes.trade_id || '—';
-  const client = allFields.client_name || '—';
-  const ccy    = payload?.instrument?.params?.ccy_pair || '—';
-  const strike = payload?.instrument?.params?.strike ?? '—';
-  const spot   = payload?.market_data?.underlyings
-    ? Object.values(payload.market_data.underlyings)[0]?.spot
-    : null;
-
-  const oidEl = document.getElementById('f-optima_id');
-  if ($('ss-ref')) $('ss-ref').textContent = ref;
-  // Show optima_id in table row title attribute for reference
-  $('ss-ref').title = oidEl ? oidEl.value : '';
-  $('ss-fwd').textContent = fwd !== null ? fwd.toFixed(4) : '—';
-  $('ss-df').textContent  = df  !== null ? df.toFixed(6)  : '—';
-  $('ss-npv').textContent = fmt(npv);
-  $('ss-npv').style.color = npv >= 0 ? 'var(--green)' : 'var(--red)';
-  $('ss-lt').textContent  = fmt(lt);
-  $('ss-st').textContent  = fmt(st);
-
-  const tbody = $('fx-single-tbody');
-  tbody.innerHTML = '';
-  const npvColor = npv >= 0 ? 'var(--green)' : 'var(--red)';
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${ref}</td>
-    <td>${client}</td>
-    <td>${ccy}</td>
-    <td>${typeof strike === 'number' ? strike.toFixed(4) : strike}</td>
-    <td>${maturity}</td>
-    <td>${spot !== null && spot !== undefined ? spot.toFixed(4) : '—'}</td>
-    <td>${fmt4(fwd)}</td>
-    <td>${fmt6(df)}</td>
-    <td style="color:${npvColor};font-weight:600">${fmt(npv)}</td>
-    <td>${fmt(lt)}</td>
-    <td>${fmt(st)}</td>
-    <td style="color:var(--green)">OK</td>
-  `;
-  tbody.appendChild(tr);
-
-  const optimaIdEl = document.getElementById('f-optima_id');
-  const optimaId = optimaIdEl ? optimaIdEl.value : '';
-
-  _lastFXSingleResult = {
-    optima_id: optimaId,
-    ref, client, ccy,
-    strike: typeof strike === 'number' ? strike.toFixed(4) : strike,
-    maturity, pricing_date: pricingDate,
-    spot: spot !== null ? spot : '',
-    forward_rate: fwd !== null ? fwd.toFixed(6) : '',
-    disc_factor:  df  !== null ? df.toFixed(8)  : '',
-    npv: npv.toFixed(2), long_term: lt.toFixed(2), short_term: st.toFixed(2),
-    status: 'OK',
-  };
-
-  el.style.display = '';
-}
-
-// Use optional chaining — button may not exist for non-FX instruments
-document.addEventListener('click', (e) => {
-  if (e.target && e.target.id === 'fx-single-download') {
-    if (!_lastFXSingleResult) return;
-    const r = _lastFXSingleResult;
-    const headers = ['Optima ID','Transaction Ref','Client','Ccy Pair','Strike Rate','Maturity Date',
-      'Pricing Date','Spot','Forward Rate','Discount Factor',
-      'NPV (INR)','Long Term','Short Term','Status'];
-    const row = [r.optima_id, r.ref, r.client, r.ccy, r.strike, r.maturity, r.pricing_date,
-      r.spot, r.forward_rate, r.disc_factor,
-      r.npv, r.long_term, r.short_term, r.status];
-    const sanitize = (v) => (v === '—' || v === undefined || v === null) ? '' : String(v);
-    const csv = [headers, row].map(cols => cols.map(v => `"${sanitize(v)}"`).join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `Optima_${r.ref || 'SingleDeal'}_${r.pricing_date || 'result'}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════
 // EVENT: Price Button
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1378,16 +1123,6 @@ $('btn-price').addEventListener('click', async () => {
     if ($('ws-outputs')) $('ws-outputs').style.display = 'block';
     if ($('ws-results-strip')) $('ws-results-strip').style.display = 'grid';
     $('diagnostics').textContent = JSON.stringify(priceRes, null, 2);
-
-if (['fx_forward','fx_range_forward'].includes(currentInst)) {
-  renderFXSingleResult(priceRes, payload);
-  if ($('ws-results-strip'))    $('ws-results-strip').style.display    = 'none';
-  if ($('ws-greeks-card'))      $('ws-greeks-card').style.display      = 'none';
-  if ($('ws-analysis-section')) $('ws-analysis-section').style.display = 'none';
-  if ($('ws-payoff-section'))   $('ws-payoff-section').style.display   = 'none';
-} else {
-  if ($('ws-fx-results')) $('ws-fx-results').style.display = 'none';
-}
 
     const npv = typeof priceRes.npv === 'number' ? priceRes.npv : null;
     const npvFmt = npv !== null

@@ -67,6 +67,15 @@ try:
 except ImportError:
     pass
 
+
+# --- Analytical alias (for forward/linear instruments that don't use a stochastic model) ---
+try:
+    from registry import model_registry
+    _bs_model = model_registry.get('black_scholes')
+    model_registry.register('analytical', _bs_model, overwrite=True)
+except Exception:
+    pass
+
 # --- Range Forward engine registration ---
 from registry import engine_registry
 try:
@@ -76,3 +85,14 @@ except Exception:
     pass
 
 print("[bootstrap] Registry loaded: instruments, engines, models")
+
+'''
+# --- FX Forward engine registration ---
+try:
+    _fx_fwd_eng = engine_registry.get(("fx_option", "analytic"))
+    engine_registry.register(("fx_forward", "analytic"), _fx_fwd_eng, overwrite=True)
+except Exception:
+    pass
+
+'''
+

@@ -155,8 +155,6 @@ $('bulk-file').addEventListener('change', (e) => {
 });
 
 let _lastBulkFile = null;  // store for Excel re-download
-let _lastBulkData = null;  // store for report generation
-let _lastReportMarkdown = '';
 
 // Stage a file — show filename, reveal Price button, don't call API yet
 function stageBulkFile(file) {
@@ -219,7 +217,6 @@ async function processBulkFile(file) {
     }
 
     const data = await resp.json();
-    _lastBulkData = data;
     renderBulkResults(data);
 
     statusDiv.className = 'bulk-status success';
@@ -282,7 +279,7 @@ function renderBulkResults(data) {
   });
 
   $('bulk-results-wrap').style.display = '';
-  $('bulk-excel-row').style.display = 'flex';
+  $('bulk-excel-row').style.display = '';
 }
 
 // Render parse-time validation errors in the results table
@@ -310,127 +307,6 @@ function renderBulkParseErrors(errors) {
   $('bs-errors').style.color = 'var(--red)';
   $('bulk-summary').style.display = '';
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// REPORT + PDF HANDLERS (event delegation — safe for dynamic elements)
-// ═══════════════════════════════════════════════════════════════════
-
-function _buildReportPayload() {
-  const firstResult = (_lastBulkData.results || [])[0] || {};
-  const valuationDate = firstResult.pricing_date || new Date().toISOString().slice(0, 10);
-  const clientNames = [...new Set((_lastBulkData.results || []).map(r => r.client).filter(Boolean))];
-  const resultsForReport = (_lastBulkData.results || []).map(r => ({
-    transaction_ref: r.ref,
-    client_name:     r.client,
-    ccy_pair:        r.ccy_pair,
-    strike:          r.strike,
-    maturity_date:   r.maturity,
-    forward_rate:    r.forward,
-    npv:             r.npv,
-    long_term:       r.long_term,
-    short_term:      r.short_term,
-    notional_1:      r.notional || 0,
-    direction_1:     r.direction || '',
-    cpty_a:          r.cpty_a || '',
-    cpty_b:          r.cpty_b || '',
-    status:          r.status,
-  }));
-  return {
-    results:        resultsForReport,
-    errors:         _lastBulkData.parse_errors || [],
-    valuation_date: valuationDate,
-    method:         _lastBulkData.method || 'flat',
-    client_name:    clientNames.join(', '),
-    report_type:    'portfolio',
-  };
-}
-
-document.addEventListener('click', async (e) => {
-  if (!e.target) return;
-
-  // ── Generate AI Report (markdown modal) ──────────────────────────
-  if (e.target.id === 'bulk-report-btn') {
-    if (!_lastBulkData) return;
-    const modal = $('report-modal');
-    const body  = $('report-modal-body');
-    modal.style.display = 'flex';
-    body.innerHTML = `<div class="report-loading"><div class="rl-spinner"></div><div>Generating report via Llama 3.1 8B...</div><div style="font-size:11px;color:var(--text-dim);margin-top:6px">This may take 20–40 seconds on CPU</div></div>`;
-    _lastReportMarkdown = '';
-    try {
-      const resp = await fetch(`${API}/reports/generate`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(_buildReportPayload()),
-      });
-      if (!resp.ok) { const err = await resp.json().catch(()=>({})); throw new Error(err.detail || `HTTP ${resp.status}`); }
-      const data = await resp.json();
-      _lastReportMarkdown = data.markdown;
-      const html = data.markdown
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^[*•-] (.+)$/gm, '<li>$1</li>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      body.innerHTML = `<div class="report-content">${html}</div>`;
-    } catch (err) {
-      body.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center"><div style="font-size:24px;margin-bottom:8px">✗</div><div style="font-weight:600;margin-bottom:4px">Report generation failed</div><div style="font-size:12px;color:var(--text-muted)">${err.message}</div><div style="font-size:11px;color:var(--text-dim);margin-top:8px">Make sure Ollama is running: <code>ollama serve</code></div></div>`;
-    }
-  }
-
-  // ── Download PDF Report ───────────────────────────────────────────
-  if (e.target.id === 'bulk-pdf-btn') {
-    if (!_lastBulkData) return;
-    const btn = e.target;
-    btn.textContent = '⏳ Generating PDF...';
-    btn.disabled = true;
-    try {
-      const resp = await fetch(`${API}/reports/generate-pdf`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(_buildReportPayload()),
-      });
-      if (!resp.ok) { const err = await resp.json().catch(()=>({})); throw new Error(err.detail || `HTTP ${resp.status}`); }
-      const blob = await resp.blob();
-      const cd   = resp.headers.get('Content-Disposition');
-      const match = cd && cd.match(/filename="?([^"]+)"?/);
-      const filename = match ? match[1] : 'Optima_Report.pdf';
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch (err) {
-      alert('PDF generation failed: ' + err.message);
-    } finally {
-      btn.textContent = '📄 Download PDF Report';
-      btn.disabled = false;
-    }
-  }
-
-  // ── Modal close ───────────────────────────────────────────────────
-  if (e.target.id === 'report-modal-close' || e.target.id === 'report-modal-close2' || e.target.id === 'report-modal') {
-    $('report-modal').style.display = 'none';
-  }
-
-  // ── Copy markdown ─────────────────────────────────────────────────
-  if (e.target.id === 'report-copy-btn') {
-    if (_lastReportMarkdown) {
-      navigator.clipboard.writeText(_lastReportMarkdown)
-        .then(() => { e.target.textContent = '✓ Copied!'; setTimeout(() => { e.target.textContent = '📋 Copy Markdown'; }, 2000); })
-        .catch(() => alert('Copy failed.'));
-    }
-  }
-
-  // ── Download markdown ─────────────────────────────────────────────
-  if (e.target.id === 'report-download-btn') {
-    if (!_lastReportMarkdown) return;
-    const blob = new Blob([_lastReportMarkdown], { type: 'text/markdown' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `Optima_Report_${new Date().toISOString().slice(0,10)}.md`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-  }
-});
 
 // Excel download button — uses stored file
 $('bulk-excel-btn')?.addEventListener('click', async () => {
@@ -487,8 +363,6 @@ let navStack = []; // tracks navigation history for back button
 
 function resetBulkUI() {
   _lastBulkFile = null;
-  _lastBulkData = null;
-  _lastReportMarkdown = '';
   _lastFXSingleResult = null;
   if ($('ws-fx-results')) $('ws-fx-results').style.display = 'none';
   if ($('fx-single-tbody')) $('fx-single-tbody').innerHTML = '';

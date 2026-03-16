@@ -29,17 +29,16 @@ const fx_forward = {
           ...FX_NOTIONAL_2,
         ],
       },
-      
       {
-        id:'market_data', label:'Market Data as on Valuation Date',
-        fields: [...FX_MARKET_DATA],
-      },
-	  {
         id:'dates', label:'Dates',
         fields: [
           ...BASE_DATES,
           {id:'maturity_date',label:'Maturity Date',type:'date',val:'2025-07-29'},
         ],
+      },
+      {
+        id:'market_data', label:'Market Data as on Valuation Date',
+        fields: [...FX_MARKET_DATA],
       },
     ],
   },
@@ -68,26 +67,7 @@ const fx_forward = {
   bulkUpload: true,
   hideModelEngine: true,
 
-  onFieldChange(fieldId) {
-    const triggerFields = [
-      'transaction_ref','cpty_a_name','cpty_b_name',
-      'notional_1_amount','strike','ccy_pair','transaction_date',
-    ];
-    if (!triggerFields.includes(fieldId)) return;
-    const g = (id) => { const el = document.getElementById('f-' + id); return el ? el.value : ''; };
-    const id = generateOptimaId({
-      asset:           'FWD',
-      ccy_pair:        g('ccy_pair'),
-      transaction_ref: g('transaction_ref'),
-      trade_date:      g('transaction_date'),
-      cpty_a:          g('cpty_a_name'),
-      cpty_b:          g('cpty_b_name'),
-      notional:        g('notional_1_amount'),
-      strike:          g('strike'),
-    });
-    const el = document.getElementById('f-optima_id');
-    if (el) el.value = id;
-  },
+  onFieldChange: null,
 };
 
 INSTRUMENT_REGISTRY['fx_forward'] = fx_forward;

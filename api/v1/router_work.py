@@ -46,14 +46,11 @@ from api.v1.endpoints.export import router as export_router
 api_v1_router.include_router(export_router, tags=["export"])
 from api.v1.endpoints.bulk_upload import router as bulk_upload_router
 api_v1_router.include_router(bulk_upload_router, prefix="/pricing", tags=["pricing"])
-
-# Reports — AI-powered deal report generation via local Ollama LLM
-try:
-    from api.v1.endpoints.reports import router as reports_router
-    api_v1_router.include_router(reports_router, prefix="/reports", tags=["reports"])
-except Exception as e:
-    print(f"[router] Reports endpoint not loaded: {e}")
 '''
-# Remove the old triple-quoted comment block and write clean version
+try:
+    from api.v1.endpoints.export import router as export_router
+    api_v1_router.include_router(export_router, tags=["export"])
+except Exception as e:
+    print(f"[router] Export endpoints not loaded: {e}")
 '''
 

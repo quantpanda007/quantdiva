@@ -164,7 +164,7 @@ def build_market_env_from_request(
     # Check if this is an FX underlying (6-char ccy pair like USDINR)
     is_fx = len(underlying) == 6 and underlying.isalpha()
 
-    if is_fx and foreign_rate:
+    if is_fx and foreign_rate is not None:
         # Build FX-specific market environment with separate curves
         return _build_fx_market_env(
             pricing_date=pricing_date,

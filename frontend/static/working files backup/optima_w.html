@@ -15,15 +15,15 @@
   --text: #e2e8f0;
   --text-muted: #64748b;
   --text-dim: #475569;
-  --accent: #f59e0b;
-  --accent-glow: rgba(245,158,11,0.15);
+  --accent: #0ea5e9;
+  --accent-glow: rgba(14,165,233,0.15);
   --green: #10b981;
   --red: #ef4444;
   --blue: #3b82f6;
   --purple: #8b5cf6;
   --cyan: #06b6d4;
   --eq-badge: #3b82f6;
-  --rates-badge: #f59e0b;
+  --rates-badge: #0ea5e9;
   --credit-badge: #ef4444;
   --fx-badge: #8b5cf6;
   --cmdty-badge: #10b981;
@@ -88,7 +88,8 @@ header {
 .mod-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
 
 /* ═══ Layout ═══════════════════════════════════ */
-.page { display: none; padding: 24px; max-width: 1360px; margin: 0 auto; }
+.page { display: none; padding: 16px; max-width: 1360px; margin: 0 auto; }
+#page-workspace { padding: 8px 14px; }
 .page.active { display: block; }
 .grid { display: grid; gap: 14px; }
 .g2 { grid-template-columns: 1fr 1fr; }
@@ -109,13 +110,13 @@ header {
 
 /* ═══ Forms ════════════════════════════════════ */
 label {
-  display: block; font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.6px; color: var(--text-muted); margin: 8px 0 4px;
+  display: block; font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-muted); margin: 5px 0 2px;
 }
 select, input {
-  width: 100%; padding: 9px 12px; border-radius: 6px;
+  width: 70%; padding: 6px 9px; border-radius: 5px;
   border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); font-size: 13px; font-family: inherit;
+  color: var(--text); font-size: 12px; font-family: inherit;
   transition: border-color 0.2s;
 }
 select:focus, input:focus {
@@ -131,8 +132,8 @@ input::placeholder { color: var(--text-dim); }
   font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit;
 }
 .btn:hover { background: var(--card-hover); border-color: var(--border-accent); }
-.btn-primary { background: var(--accent); color: #1a1000; border-color: transparent; font-weight: 700; }
-.btn-primary:hover { background: #d97706; }
+.btn-primary { background: var(--accent); color: #fff; border-color: transparent; font-weight: 700; }
+.btn-primary:hover { background: #0284c7; }
 .btn-sm { padding: 6px 14px; font-size: 12px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 
@@ -143,7 +144,7 @@ input::placeholder { color: var(--text-dim); }
   text-transform: uppercase; letter-spacing: 0.5px;
 }
 .badge-eq { background: rgba(59,130,246,0.15); color: var(--eq-badge); }
-.badge-rates { background: rgba(245,158,11,0.15); color: var(--rates-badge); }
+.badge-rates { background: rgba(14,165,233,0.15); color: var(--rates-badge); }
 .badge-credit { background: rgba(239,68,68,0.15); color: var(--credit-badge); }
 .badge-fx { background: rgba(139,92,246,0.15); color: var(--fx-badge); }
 .badge-cmdty { background: rgba(16,185,129,0.15); color: var(--cmdty-badge); }
@@ -159,13 +160,13 @@ input::placeholder { color: var(--text-dim); }
 .npv-meta { font-size: 11px; color: var(--text-dim); }
 
 /* ═══ KPI Tiles ════════════════════════════════ */
-.kpi-grid { display: grid; gap: 8px; }
+.kpi-grid { display: grid; gap: 6px; }
 .kpi-tile {
   background: var(--bg); border: 1px dashed var(--border);
-  border-radius: 8px; padding: 10px; text-align: center;
+  border-radius: 6px; padding: 6px 8px; text-align: center;
 }
-.kpi-tile .kpi-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
-.kpi-tile .kpi-val { font-size: 16px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.kpi-tile .kpi-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+.kpi-tile .kpi-val { font-size: 14px; font-weight: 600; margin-top: 1px; font-variant-numeric: tabular-nums; }
 
 /* ═══ Tables ═══════════════════════════════════ */
 table { width: 100%; border-collapse: collapse; }
@@ -203,7 +204,7 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
   padding: 12px 16px; font-size: 12px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.8px;
   color: var(--accent); border-bottom: 1px solid var(--border);
-  background: rgba(245,158,11,0.05);
+  background: rgba(14,165,233,0.05);
 }
 .fx-card {
   display: block; padding: 12px 16px;
@@ -242,36 +243,55 @@ details.ws-section > .ws-body { padding: 14px 16px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* ═══ Grouped Workspace ═══════════════════════ */
-.ws-grouped-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.field-group { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.ws-grouped-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; align-items: start; }
+.field-group { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .field-group.full-width { grid-column: 1 / -1; }
-.field-group-header { padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); border-bottom: 1px solid var(--border); background: rgba(245,158,11,0.04); }
-.field-group-body { padding: 6px 14px 14px; }
-.field-group-body label { font-size: 10.5px; margin: 6px 0 3px; color: var(--accent); opacity: 0.85; }
-.field-group-body input, .field-group-body select { padding: 7px 10px; font-size: 12.5px; }
-.sub-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--cyan); margin: 12px 0 4px; padding-top: 8px; border-top: 1px solid rgba(30,45,74,0.5); }
-.sub-group-title:first-of-type { border-top: none; margin-top: 4px; }
-.fg-row { display: grid; gap: 10px; }
+.field-group-header { padding: 5px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); border-bottom: 1px solid var(--border); background: rgba(14,165,233,0.04); }
+.field-group-body { padding: 3px 5px 6px; display: flex; flex-direction: column; align-items: flex-start; }
+.field-group-body label { font-size: 10px; margin: 4px 0 2px; color: var(--accent); opacity: 0.85; }
+.field-group-body input, .field-group-body select { padding: 5px 6px; font-size: 12px; width: auto; min-width: 80px; max-width: 120px; }
+.sub-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--cyan); margin: 7px 0 2px; padding-top: 5px; border-top: 1px solid rgba(30,45,74,0.5); }
+.sub-group-title:first-of-type { border-top: none; margin-top: 2px; }
+.fg-row { display: grid; gap: 8px; }
 .fg-row.r2 { grid-template-columns: 1fr 1fr; }
 .fg-row.r3 { grid-template-columns: 1fr 1fr 1fr; }
 
+/* ═══ Collapsible Field Group ═════════════════ */
+.field-group-collapsible > summary {
+  cursor: pointer; list-style: none;
+  padding: 7px 12px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--accent);
+  background: rgba(14,165,233,0.04);
+  display: flex; align-items: center; gap: 6px;
+}
+.field-group-collapsible > summary::-webkit-details-marker { display: none; }
+.field-group-collapsible > summary::before {
+  content: '▸'; font-size: 10px; color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.field-group-collapsible[open] > summary::before { transform: rotate(90deg); }
+.field-group-collapsible[open] > summary { border-bottom: 1px solid var(--border); }
+.field-group-collapsible > .field-group-body { display: none; }
+.field-group-collapsible[open] > .field-group-body { display: block; }
+
 /* ═══ Results Strip ═══════════════════════════ */
-.results-strip { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-top: 16px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; border-top: 2px solid var(--accent); }
-.results-strip .rs-title { grid-column: 1 / -1; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 4px; }
+.results-strip { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 10px; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; border-top: 2px solid var(--accent); }
+.results-strip .rs-title { grid-column: 1 / -1; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 2px; }
 .rs-cell { text-align: center; }
-.rs-cell .rs-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.rs-cell .rs-val { font-size: 22px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.rs-cell .rs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.rs-cell .rs-val { font-size: 18px; font-weight: 700; margin-top: 1px; font-variant-numeric: tabular-nums; }
 
 /* ═══ Login Page ═══════════════════════════════ */
-.login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: radial-gradient(ellipse at 30% 20%, rgba(245,158,11,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%), var(--bg); }
+.login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: radial-gradient(ellipse at 30% 20%, rgba(14,165,233,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%), var(--bg); }
 .login-box { width: 380px; padding: 40px 36px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .login-logo { text-align: center; margin-bottom: 28px; }
 .login-logo .logo-mark { font-size: 32px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
 .login-logo .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
 .login-box label { margin-top: 16px; }
 .login-error { color: var(--red); font-size: 12px; min-height: 18px; margin: 10px 0 4px; text-align: center; }
-.login-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #1a1000; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; margin-top: 4px; }
-.login-btn:hover { background: #d97706; }
+.login-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; margin-top: 4px; }
+.login-btn:hover { background: #0284c7; }
 
 /* ═══ Module Boxes ═════════════════════════════ */
 .module-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 960px; margin: 0 auto; padding: 50px 24px 40px; }
@@ -279,11 +299,12 @@ details.ws-section > .ws-body { padding: 14px 16px; }
 .module-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); opacity: 0; transition: opacity 0.25s; }
 .module-box:hover { border-color: var(--accent); background: var(--card-hover); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
 .module-box:hover::before { opacity: 1; }
+.module-box:hover .mb-label { color: var(--accent); }
 .module-box.disabled { opacity: 0.4; cursor: default; }
 .module-box.disabled:hover { border-color: var(--border); background: var(--card); transform: none; box-shadow: none; }
 .module-box.disabled:hover::before { opacity: 0; }
 .mb-icon { font-size: 28px; margin-bottom: 10px; }
-.mb-label { font-size: 14px; font-weight: 600; }
+.mb-label { font-size: 14px; font-weight: 700; color: #fff; }
 .mb-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 .mb-coming { display: inline-block; margin-top: 8px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); padding: 2px 8px; border: 1px solid var(--border); border-radius: 10px; }
 
@@ -322,11 +343,11 @@ details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(-
 }
 .bulk-status.success { background: rgba(16,185,129,0.08); border-color: var(--green); color: var(--green); }
 .bulk-status.error { background: rgba(239,68,68,0.08); border-color: var(--red); color: var(--red); }
-.bulk-status.loading { background: rgba(245,158,11,0.08); border-color: var(--accent); color: var(--accent); }
+.bulk-status.loading { background: rgba(14,165,233,0.08); border-color: var(--accent); color: var(--accent); }
 
 /* ═══ Workspace Mode Toggle ═══════════════════ */
 .mode-toggle {
-  display: flex; gap: 0; margin-bottom: 16px;
+  display: flex; gap: 0; margin-bottom: 7px;
   background: var(--card); border: 1px solid var(--border);
   border-radius: 8px; overflow: hidden; width: fit-content;
 }
@@ -339,8 +360,33 @@ details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(-
 .mode-btn:last-child { border-right: none; }
 .mode-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
 .mode-btn.active {
-  background: var(--accent); color: #1a1000; font-weight: 700;
+  background: var(--accent); color: #fff; font-weight: 700;
 }
+
+#ws-outputs { display: none; }
+#ws-results-strip { display: none; }
+.ws-action-row {
+  display: flex; gap: 8px; align-items: center;
+  margin: 7px 0 0; flex-wrap: wrap;
+}
+
+/* ═══ Bulk Results ════════════════════════════ */
+.bulk-summary-strip {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  margin: 10px 0; padding: 10px 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; border-top: 2px solid var(--accent);
+}
+.bulk-summary-strip .bs-cell { text-align: center; }
+.bulk-summary-strip .bs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.bulk-summary-strip .bs-val { font-size: 16px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.bulk-results-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.bulk-results-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
+.bulk-results-table th:first-child, .bulk-results-table th:nth-child(2), .bulk-results-table th:nth-child(3) { text-align: left; }
+.bulk-results-table td { padding: 6px 8px; border-bottom: 1px solid rgba(30,45,74,0.4); text-align: right; }
+.bulk-results-table td:first-child, .bulk-results-table td:nth-child(2), .bulk-results-table td:nth-child(3) { text-align: left; }
+.bulk-results-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.bulk-results-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
 
 /* ═══ Bulk Drop Zone ══════════════════════════ */
 .bulk-upload-area { margin-top: 0; }
@@ -348,10 +394,10 @@ details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(-
   border: 2px dashed var(--border); border-radius: 12px;
   padding: 40px 20px; text-align: center; cursor: pointer;
   margin: 16px 0; transition: all 0.25s;
-  background: rgba(245,158,11,0.02);
+  background: rgba(14,165,233,0.02);
 }
 .bulk-drop-zone:hover, .bulk-drop-zone.dragover {
-  border-color: var(--accent); background: rgba(245,158,11,0.06);
+  border-color: var(--accent); background: rgba(14,165,233,0.06);
 }
 .bulk-drop-icon { font-size: 36px; margin-bottom: 8px; }
 .bulk-drop-text { font-size: 14px; font-weight: 600; color: var(--text); }
@@ -476,6 +522,12 @@ details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(-
     <!-- ═══ GROUPED FIELD LAYOUT (3 columns) ═══ -->
     <div id="ws-grouped-fields" class="ws-grouped-layout" style="display:none"></div>
 
+    <!-- ═══ ACTION ROW (shown instead of engine card when hideModelEngine=true) ═══ -->
+    <div id="ws-action-row" class="ws-action-row" style="display:none">
+      <button class="btn btn-primary" id="btn-price">⚡ Price</button>
+      <button class="btn" id="btn-clear">✕ Clear</button>
+    </div>
+
     <!-- ═══ FLAT LAYOUT (original 2-column) ═══ -->
     <div class="grid g2" id="ws-flat-left">
     <div>
@@ -497,24 +549,20 @@ details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(-
     </div>
   </div>
 
-  <!-- ═══ MODEL & ENGINE (always visible) ═══ -->
-  <div class="card" style="margin-top:14px" id="ws-engine-card">
+  <!-- ═══ MODEL & ENGINE (hidden for simple instruments via hideModelEngine) ═══ -->
+  <div class="card" style="margin-top:10px" id="ws-engine-card">
     <div class="card-title"><div class="dot"></div>Model & Engine</div>
     <div class="grid g4">
       <div><label>Model</label><select id="f-model"></select></div>
       <div><label>Engine</label><select id="f-engine"></select></div>
       <div id="ws-engine-params"></div>
-      <div class="actions" style="margin-top:0;align-items:flex-end;display:flex">
-        <button class="btn btn-primary" id="btn-price">⚡ Price</button>
-        <button class="btn" id="btn-compare">▦ Compare</button>
-        <button class="btn" id="btn-export">📥 Excel</button>
-        <button class="btn" id="btn-clear">✕ Clear</button>
-      </div>
+      <div><button class="btn" id="btn-compare" style="margin-top:22px">▦ Compare</button></div>
     </div>
   </div>
 
   <!-- ═══ VALUATION RESULTS STRIP (shown only for grouped layout) ═══ -->
-  <div id="ws-results-strip" class="results-strip" style="display:none">
+  <div id="ws-outputs">
+  <div id="ws-results-strip" class="results-strip">
     <div class="rs-title">Valuation Results</div>
     <div class="rs-cell"><div class="rs-label">CCY</div><div><select id="rs-ccy" style="width:80px;text-align:center;padding:4px"><option>INR</option><option>USD</option></select></div></div>
     <div class="rs-cell"><div class="rs-label">MTM / NPV</div><div class="rs-val" id="rs-npv">—</div></div>
@@ -522,29 +570,30 @@ details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(-
     <div class="rs-cell"><div class="rs-label">Short Term</div><div class="rs-val" id="rs-short-term">—</div></div>
   </div>
 
-  <!-- ═══ SENSITIVITIES (always visible) ═══ -->
-  <div class="card" style="margin-top:14px" id="ws-greeks-card">
+  <!-- ═══ SENSITIVITIES ═══ -->
+  <div class="card" style="margin-top:10px" id="ws-greeks-card">
     <div class="card-title"><div class="dot"></div>Sensitivities</div>
     <div class="kpi-grid" id="ws-greeks-grid"></div>
   </div>
 
   <!-- ═══ Compare / Diagnostics ═══ -->
-  <div class="card" style="margin-top:14px;display:none" id="compare-card">
+  <div class="card" style="margin-top:10px;display:none" id="compare-card">
     <div class="card-title"><div class="dot"></div>Engine Comparison</div>
     <table><thead><tr><th>Engine</th><th>NPV</th><th>Diff (bp)</th><th>Time (ms)</th></tr></thead><tbody id="compare-body"></tbody></table>
   </div>
-  <details class="ws-section" style="margin-top:14px">
+  <details class="ws-section" style="margin-top:10px">
     <summary>Diagnostics</summary>
     <div class="ws-body"><pre id="diagnostics" style="font-size:12px;color:var(--text-dim);white-space:pre-wrap;">Run a pricing to see diagnostics.</pre></div>
   </details>
 
-  <!-- ═══ Output panels (same as before) ═══ -->
+  <!-- ═══ Output panels ═══ -->
   <details class="ws-section" id="ws-payoff-section" style="display:none"><summary>Payoff Diagram</summary><div class="ws-body"><div id="payoff-chart"></div></div></details>
   <details class="ws-section" id="ws-cashflows-section" style="display:none"><summary>Cashflow Schedule</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-cashflows" style="margin-bottom:10px">Load Cashflows</button><div id="cashflows-body"></div></div></details>
   <details class="ws-section" id="ws-risk-section" style="display:none"><summary>Risk — DV01 by Bucket</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-risk-ladder" style="margin-bottom:10px">Compute Risk Ladder</button><div class="grid g2"><div id="risk-ladder-body"></div><div id="risk-ladder-chart"></div></div></div></details>
   <details class="ws-section" id="ws-curves-section" style="display:none"><summary>Curve Data</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-curves" style="margin-bottom:10px">Load Curves</button><div class="grid g2"><div id="curves-body"></div><div id="curves-chart"></div></div></div></details>
   <details class="ws-section" id="ws-resets-section" style="display:none"><summary>Resets (Fixings)</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-resets" style="margin-bottom:10px">Load Resets</button><div id="resets-body"></div></div></details>
   <details class="ws-section" id="ws-analysis-section"><summary>Analysis</summary><div class="ws-body"><div class="grid g2" id="ws-analysis-panels"></div></div></details>
+  </div><!-- /ws-outputs -->
 
   </div><!-- /ws-single-mode -->
 
@@ -573,6 +622,33 @@ details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(-
       </div>
     </div>
     <div id="bulk-status" class="bulk-status" style="display:none"></div>
+
+    <!-- Results summary strip -->
+    <div id="bulk-summary" style="display:none" class="bulk-summary-strip">
+      <div class="bs-cell"><div class="bs-label">Deals Priced</div><div class="bs-val" id="bs-priced">—</div></div>
+      <div class="bs-cell"><div class="bs-label">Total NPV (INR)</div><div class="bs-val" id="bs-npv">—</div></div>
+      <div class="bs-cell"><div class="bs-label">Long Term</div><div class="bs-val" id="bs-lt">—</div></div>
+      <div class="bs-cell"><div class="bs-label">Short Term</div><div class="bs-val" id="bs-st">—</div></div>
+      <div class="bs-cell"><div class="bs-label">Errors</div><div class="bs-val" id="bs-errors">—</div></div>
+    </div>
+
+    <!-- Results table -->
+    <div id="bulk-results-wrap" class="bulk-results-wrap" style="display:none">
+      <table class="bulk-results-table">
+        <thead><tr>
+          <th>Ref</th><th>Client</th><th>Ccy</th>
+          <th>Strike</th><th>Maturity</th><th>Forward</th>
+          <th>NPV (INR)</th><th>Long Term</th><th>Short Term</th><th>Status</th>
+        </tr></thead>
+        <tbody id="bulk-results-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Excel download (appears after pricing) -->
+    <div id="bulk-excel-row" style="display:none; margin-top:8px">
+      <button class="btn btn-primary" id="bulk-excel-btn">📥 Download Excel Report</button>
+    </div>
+
     <div id="bulk-results-preview" style="display:none"></div>
   </div>
 

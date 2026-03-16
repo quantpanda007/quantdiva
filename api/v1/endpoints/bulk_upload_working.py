@@ -15,8 +15,8 @@ from __future__ import annotations
 import io
 import math
 import logging
-from datetime import date, datetime
-from typing import Dict, List, Optional, Tuple
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
@@ -97,11 +97,6 @@ def _normalize_header(h: str) -> str:
     return h.strip().lower().replace("\n", " ").replace("  ", " ")
 
 
-# Contract type sets — module level, not redefined per row
-FORWARD_TYPES = {"forward", "vanilla forward", "fx forward"}
-RANGE_TYPES   = {"range forward", "range_forward", "fx range forward"}
-
-
 def _parse_date(val) -> Optional[date]:
     if val is None:
         return None
@@ -130,12 +125,14 @@ def _parse_number(val) -> float:
         return 0.0
 
 
-def _one_year_later(d: date) -> date:
-    """Return d + 1 year, handling Feb-29 leap year edge case."""
-    try:
-        return d.replace(year=d.year + 1)
-    except ValueError:
-        return d.replace(year=d.year + 1, day=28)
+def _add_business_days(d: date, days: int) -> date:
+    current = d
+    added = 0
+    while added < days:
+        current += timedelta(days=1)
+        if current.weekday() < 5:
+            added += 1
+    return current
 
 
 # ---------------------------------------------------------------------------
@@ -248,6 +245,7 @@ def parse_all_market_data(wb: openpyxl.Workbook) -> Dict[str, MarketCurves]:
     curves_map: Dict[str, MarketCurves] = {}
     sheet_names = wb.sheetnames
 
+    # Detect per-pair sheets: "{PAIR} Forward" / "{PAIR} Discount"
     fwd_sheets = {}
     disc_sheets = {}
     for name in sheet_names:
@@ -259,6 +257,7 @@ def parse_all_market_data(wb: openpyxl.Workbook) -> Dict[str, MarketCurves]:
             pair = name[: -len(" Discount")].strip().upper().replace("/", "")
             disc_sheets[pair] = name
 
+    # Build curves for each pair that has both forward and discount
     for pair in fwd_sheets:
         if pair in disc_sheets:
             mc = MarketCurves()
@@ -286,7 +285,7 @@ def parse_all_market_data(wb: openpyxl.Workbook) -> Dict[str, MarketCurves]:
 # Parse deals
 # ---------------------------------------------------------------------------
 
-def parse_upload(file_bytes: bytes, expected_contract_type: str = None) -> Tuple[List[Dict], List[Dict], Dict[str, MarketCurves]]:
+def parse_upload(file_bytes: bytes) -> Tuple[List[Dict], List[Dict], Dict[str, MarketCurves]]:
     """Parse Excel. Returns (deals, errors, curves_map)."""
     wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
     curves_map = parse_all_market_data(wb)
@@ -299,6 +298,7 @@ def parse_upload(file_bytes: bytes, expected_contract_type: str = None) -> Tuple
             break
     if ws is None:
         skip = {"forward", "discount", "instructions"}
+        # Also skip per-pair market data sheets
         for name in wb.sheetnames:
             lower = name.lower().strip()
             if lower in skip or lower.endswith(" forward") or lower.endswith(" discount"):
@@ -335,6 +335,7 @@ def parse_upload(file_bytes: bytes, expected_contract_type: str = None) -> Tuple
                 return _row[idx]
             return None
 
+        # Valuate check — only process rows explicitly marked Yes
         valuate = str(get("valuate") or "").strip().lower()
         if valuate not in ("yes", "y", ""):
             continue
@@ -355,13 +356,13 @@ def parse_upload(file_bytes: bytes, expected_contract_type: str = None) -> Tuple
             "strike": _parse_number(get("strike")),
             "ccy_pair": str(get("ccy_pair") or "USDINR").replace("/", "").upper(),
             "notional_1": _parse_number(get("notional_1")),
-            "direction_1": str(get("direction_1") or ""),
+            "direction_1": str(get("direction_1") or "Sell"),
             "notional_2": _parse_number(get("notional_2")),
             "maturity_date": _parse_date(get("maturity_date")),
             "delivery_start_date": _parse_date(get("delivery_start_date")),
             "delivery_end_date": _parse_date(get("delivery_end_date")),
-            "domestic_rate": _parse_number(get("domestic_rate")) if get("domestic_rate") is not None else None,
-            "foreign_rate": _parse_number(get("foreign_rate")) if get("foreign_rate") is not None else None,
+            "domestic_rate": _parse_number(get("domestic_rate")) if get("domestic_rate") else None,
+            "foreign_rate": _parse_number(get("foreign_rate")) if get("foreign_rate") else None,
         }
 
         # Range forward: auto-compute maturity
@@ -373,63 +374,17 @@ def parse_upload(file_bytes: bytes, expected_contract_type: str = None) -> Tuple
                 deal["maturity_date"] = deal["delivery_end_date"]
 
         errs = []
-        warns = []
-
-        # ── Mandatory fields ──────────────────────────────────────────────
-        if not deal["transaction_ref"] or deal["transaction_ref"].startswith("ROW-"):
-            errs.append("Transaction Ref No is required")
-
-        if not deal["reporting_date"]:
-            errs.append("Valuation / Reporting Date is required")
-
-        if not deal["ccy_pair"]:
-            errs.append("Currency Pair is required")
-
         if not deal["strike"]:
-            errs.append("Strike Rate is required")
-
+            errs.append("Missing strike rate")
         if not deal["notional_1"]:
-            errs.append("Notional Currency 1 is required")
-
-        if not deal["direction_1"].strip():
-            errs.append("Buy/Sell (CCY1) is required — cannot determine trade direction")
-
-        if not deal["maturity_date"] and expected_contract_type != "range_forward":
-            errs.append("Maturity Date is required")
-
-        # Spot: mandatory only in flat rate mode
+            errs.append("Missing notional")
+        if not deal["maturity_date"]:
+            errs.append("Missing or invalid maturity date")
         if not deal["spot"] and not has_curves:
-            errs.append("Spot rate is required when no market data curve sheets are provided")
-
-        # ── Curve mode: currency pair must have matching sheets ───────────
-        if has_curves and deal["ccy_pair"] and deal["ccy_pair"] not in curves_map:
-            errs.append(
-                f"No curve sheets found for {deal['ccy_pair']} "
-                f"(expected '{deal['ccy_pair']} Forward' and '{deal['ccy_pair']} Discount' sheets)"
-            )
-
-        # ── Contract type cross-check ─────────────────────────────────────
-        deal_type = deal["contract_type"].strip().lower()
-        if expected_contract_type == "forward":
-            if deal_type in RANGE_TYPES:
-                errs.append(
-                    f"Wrong instrument: got '{deal['contract_type']}' — "
-                    f"please use the Range Forward bulk upload for this deal."
-                )
-            elif deal["delivery_start_date"] or deal["delivery_end_date"]:
-                errs.append(
-                    "Delivery Start/End Date found in a Vanilla Forward upload — "
-                    "use the Range Forward bulk upload instead."
-                )
-        elif expected_contract_type == "range_forward":
-            if not deal["delivery_start_date"] or not deal["delivery_end_date"]:
-                errs.append(
-                    "Range Forward requires both Delivery Start Date and Delivery End Date."
-                )
-
-        # Attach warnings to ref for display (non-blocking)
-        if warns:
-            deal["_warnings"] = "; ".join(warns)
+            errs.append("Missing spot rate (required without market data curves)")
+        if has_curves and deal["ccy_pair"] not in curves_map:
+            errs.append(f"No market data sheets for {deal['ccy_pair']} "
+                        f"(need '{deal['ccy_pair']} Forward' and '{deal['ccy_pair']} Discount')")
 
         if errs:
             errors.append({"row": row_idx, "ref": deal["transaction_ref"], "errors": "; ".join(errs)})
@@ -449,13 +404,8 @@ def price_deals_with_curves(
     interpolation: str = "linear",
 ) -> Tuple[List[Dict], List[Dict]]:
     """
-    Price deals using interpolated forward and discount factor curves.
-
-    Sign convention (unified with flat path and single deal):
-      buy  → sign = +1  (positive NPV when forward > strike)
-      sell → sign = -1  (positive NPV when strike > forward)
-
-    NPV = Notional × (Forward - Strike) × DF × sign
+    NPV = Notional × (Strike - Forward) × DF × sign
+    Curves looked up per deal's currency pair.
     """
     results, pricing_errors = [], []
 
@@ -465,12 +415,13 @@ def price_deals_with_curves(
 
             if deal["maturity_date"] <= pricing_date:
                 results.append({
-                    **deal, "npv": 0.0, "forward_rate": None,
+                    **deal, "npv": 0.0, "forward_rate": deal["spot"],
                     "discount_factor": 1.0, "long_term": 0.0, "short_term": 0.0,
                     "pricing_method": "curve", "pricing_date": pricing_date, "status": "Expired",
                 })
                 continue
 
+            # Get curves for this deal's currency pair
             ccy = deal["ccy_pair"]
             curves = curves_map.get(ccy)
             if not curves:
@@ -481,31 +432,27 @@ def price_deals_with_curves(
                 continue
 
             maturity = deal["maturity_date"]
+            days_to_maturity = (maturity - pricing_date).days
+
             fwd_rate = curves.interpolate_forward(maturity, method=interpolation)
+            disc_factor = curves.interpolate_df(maturity, method=interpolation)
 
-            # Anchor the discount curve at pricing_date = DF 1.0 if the earliest
-            # curve point is after the pricing date. Without this, short-dated
-            # deals snap to the first available point instead of interpolating.
-            pricing_date_ord = pricing_date.toordinal()
-            if curves.discount_points and curves.discount_points[0][0] > pricing_date_ord:
-                anchored_disc = [(pricing_date_ord, 1.0)] + curves.discount_points
-            else:
-                anchored_disc = curves.discount_points
-            disc_factor = _linear_interpolate(anchored_disc, maturity.toordinal())
-            strike       = deal["strike"]
+            # Precise strike from CCY2/CCY1
+            strike = deal["strike"]
+            if deal["notional_2"] and deal["notional_1"]:
+                strike = deal["notional_2"] / deal["notional_1"]
 
-            # Unified sign convention: buy=+1, sell=-1
             direction = deal["direction_1"].lower()
-            sign = 1.0 if direction in ("buy", "b") else -1.0
+            sign = 1.0 if direction in ("sell", "s") else -1.0
 
-            npv = deal["notional_1"] * (fwd_rate - strike) * disc_factor * sign
+            npv = deal["notional_1"] * (strike - fwd_rate) * disc_factor * sign
 
-            is_long_term = maturity > _one_year_later(pricing_date)
+            months = days_to_maturity / 30.0
             results.append({
                 **deal, "npv": npv, "strike_precise": strike, "forward_rate": fwd_rate,
                 "discount_factor": disc_factor,
-                "long_term":  npv if is_long_term else 0.0,
-                "short_term": npv if not is_long_term else 0.0,
+                "long_term": npv if months > 12 else 0.0,
+                "short_term": npv if months <= 12 else 0.0,
                 "pricing_method": "curve", "pricing_date": pricing_date, "status": "OK",
             })
 
@@ -537,51 +484,37 @@ def price_deals_flat(
             r_d = deal["domestic_rate"] if deal["domestic_rate"] is not None else default_domestic_rate
             r_f = deal["foreign_rate"] if deal["foreign_rate"] is not None else default_foreign_rate
             pricing_date = deal["reporting_date"] or date.today()
-
-            if deal["maturity_date"] <= pricing_date:
-                results.append({
-                    **deal, "npv": 0.0, "forward_rate": None,
-                    "discount_factor": 1.0, "long_term": 0.0, "short_term": 0.0,
-                    "pricing_method": "flat", "pricing_date": pricing_date, "status": "Expired",
-                })
-                continue
-
-            direction = "buy" if deal["direction_1"].lower() in ("buy", "b") else "sell"
+            direction = "sell" if deal["direction_1"].lower() in ("sell", "s") else "buy"
 
             inst_req = InstrumentRequest(
                 type="fx_forward",
                 params={
-                    "ccy_pair":       deal["ccy_pair"],
-                    "strike":         deal["strike"],
-                    "delivery_date":  deal["maturity_date"].isoformat(),
-                    "notional":       deal["notional_1"],
-                    "direction":      direction,
+                    "ccy_pair": deal["ccy_pair"], "strike": deal["strike"],
+                    "delivery_date": deal["maturity_date"].isoformat(),
+                    "notional": deal["notional_1"], "direction": direction,
                 }
             )
             md_req = MarketDataRequest(
                 pricing_date=pricing_date.isoformat(),
-                underlyings={deal["ccy_pair"]: UnderlyingData(spot=deal["spot"], vol=0.0)},
+                underlyings={deal["ccy_pair"]: UnderlyingData(spot=deal["spot"], vol=0.06)},
                 rate_curve=[{"tenor": "1Y", "rate": r_d}],
                 foreign_rate=r_f,
             )
 
-            instrument  = build_instrument_from_request(inst_req)
-            market_env  = build_market_env_from_request(md_req, underlying=getattr(instrument, "ccy_pair", ""))
-            result      = ps.price(instrument, market_env, model_type="black_scholes", engine_type="analytic")
+            instrument = build_instrument_from_request(inst_req)
+            market_env = build_market_env_from_request(md_req, underlying=getattr(instrument, "ccy_pair", ""))
+            result = ps.price(instrument, market_env, model_type="black_scholes", engine_type="analytic")
 
-            # Read diagnostics from engine results (disc_factor key, not discount_factor)
-            T           = (deal["maturity_date"] - pricing_date).days / 365.0
-            diag        = result.diagnostics or {}
-            fwd_rate    = diag.get("forward_rate")    or (deal["spot"] * math.exp((r_d - r_f) * T) if T > 0 else deal["spot"])
-            disc_factor = diag.get("disc_factor")     or (math.exp(-r_d * T) if T > 0 else 1.0)
-
-            is_long_term = deal["maturity_date"] > _one_year_later(pricing_date)
+            T = (deal["maturity_date"] - pricing_date).days / 365.0
+            fwd_rate = deal["spot"] * math.exp((r_d - r_f) * T) if T > 0 else deal["spot"]
+            disc_factor = math.exp(-r_d * T) if T > 0 else 1.0
+            months = (deal["maturity_date"] - pricing_date).days / 30.0
 
             results.append({
                 **deal, "npv": result.npv, "forward_rate": fwd_rate,
                 "discount_factor": disc_factor,
-                "long_term":  result.npv if is_long_term else 0.0,
-                "short_term": result.npv if not is_long_term else 0.0,
+                "long_term": result.npv if months > 12 else 0.0,
+                "short_term": result.npv if months <= 12 else 0.0,
                 "domestic_rate_used": r_d, "foreign_rate_used": r_f,
                 "pricing_method": "flat", "pricing_date": pricing_date, "status": "OK",
             })
@@ -613,26 +546,30 @@ def generate_results_excel(results, errors, upload_filename, pricing_method="fla
     ws.column_dimensions["A"].width = 25
     ws.column_dimensions["B"].width = 35
 
-    active  = [r for r in results if r.get("status") != "Expired"]
+    active = [r for r in results if r.get("status") != "Expired"]
     expired = len(results) - len(active)
+    spot = (active[0]["spot"] if active else 85.47) or 85.47
+
+    # Currency pairs in this upload
     ccy_pairs = sorted(set(r.get("ccy_pair", "USDINR") for r in active))
 
     rows = [
-        ("Upload File",    upload_filename),
+        ("Upload File", upload_filename),
         ("Pricing Method", "Curve-based" if pricing_method == "curve" else "Flat Rate"),
         ("Currency Pairs", ", ".join(ccy_pairs)),
-        ("Total Deals",    len(results) + len(errors)),
-        ("Priced OK",      len(active)),
-        ("Expired",        expired),
-        ("Errors",         len(errors)),
+        ("Total Deals", len(results) + len(errors)),
+        ("Priced OK", len(active)),
+        ("Expired", expired),
+        ("Errors", len(errors)),
     ]
     if results:
         rows.append(("Pricing Date", str(results[0].get("pricing_date", ""))))
     rows += [
         ("", ""),
-        ("Total NPV (INR)",    sum(r["npv"] for r in active)),
-        ("Total Long Term",    sum(r["long_term"] for r in active)),
-        ("Total Short Term",   sum(r["short_term"] for r in active)),
+        ("Total NPV (INR)", sum(r["npv"] for r in active)),
+        ("Total NPV (USD)", sum(r["npv"] for r in active) / spot if spot else 0),
+        ("Total Long Term", sum(r["long_term"] for r in active)),
+        ("Total Short Term", sum(r["short_term"] for r in active)),
         ("", ""),
         ("Timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
     ]
@@ -661,7 +598,7 @@ def generate_results_excel(results, errors, upload_filename, pricing_method="fla
         cell.border = THIN_BORDER
 
     for ri, r in enumerate(results, 2):
-        s = r.get("spot") or None
+        s = r.get("spot", 85.47) or 85.47
         data = [
             r["transaction_ref"], r["client_name"], r["cpty_a"], r["cpty_b"],
             r["ccy_pair"], r.get("strike_precise", r["strike"]), r["notional_1"], r["direction_1"],
@@ -670,7 +607,7 @@ def generate_results_excel(results, errors, upload_filename, pricing_method="fla
             r["maturity_date"].isoformat() if r.get("maturity_date") else "",
             str(r.get("pricing_date", "")),
             r["spot"], r["forward_rate"], r["discount_factor"],
-            r["npv"], r["npv"] / s if s else "", r["long_term"], r["short_term"], r["status"],
+            r["npv"], r["npv"] / s if s else 0, r["long_term"], r["short_term"], r["status"],
         ]
         for col, val in enumerate(data, 1):
             cell = ws2.cell(row=ri, column=col, value=val)
@@ -727,18 +664,21 @@ async def bulk_upload(
     domestic_rate: float = Query(0.065, description="Fallback domestic rate"),
     foreign_rate: float = Query(0.045, description="Fallback foreign rate"),
     interpolation: str = Query("linear", description="Interpolation method: 'linear' or 'cubic_spline'"),
-    contract_type: str = Query("forward", description="Expected contract type: 'forward' or 'range_forward'"),
 ):
+    """
+    Upload Excel with FX forward deals + market data.
+    Market data sheets: '{CCY_PAIR} Forward' and '{CCY_PAIR} Discount'.
+    Falls back to flat rates if no market data sheets found.
+    """
     if not file.filename.endswith((".xlsx", ".xls")):
         raise HTTPException(400, "Only .xlsx/.xls files accepted")
+
     if interpolation not in ("linear", "cubic_spline"):
         raise HTTPException(400, "interpolation must be 'linear' or 'cubic_spline'")
-    if contract_type not in ("forward", "range_forward"):
-        raise HTTPException(400, "contract_type must be 'forward' or 'range_forward'")
 
     try:
         contents = await file.read()
-        deals, parse_errors, curves_map = parse_upload(contents, expected_contract_type=contract_type)
+        deals, parse_errors, curves_map = parse_upload(contents)
 
         if not deals and parse_errors:
             raise HTTPException(400, f"No valid deals found. Errors: {parse_errors}")
@@ -769,6 +709,7 @@ async def bulk_upload(
 
 @router.get("/bulk-template")
 async def download_template():
+    """Download blank template."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Deals"
@@ -781,74 +722,3 @@ async def download_template():
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": 'attachment; filename="Optima_BulkUpload_Template.xlsx"'},
     )
-
-
-@router.post("/bulk-price")
-async def bulk_price_json(
-    file: UploadFile = File(...),
-    domestic_rate: float = Query(0.065),
-    foreign_rate: float = Query(0.045),
-    interpolation: str = Query("linear"),
-    contract_type: str = Query("forward", description="Expected contract type: 'forward' or 'range_forward'"),
-):
-    """
-    Same as /bulk-upload but returns JSON for on-page rendering.
-    """
-    if not file.filename.endswith((".xlsx", ".xls")):
-        raise HTTPException(400, "Only .xlsx/.xls files accepted")
-
-    try:
-        contents = await file.read()
-        deals, parse_errors, curves_map = parse_upload(contents, expected_contract_type=contract_type)
-
-        if not deals and parse_errors:
-            raise HTTPException(400, f"No valid deals: {parse_errors}")
-
-        if curves_map:
-            results, pricing_errors = price_deals_with_curves(deals, curves_map, interpolation)
-            method = "curve"
-        else:
-            results, pricing_errors = price_deals_flat(deals, domestic_rate, foreign_rate)
-            method = "flat"
-
-        def _fmt(r):
-            fwd = r.get("forward_rate")
-            return {
-                "ref":        r["transaction_ref"],
-                "client":     r["client_name"],
-                "ccy_pair":   r["ccy_pair"],
-                "strike":     r.get("strike_precise", r["strike"]),
-                "maturity":   r["maturity_date"].isoformat() if r.get("maturity_date") else "",
-                "forward":    round(fwd, 4) if fwd is not None else None,
-                "npv":        round(r["npv"], 2),
-                "long_term":  round(r.get("long_term", 0), 2),
-                "short_term": round(r.get("short_term", 0), 2),
-                "status":     r.get("status", "OK"),
-                # Fields for report generation
-                "notional":   r.get("notional_1", 0),
-                "direction":  r.get("direction_1", ""),
-                "cpty_a":     r.get("cpty_a", ""),
-                "cpty_b":     r.get("cpty_b", ""),
-                "trade_date": r["trade_date"].isoformat() if r.get("trade_date") else "",
-                "optima_id":     r.get("optima_id", ""),
-                "pricing_date":  str(r.get("pricing_date", "")),
-            }
-
-        return {
-            "method":           method,
-            "total_deals":      len(results) + len(pricing_errors) + len(parse_errors),
-            "priced":           len(results),
-            "errors":           len(parse_errors) + len(pricing_errors),
-            "total_npv":        round(sum(r["npv"] for r in results), 2),
-            "total_long_term":  round(sum(r.get("long_term", 0) for r in results), 2),
-            "total_short_term": round(sum(r.get("short_term", 0) for r in results), 2),
-            "results":          [_fmt(r) for r in results],
-            "parse_errors":     parse_errors,
-            "pricing_errors":   pricing_errors,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Bulk price JSON failed")
-        raise HTTPException(500, f"Bulk price failed: {e}")

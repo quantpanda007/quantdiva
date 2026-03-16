@@ -123,18 +123,41 @@ class PricingService:
             # Store engine instance for diagnostics access
             self._last_engine_instance = engine_instance
 
-            # 4. Build QuantLib instrument
+            # 4. New-style path: engine.price() returns typed FXForwardResults.
+            #    FXForwardEngine uses this. All other engines fall through to step 5.
+            try:
+                from engines.analytic.fx_engines import FXForwardResults as _FXFwdResults
+                if hasattr(engine_instance, "price"):
+                    _candidate = engine_instance.price(instrument, market_env)
+                    if hasattr(_candidate, 'forward_rate') and hasattr(_candidate, 'disc_factor'):
+                        elapsed = time.perf_counter() - t0
+                        _diags: dict = {"elapsed_seconds": round(elapsed, 6)}
+                        if _candidate.forward_rate is not None:
+                            _diags["forward_rate"] = _candidate.forward_rate
+                        if _candidate.disc_factor is not None:
+                            _diags["disc_factor"] = _candidate.disc_factor
+                        return PricingResult(
+                            trade_id=instrument.trade_id(),
+                            npv=_candidate.npv,
+                            currency=instrument.currency(),
+                            pricing_date=market_env.pricing_date,
+                            engine_used=engine_type,
+                            model_used=model_type,
+                            diagnostics=_diags,
+                        )
+            except ImportError:
+                pass
+
+            # 5. Legacy path: instrument.build(market_env) → ql_instrument.NPV()
+            #    Used by all non-FX-forward instruments.
             ql_instrument = instrument.build(market_env)
 
-            # Set pricing engine (some instruments like FRA compute
-            # NPV directly from their curves and don't need an engine)
             try:
                 ql_instrument.setPricingEngine(ql_engine)
             except (AttributeError, RuntimeError):
                 # FRA and similar instruments price via their index curve
                 pass
 
-            # 5. Extract results
             npv = ql_instrument.NPV()
             elapsed = time.perf_counter() - t0
 
@@ -226,7 +249,6 @@ class PricingService:
         base_result = self.price(instrument, market_env, **kwargs)
         greeks = {}
 
-        # Try QuantLib's built-in Greeks first
         try:
             market_env.set_evaluation_date()
 
@@ -294,26 +316,16 @@ class PricingService:
     # Private helpers
     # -----------------------------------------------------------------------
 
-    def _build_model(
-        self, ModelClass, instrument: BaseInstrument, params: dict
-    ) -> BaseModel:
-        """Instantiate a model, setting underlying from instrument if needed."""
+    def _build_model(self, ModelClass, instrument: BaseInstrument, params: dict) -> BaseModel:
         model = ModelClass()
         if hasattr(model, "underlying") and hasattr(instrument, "underlying"):
             model.underlying = instrument.underlying
         return model
 
     def _build_engine(self, EngineClass, params: dict) -> BaseEngine:
-        """
-        Instantiate an engine with optional parameters.
-
-        Special handling for Finite Difference engines:
-        maps engine_params → FDGridConfig.
-        """
         if not params:
             return EngineClass()
 
-        # --- FD engine special wiring ---
         try:
             from engines.finite_difference.fd_config import FDGridConfig
 
@@ -324,16 +336,13 @@ class PricingService:
                     vol_steps=params.get("vol_steps", 50),
                     damping_steps=params.get("damping_steps", 0),
                 )
-                # Pass through scheme if provided
                 if "scheme" in params:
                     grid_config.scheme = params["scheme"]
-                # Pass through spot grid bounds if provided
                 if "spot_min_factor" in params:
                     grid_config.spot_min_factor = params["spot_min_factor"]
                 if "spot_max_factor" in params:
                     grid_config.spot_max_factor = params["spot_max_factor"]
 
-                # Build engine with grid config and optional flags
                 engine_kwargs = {"grid_config": grid_config}
                 if "run_convergence" in params:
                     engine_kwargs["run_convergence"] = params["run_convergence"]
@@ -344,20 +353,10 @@ class PricingService:
         except ImportError:
             pass
 
-        # --- Default construction: pass matching params ---
         return EngineClass(**{k: v for k, v in params.items() if hasattr(EngineClass, k)})
 
-    def _bump_greek(
-        self,
-        instrument: BaseInstrument,
-        market_env: MarketEnvironment,
-        risk_factor: str,
-        bump_size: float,
-        **kwargs,
-    ) -> Optional[float]:
-        """First-order finite difference Greek via bump-and-reprice."""
+    def _bump_greek(self, instrument, market_env, risk_factor, bump_size, **kwargs):
         from services.greeks.bump_reprice import BumpAndRepriceGreeks
-
         greeks_svc = BumpAndRepriceGreeks(pricing_service=self)
         result = greeks_svc.compute(
             instrument=instrument,
@@ -369,17 +368,8 @@ class PricingService:
         )
         return result.greeks.get(risk_factor)
 
-    def _bump_greek_second_order(
-        self,
-        instrument: BaseInstrument,
-        market_env: MarketEnvironment,
-        risk_factor: str,
-        bump_size: float,
-        **kwargs,
-    ) -> Optional[float]:
-        """Second-order finite difference Greek via bump-and-reprice."""
+    def _bump_greek_second_order(self, instrument, market_env, risk_factor, bump_size, **kwargs):
         from services.greeks.bump_reprice import BumpAndRepriceGreeks
-
         greeks_svc = BumpAndRepriceGreeks(pricing_service=self)
         result = greeks_svc.compute(
             instrument=instrument,

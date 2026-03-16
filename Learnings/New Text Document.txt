@@ -1,0 +1,51 @@
+Single deal
+
+collectPayload()                          → optima_core.js
+fetch("/api/v1/pricing/single")           → optima_core.js
+
+price_single()                            → api/v1/endpoints/pricing.py
+  _resolve_underlying()                   → api/v1/endpoints/pricing.py
+  build_instrument_from_request()         → api/v1/helpers.py
+    instrument_registry.get()             → registry/__init__.py
+    FXForward.__init__()                  → instruments/fx/fx_forward.py
+  build_market_env_from_request()         → api/v1/helpers.py
+    _build_fx_market_env()                → api/v1/helpers.py
+      build_flat_curve()                  → market/curves/yield_curve.py
+      build_flat_vol()                    → market/curves/yield_curve.py
+  PricingService.price()                  → services/pricers/pricing_service.py
+    market_env.set_evaluation_date()      → core/interfaces/base.py
+    model_registry.get()                  → registry/__init__.py
+    engine_registry.get()                 → registry/__init__.py
+    FXForwardEngine.build()               → engines/analytic/fx_engines.py
+    FXForward.build()                     → instruments/fx/fx_forward.py
+      FXForward._extract_rate()           → instruments/fx/fx_forward.py
+      FXForward._extract_foreign_rate()   → instruments/fx/fx_forward.py
+      AnalyticalInstrument.__init__()     → instruments/fx/fx_forward.py
+    AnalyticalInstrument.NPV()            → instruments/fx/fx_forward.py
+	
+	
+	
+	
+	
+Bulk Upload — Curve path
+
+
+processBulkFile()                         → optima_core.js
+fetch("/api/v1/pricing/bulk-price")       → optima_core.js
+
+bulk_price_json()                         → api/v1/endpoints/bulk_upload.py
+  parse_upload()                          → api/v1/endpoints/bulk_upload.py
+    parse_all_market_data()               → api/v1/endpoints/bulk_upload.py
+      _parse_curve_sheet()                → api/v1/endpoints/bulk_upload.py
+      MarketCurves.__init__()             → api/v1/endpoints/bulk_upload.py
+      MarketCurves.has_curves()           → api/v1/endpoints/bulk_upload.py
+    _normalize_header()                   → api/v1/endpoints/bulk_upload.py
+    _parse_date()                         → api/v1/endpoints/bulk_upload.py
+    _parse_number()                       → api/v1/endpoints/bulk_upload.py
+  price_deals_with_curves()               → api/v1/endpoints/bulk_upload.py
+    MarketCurves.interpolate_forward()    → api/v1/endpoints/bulk_upload.py
+      _linear_interpolate()               → api/v1/endpoints/bulk_upload.py
+    MarketCurves.interpolate_df()         → api/v1/endpoints/bulk_upload.py
+      _linear_interpolate()               → api/v1/endpoints/bulk_upload.py
+    _one_year_later()                     → api/v1/endpoints/bulk_upload.py
+  _fmt()                                  → api/v1/endpoints/bulk_upload.py
