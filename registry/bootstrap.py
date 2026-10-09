@@ -19,6 +19,7 @@ import instruments.rates.fixed_rate_bond         # noqa: F401
 import instruments.rates.fra                     # noqa: F401
 import instruments.rates.cap_floor               # noqa: F401
 import instruments.rates.swaption                # noqa: F401
+import instruments.rates.irs.pricing_instrument  # noqa: F401  (fresh IRS, type "ois")
 
 # Credit
 import instruments.credit.cds                    # noqa: F401
@@ -35,6 +36,7 @@ import engines.analytic.barrier_digital_engine   # noqa: F401
 import engines.analytic.asian_engine             # noqa: F401
 import engines.analytic.lookback_engine          # noqa: F401
 import engines.analytic.rates_engines            # noqa: F401
+import engines.analytic.irs_discounting_engine   # noqa: F401  (fresh IRS, ("ois", "discounting"))
 import engines.analytic.credit_engines           # noqa: F401
 import engines.analytic.fx_engines               # noqa: F401
 

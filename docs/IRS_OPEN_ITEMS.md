@@ -13,7 +13,7 @@ Last updated: 09-Oct-2026 · QuantLib 1.43
 | OI-2 | Bloomberg rate cutoff vs QuantLib `lockoutDays` | Open: mapping not confirmed | `test_tc1_bloomberg_reconciliation.py::test_baseline_conventions_are_the_recorded_ones` |
 | OI-3 | TC1 lookback: case fixture 1 vs Bloomberg source 0 | Open: fixture not changed | `test_tc1_period1_regression.py::test_lookback_is_taken_from_bloomberg_source` |
 | OI-4 | Legacy SOFR path (`interest_rate_swap.py`, `yield_curve.py`) | Excluded, uncommitted experimental work | not part of the fresh IRS suite |
-| OI-5 | Curve market-data source and tenor mapping | Deferred: test fixture is the source for now | `test_irs_zero_curve.py` |
+| OI-5 | Curve market-data source, tenor mapping, request-level curve input | Partly done: service path wired; curve data still from the test fixture | `test_irs_zero_curve.py`, `test_tc1_pricing_service_e2e.py` |
 | OI-6 | Bloomberg-derived data and the public GitHub remote | Decision deferred: keep all commits local | — |
 
 ---
@@ -103,18 +103,37 @@ TC1 NPV on that path is −7,520.51 (QL 1.43). `tests/irs/test_bloomberg_irs_dis
 fails, a known curve gap. Not to be merged into the fresh implementation
 without explicit decisions.
 
-## OI-5: Curve market-data source
+## OI-5: Curve market-data source and request integration
 
-`market/curves/irs_zero_curve.py` accepts structured `ZeroCurveMarketData` only.
-For now the data comes from the committed test fixture
-`tests/fixtures/bloomberg_irs/curves/2026-03-31-USD-SOFR-zero.json`, through a
-test-side adapter in `tests/unit/test_irs/conftest.py`. The tenors in that fixture
-are inferred, because the Bloomberg export has no Tenor column. A production
-market-data source waits until the Bloomberg tenor mapping and curve conventions
-are confirmed.
-Not yet done: wiring the curve into `PricingService` / a typed IRS pricing
-context. `attach_discounting_engine` still takes the `QuantLibDiscountCurve`
-record, so the TC1 tests wrap the zero curve's handle in it.
+**Done:**
+- `market/curves/irs_zero_curve.py` builds the curve from structured
+  `ZeroCurveMarketData` only.
+- `market/curves/irs_market_environment.py` puts that one curve into a
+  `MarketEnvironment` as both the discount and forecast curve of its currency.
+- TC1 prices end to end through `build_instrument_from_request` and
+  `PricingService.price`, using instrument `"ois"` (`FreshOISInstrument`), model
+  `"analytical"` and engine `("ois", "discounting")` (`FreshIRSDiscountingEngine`,
+  which never falls back to another curve).
+- The service result equals the recorded reconciliation baseline exactly.
+
+**Still open:**
+- The curve data comes from the committed test fixture
+  `tests/fixtures/bloomberg_irs/curves/2026-03-31-USD-SOFR-zero.json`, through a
+  test-side adapter in `tests/unit/test_irs/conftest.py`. Its tenors are inferred,
+  because the Bloomberg export has no Tenor column. A production market-data source
+  waits until the Bloomberg tenor mapping and curve conventions are confirmed.
+- `MarketDataRequest` cannot carry zero curves, and `build_market_env_from_request`
+  builds flat test curves only. The e2e test therefore builds the environment with
+  the helper and uses the request for the instrument and the model/engine selection.
+- `MarketEnvironment` keys curves by currency only, which is enough for
+  single-curve TC1. Separate discount and projection curves per benchmark need a
+  typed IRS pricing context.
+- `build_instrument_from_request` swallows `from_dict` errors and retries with the
+  constructor. `FreshOISInstrument` refuses untyped constructor input, so a bad
+  request still fails, but with a generic `TypeError` rather than the specific
+  validation message.
+- The TC1 test helpers wrap the zero curve in `QuantLibDiscountCurve` for
+  `attach_discounting_engine`. The service path does not need this.
 
 ## OI-6: Bloomberg-derived data and the public remote
 
