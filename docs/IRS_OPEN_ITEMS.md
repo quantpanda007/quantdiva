@@ -1,0 +1,124 @@
+# Fresh IRS: Open Items
+
+Register of unresolved items for the fresh IRS implementation. Each item lists
+what is known (observed), what has been done, what is still missing, and where it
+is monitored. Items here are **not** resolved by tuning, hardcoded adjustments, or
+editing recorded baselines.
+
+Last updated: 09-Oct-2026 · QuantLib 1.43
+
+| ID | Item | Status | Monitored by |
+|---|---|---|---|
+| OI-1 | TC1 Period 2 / 30-Nov-2027 discount factor vs Bloomberg | Open: awaiting Bloomberg curve-490 data | `test_tc1_bloomberg_reconciliation.py` |
+| OI-2 | Bloomberg rate cutoff vs QuantLib `lockoutDays` | Open: mapping not confirmed | `test_tc1_bloomberg_reconciliation.py::test_baseline_conventions_are_the_recorded_ones` |
+| OI-3 | TC1 lookback: case fixture 1 vs Bloomberg source 0 | Open: fixture not changed | `test_tc1_period1_regression.py::test_lookback_is_taken_from_bloomberg_source` |
+| OI-4 | Legacy SOFR path (`interest_rate_swap.py`, `yield_curve.py`) | Excluded, uncommitted experimental work | not part of the fresh IRS suite |
+| OI-5 | Curve market-data source and tenor mapping | Deferred: test fixture is the source for now | `test_irs_zero_curve.py` |
+| OI-6 | Bloomberg-derived data and the public GitHub remote | Decision deferred: keep all commits local | — |
+
+---
+
+## OI-1: 30-Nov-2027 discount factor (TC1 Period 2)
+
+**Observed (Bloomberg, as displayed):** payment DF 0.941092 at 30-Nov-2027; Period 2
+equivalent coupon 3.64025%; floating-leg NPV 24,023.74; total NPV −7,955.00.
+
+**Optima (recorded baseline):** DF 0.9410946; Period 2 coupon 3.639708%; floating-leg
+NPV 24,023.04; total NPV −7,955.73.
+
+| Metric | Optima − Bloomberg |
+|---|---:|
+| 30-Nov-2027 DF | +2.6e-6 |
+| Zero rate at 30-Nov-2027 | −0.016 bp |
+| Period 2 coupon | −0.054 bp |
+| Period 2 payment | −$0.74 |
+| Floating-leg NPV | **−$0.70** |
+| Fixed-leg NPV | −$0.02 |
+| Total NPV | −$0.73 |
+
+**Established:**
+- Period 1 reconciles within Bloomberg display precision, and so do the
+  28-May-2027 DF and the Period 1 start DF implied by the coupon.
+- Bloomberg's own Period 2 coupon and 30-Nov DF are mutually consistent
+  (coupon-implied DF 0.9410922).
+- The floating-leg gap comes through the Period 2 coupon (projection); the
+  discounting effect is under $0.02.
+- Ruled out: input rounding (effect ≤ 1e-7 in DF), and replacing the
+  interpolation everywhere (log-linear DF, cubic and monotone-cubic all break
+  the 28-May-2027 check).
+- The gap is about 5× the display-rounding band, so it is real but small.
+
+**Hypotheses (unconfirmed):**
+- Bloomberg curve members between 18M (04-Oct-2027) and 2Y (03-Apr-2028) that the
+  20-row export does not show.
+- A segment-specific convention. This is the only checked segment spanning a
+  year end (31-Dec-2027), but a typical positive turn premium would move the
+  rate the other way.
+- Interpolation weights on another day basis. Not tested, deliberately, to avoid
+  fitting.
+
+**Required from Bloomberg (curve 490, curve date 31-Mar-2026, same snapshot as SWPM):**
+1. Complete curve member list: instrument type, tenor, maturity, quote, active status.
+2. Curve settings: interpolation method and quantity, turn-of-year or
+   meeting-date settings, interpolation day basis.
+3. Full-precision zero rate and DF at 30-Nov-2027 and 28-May-2027 (control),
+   and at the 04-Oct-2027 and 03-Apr-2028 pillars.
+4. Confirmation that the SWPM trade used curve 490 for both projection and
+   discounting from that snapshot.
+
+**Rule:** do not change interpolation or add adjustments to match the two
+cashflows. When the data arrives, re-run the analysis, then update the recorded
+baseline and this entry together.
+
+## OI-2: Rate cutoff vs lockout
+
+Bloomberg TC1 has `rate_cut_off_days = 1`. The fresh floating leg keeps the cutoff
+as contractual metadata and passes `lockoutDays = 0` to QuantLib. On TC1 the two
+readings differ by about 0.001 bp, below Bloomberg's display precision, so TC1
+cannot confirm the mapping. Needs a Bloomberg proof-out of the last observations
+in a period, or a trade where the difference is material.
+
+## OI-3: TC1 lookback discrepancy
+
+`tests/fixtures/bloomberg_irs/cases/TC1.json` records `lookback_days: 1`;
+the Bloomberg source (`source/TC1.json`, `leg_2.days_before_accrual`) is 0. The TC1
+tests read the lookback from the source. With lookback 1, Period 1 moves by
++0.045 bp. The fixture has not been changed and needs an owner decision. The
+legacy fixture `tests/fixtures/bloomberg_irs_case.json` also records 1.
+
+## OI-4: Legacy SOFR path
+
+The uncommitted changes to `instruments/rates/interest_rate_swap.py` and
+`market/curves/yield_curve.py` are kept separate from the fresh implementation.
+Unresolved issues:
+- `rate_cutoff_days` is passed as `lockoutDays`.
+- `reset_type` and `principal_exchange` are stored but not applied.
+- Lookback is 1, from the legacy fixture.
+- Forward rates are chained interval forwards, and DFs sit on display dates.
+- The schedule uses the Federal Reserve calendar while the index fixes on the
+  SOFR calendar.
+- Same frequency on both legs only; empty-handle fallback.
+
+TC1 NPV on that path is −7,520.51 (QL 1.43). `tests/irs/test_bloomberg_irs_discount_curve.py`
+fails, a known curve gap. Not to be merged into the fresh implementation
+without explicit decisions.
+
+## OI-5: Curve market-data source
+
+`market/curves/irs_zero_curve.py` accepts structured `ZeroCurveMarketData` only.
+For now the data comes from the committed test fixture
+`tests/fixtures/bloomberg_irs/curves/2026-03-31-USD-SOFR-zero.json`, through a
+test-side adapter in `tests/unit/test_irs/conftest.py`. The tenors in that fixture
+are inferred, because the Bloomberg export has no Tenor column. A production
+market-data source waits until the Bloomberg tenor mapping and curve conventions
+are confirmed.
+Not yet done: wiring the curve into `PricingService` / a typed IRS pricing
+context. `attach_discounting_engine` still takes the `QuantLibDiscountCurve`
+record, so the TC1 tests wrap the zero curve's handle in it.
+
+## OI-6: Bloomberg-derived data and the public remote
+
+`origin` (github.com/quantpanda007/quantdiva) is public. Bloomberg-derived
+fixtures, including the zero-curve fixture in commit `581e68b`, are committed
+locally only. Decision: keep all commits local, no push, until the data-sharing
+implications are reviewed.
