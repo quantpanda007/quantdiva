@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "valuation_date": "2026-03-31",
+  "provenance": "Bloomberg 490-USDSOFR curve export, 31-Mar-2026 (zero rates and discount factors), converted from tests/fixtures/bloomberg_irs/curves/2026-03-31-USD-SOFR-zero.json: zero_rate = Zero Rate % / 100, tenors as inferred there. Bloomberg-derived: keep local (OI-6). Known curve differences vs Bloomberg: OI-1, OI-7.",
+  "curves": {
+    "USD-SOFR-490": {
+      "currency": "USD",
+      "benchmark": "SOFR",
+      "reference_date": "2026-03-31",
+      "conventions": {
+        "calendar": "US-SOFR",
+        "spot_lag_days": 2,
+        "business_day_convention": "modified_following",
+        "end_of_month": false,
+        "day_count": "ACT/365F",
+        "compounding": "continuous",
+        "interpolation": "linear_zero",
+        "front_extrapolation": "flat_first_zero",
+        "allow_extrapolation": false,
+        "discount_factor_check_tolerance": 1e-06
+      },
+      "observations": [
+        {
+          "tenor": "1W",
+          "zero_rate": 0.0370182,
+          "discount_factor": 0.999088
+        },
+        {
+          "tenor": "2W",
+          "zero_rate": 0.0370182,
+          "discount_factor": 0.998379
+        },
+        {
+          "tenor": "3W",
+          "zero_rate": 0.0370094,
+          "discount_factor": 0.997671
+        },
+        {
+          "tenor": "1M",
+          "zero_rate": 0.0370544,
+          "discount_factor": 0.996554
+        },
+        {
+          "tenor": "2M",
+          "zero_rate": 0.037097,
+          "discount_factor": 0.993617
+        },
+        {
+          "tenor": "3M",
+          "zero_rate": 0.0371046,
+          "discount_factor": 0.990591
+        },
+        {
+          "tenor": "4M",
+          "zero_rate": 0.0370721,
+          "discount_factor": 0.987384
+        },
+        {
+          "tenor": "5M",
+          "zero_rate": 0.0370252,
+          "discount_factor": 0.9844
+        },
+        {
+          "tenor": "6M",
+          "zero_rate": 0.0369965,
+          "discount_factor": 0.981423
+        },
+        {
+          "tenor": "7M",
+          "zero_rate": 0.0369836,
+          "discount_factor": 0.978352
+        },
+        {
+          "tenor": "8M",
+          "zero_rate": 0.0369651,
+          "discount_factor": 0.975394
+        },
+        {
+          "tenor": "9M",
+          "zero_rate": 0.0369401,
+          "discount_factor": 0.972159
+        },
+        {
+          "tenor": "10M",
+          "zero_rate": 0.0369122,
+          "discount_factor": 0.969332
+        },
+        {
+          "tenor": "11M",
+          "zero_rate": 0.0368706,
+          "discount_factor": 0.966628
+        },
+        {
+          "tenor": "12M",
+          "zero_rate": 0.0368376,
+          "discount_factor": 0.963638
+        },
+        {
+          "tenor": "18M",
+          "zero_rate": 0.0365444,
+          "discount_factor": 0.946232
+        },
+        {
+          "tenor": "2Y",
+          "zero_rate": 0.0360422,
+          "discount_factor": 0.930085
+        },
+        {
+          "tenor": "3Y",
+          "zero_rate": 0.0356121,
+          "discount_factor": 0.89841
+        },
+        {
+          "tenor": "4Y",
+          "zero_rate": 0.035692,
+          "discount_factor": 0.866701
+        },
+        {
+          "tenor": "5Y",
+          "zero_rate": 0.0360763,
+          "discount_factor": 0.834704
+        }
+      ]
+    }
+  },
+  "assignments": {
+    "USD": {
+      "discount": "USD-SOFR-490",
+      "forecast": "USD-SOFR-490"
+    }
+  }
+}

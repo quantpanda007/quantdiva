@@ -13,7 +13,7 @@ Last updated: 09-Oct-2026 · QuantLib 1.43
 | OI-2 | Bloomberg rate cutoff vs QuantLib `lockoutDays` | Open: mapping not confirmed | `test_tc1_bloomberg_reconciliation.py::test_baseline_conventions_are_the_recorded_ones` |
 | OI-3 | TC1 lookback: case fixture 1 vs Bloomberg source 0 | Open: fixture not changed | `test_tc1_period1_regression.py::test_lookback_is_taken_from_bloomberg_source` |
 | OI-4 | Legacy SOFR path (`interest_rate_swap.py`, `yield_curve.py`) | Excluded, uncommitted experimental work | not part of the fresh IRS suite |
-| OI-5 | Curve market-data source, tenor mapping, request-level curve input | Partly done: service path wired; curve data still from the test fixture | `test_irs_zero_curve.py`, `test_tc1_pricing_service_e2e.py`, `test_tc3_pricing_service_e2e.py` |
+| OI-5 | Curve market-data source, tenor mapping, request-level curve input | Partly done: file-driven CLI workflow in place; tenor mapping and conventions still unconfirmed | `test_irs_zero_curve.py`, `test_tc1_pricing_service_e2e.py`, `test_tc3_pricing_service_e2e.py`, `test_irs_input_workflow.py` |
 | OI-6 | Bloomberg-derived data and the public GitHub remote | Decision deferred: keep all commits local | — |
 | OI-7 | TC3 Period 4 / 28-Apr-2028 discount factor vs Bloomberg | Open: awaiting Bloomberg curve-490 data (with OI-1) | `test_tc3_pricing_service_e2e.py` |
 | OI-8 | Contractual maturity vs adjusted accrual dates; calendar mapping | Implemented with provisional convention and FD-only calendar | `test_tc1_pricing_service_e2e.py`, `test_tc3_pricing_service_e2e.py` |
@@ -127,19 +127,42 @@ without explicit decisions.
 - The service result equals the recorded reconciliation baseline exactly.
 - TC3 (amortising, semiannual, short final stub, contractual maturity on a
   Sunday) prices through the same path with no instrument- or engine-specific code.
+- Input-driven workflow (command line, no FastAPI):
+  `python scripts/price_irs.py --trade <trade.json> --market <market.json> [--output result.json]`.
+  - Trade file: `{"schema_version": 1, "instrument_type": "ois", "params": {...}}`, with
+    `params` exactly the `FreshOISTrade` parameters (Option B validation applies).
+  - Market file: valuation date, curves (observations plus explicit conventions) and
+    per-currency `discount` / `forecast` curve assignments, which may differ.
+    Parsed and resolved by `market/curves/irs_market_snapshot.py`; curves are built
+    with `build_zero_curve`.
+  - `services/pricers/irs_valuation.py` (`price_irs`) builds the instrument through the
+    registry (specific validation errors), resolves the environment, prices with
+    `PricingService` and the discounting engine, and reads cashflows with
+    `irs_cashflow_rows`.
+  - It fails, never falls back, on: a missing assignment; a curve of another
+    currency; a curve reference date or trade valuation date that differs from the
+    market valuation date; an unsupported convention; or a floating benchmark that
+    does not map to the forecast curve's benchmark.
+  - Strict vocabularies: market calendars `US-SOFR`, `US-FED` (trade accrual
+    adjustment still uses `FD`, OI-8); benchmark map `SOFRRATE` → `SOFR`.
+  - TC1/TC3 inputs: `examples/irs/tc1_trade.json`, `examples/irs/tc3_trade.json`,
+    `examples/irs/usd_sofr_2026-03-31.json`. Generated from the existing fixtures
+    and checked against them by `test_irs_input_workflow.py`. Bloomberg-derived:
+    local commits only (OI-6). Zero rates are stored as decimals, so NPVs agree with
+    the fixture route to about 1e-10, within the 1e-6 baseline tolerance.
 
 **Still open:**
-- The curve data comes from the committed test fixture
-  `tests/fixtures/bloomberg_irs/curves/2026-03-31-USD-SOFR-zero.json`, through a
-  test-side adapter in `tests/unit/test_irs/conftest.py`. Its tenors are inferred,
-  because the Bloomberg export has no Tenor column. A production market-data source
-  waits until the Bloomberg tenor mapping and curve conventions are confirmed.
+- The curve observations are Bloomberg export values with inferred tenors (the
+  export has no Tenor column), and the curve conventions in the market file are the
+  ones established for TC1 (SOFR calendar, T+2, Modified Following, ACT/365F,
+  continuous, linear zero, flat front). Both await confirmation of the Bloomberg
+  tenor mapping and curve settings (OI-1).
 - `MarketDataRequest` cannot carry zero curves, and `build_market_env_from_request`
   builds flat test curves only. The e2e test therefore builds the environment with
   the helper and uses the request for the instrument and the model/engine selection.
-- `MarketEnvironment` keys curves by currency only, which is enough for
-  single-curve TC1. Separate discount and projection curves per benchmark need a
-  typed IRS pricing context.
+- `MarketEnvironment` keys curves by currency only. Discount and forecast curves can
+  differ, but a currency can have only one forecast curve, so trades on two
+  benchmarks in one currency would need a richer pricing context.
 - `build_instrument_from_request` swallows `from_dict` errors and retries with the
   constructor. `FreshOISInstrument` refuses untyped constructor input, so a bad
   request still fails, but with a generic `TypeError` rather than the specific
