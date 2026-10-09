@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "case_id": "TC1",
+  "trade_id": "SLLSL9RR",
+  "source": "tests/unit/test_irs/test_pricing.py diagnostic reference dictionary",
+  "outputs": [
+    {
+      "name": "fixed_leg_npv",
+      "value": -31978.74,
+      "unit_status": "not_stated",
+      "currency": null,
+      "scale": null
+    },
+    {
+      "name": "floating_leg_npv",
+      "value": 24023.74,
+      "unit_status": "not_stated",
+      "currency": null,
+      "scale": null
+    },
+    {
+      "name": "total_npv",
+      "value": -7955.0,
+      "unit_status": "not_stated",
+      "currency": null,
+      "scale": null
+    }
+  ],
+  "source_json": "tests/fixtures/bloomberg_irs/source/TC1.json",
+  "source_oracle_sections": {
+    "cashflow": {
+      "currency": "USD",
+      "net": [
+        {
+          "pay_date": "2027-05-28",
+          "payments_receive": 20174.4,
+          "payments_pay": -26647.22,
+          "net_payment": -6472.82,
+          "discount_factor": 0.958306,
+          "pv": -6202.94
+        },
+        {
+          "pay_date": "2027-11-30",
+          "payments_receive": 4984.11,
+          "payments_pay": -6845.83,
+          "net_payment": -1861.73,
+          "discount_factor": 0.941092,
+          "pv": -1752.06
+        }
+      ],
+      "accrued": 0.0,
+      "npv": -7955.0
+    },
+    "cashflow_leg_1": {
+      "leg": "Pay Fixed",
+      "currency": "USD",
+      "accrued": 0.0,
+      "npv": -31978.74,
+      "cashflows": [
+        {
+          "pay_date": "2027-05-28",
+          "accrual_start": "2026-05-31",
+          "accrual_end": "2027-05-28",
+          "days": 362,
+          "notional": -530000000,
+          "principal": 0.0,
+          "payment": -26647.22,
+          "discount_factor": 0.958306,
+          "pv": -25536.19
+        },
+        {
+          "pay_date": "2027-11-30",
+          "accrual_start": "2027-05-28",
+          "accrual_end": "2027-11-30",
+          "days": 186,
+          "notional": -265000000,
+          "principal": 0.0,
+          "payment": -6845.83,
+          "discount_factor": 0.941092,
+          "pv": -6442.56
+        }
+      ]
+    },
+    "cashflow_leg_2": {
+      "leg": "Receive Float",
+      "currency": "USD",
+      "accrued": 0.0,
+      "npv": 24023.74,
+      "cashflows": [
+        {
+          "pay_date": "2027-05-28",
+          "accrual_start": "2026-05-31",
+          "accrual_end": "2027-05-28",
+          "days": 362,
+          "notional": 530000000,
+          "principal": 0.0,
+          "effective_reset_date": "2027-05-27",
+          "equivalent_coupon": 3.78546,
+          "payment": 20174.4,
+          "discount_factor": 0.958306,
+          "pv": 19333.24
+        },
+        {
+          "pay_date": "2027-11-30",
+          "accrual_start": "2027-05-28",
+          "accrual_end": "2027-11-30",
+          "days": 186,
+          "notional": 265000000,
+          "principal": 0.0,
+          "effective_reset_date": "2027-11-29",
+          "equivalent_coupon": 3.64025,
+          "payment": 4984.11,
+          "discount_factor": 0.941092,
+          "pv": 4690.5
+        }
+      ]
+    },
+    "valuation_results": {
+      "par_coupon": 3.756205,
+      "premium": -1.50094,
+      "principal": -7955.0,
+      "bp_value": -150.09436,
+      "accrued": 0.0,
+      "npv": -7955.0
+    },
+    "risk": {
+      "pv01": -63.96,
+      "dv01": -64.67,
+      "gamma_1bp": -0.02
+    },
+    "leg_1_market": {
+      "npv": -8594.58,
+      "accrued": 0.0,
+      "premium": -1.62,
+      "dv01": -64.75
+    },
+    "leg_2_market": {
+      "npv": 639.58,
+      "accrued": 0.0,
+      "premium": 0.12,
+      "dv01": 0.08
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "TC1",
+  "source": {
+    "trade_id": "SLLSL9RR",
+    "trade_fixture": "tests/fixtures/bloomberg_irs_case.json",
+    "market_data_id": "2026-03-31-USD-SOFR",
+    "bloomberg_source_json": "tests/fixtures/bloomberg_irs/source/TC1.json"
+  },
+  "trade": {
+    "trade_id": "SLLSL9RR",
+    "currency": "USD",
+    "valuation_date": "2026-03-31",
+    "effective_date": "2026-05-31",
+    "maturity_date": "2027-11-30",
+    "notional": {
+      "amount": 530000,
+      "currency": "USD"
+    },
+    "principal_exchange": "Never",
+    "pay_leg": {
+      "kind": "fixed",
+      "original_notional": {
+        "amount": 530000,
+        "currency": "USD"
+      },
+      "payment_frequency": "Annual",
+      "day_count": "ACT/360",
+      "fixed_coupon": {
+        "value": 5.0,
+        "unit": "percent"
+      },
+      "principal_repayments": [
+        {
+          "payment_date": "2027-05-28",
+          "amount": {
+            "amount": 265000,
+            "currency": "USD"
+          }
+        }
+      ]
+    },
+    "receive_leg": {
+      "kind": "floating",
+      "original_notional": {
+        "amount": 530000,
+        "currency": "USD"
+      },
+      "payment_frequency": "Annual",
+      "day_count": "ACT/360",
+      "benchmark": "SOFR",
+      "benchmark_tenor": "1D",
+      "floating_spread": {
+        "value": 10,
+        "unit": "bps"
+      },
+      "leverage": 1.0,
+      "reset_frequency": "Daily",
+      "observation": {
+        "lookback_days": 1,
+        "lookback_type": "Lookback",
+        "cutoff_days": 1,
+        "reset_timing": "In Arrears",
+        "compounding": "ExcludeSprd"
+      },
+      "principal_repayments": [
+        {
+          "payment_date": "2027-05-28",
+          "amount": {
+            "amount": 265000,
+            "currency": "USD"
+          }
+        }
+      ]
+    },
+    "amortization_source": {
+      "type": "Notional reduction",
+      "reduction_percent": 50,
+      "reduction_amount": 265000,
+      "remaining_notional": 265000,
+      "reduction_date": "2027-05-28",
+      "period_notionals": [
+        {
+          "period_start": "2026-05-31",
+          "period_end": "2027-05-28",
+          "notional": 530000,
+          "currency": "USD"
+        },
+        {
+          "period_start": "2027-05-28",
+          "period_end": "2027-11-30",
+          "notional": 265000,
+          "currency": "USD"
+        }
+      ]
+    }
+  },
+  "schedule_inputs": {
+    "pay_leg": {
+      "generation_direction": "Backward",
+      "explicit_accrual_boundaries": [
+        "2026-05-31",
+        "2027-05-28",
+        "2027-11-30"
+      ],
+      "payment_dates": [
+        "2027-05-28",
+        "2027-11-30"
+      ],
+      "business_day_convention": "Modified Following"
+    },
+    "receive_leg": {
+      "generation_direction": "Backward",
+      "explicit_accrual_boundaries": [
+        "2026-05-31",
+        "2027-05-28",
+        "2027-11-30"
+      ],
+      "payment_dates": [
+        "2027-05-28",
+        "2027-11-30"
+      ],
+      "business_day_convention": "Modified Following"
+    }
+  }
+}
