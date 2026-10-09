@@ -12,6 +12,9 @@ requires-python = ">=3.10"
 license = {text = "MIT"}
 
 dependencies = [    
+    # Pinned exactly; keep in sync with environment.yml (conda: quantlib-python==1.43).
+    # 1.43 is required for correct overnight-coupon accrual on holiday start dates.
+    "QuantLib==1.43",
     "numpy>=1.24",
     "scipy>=1.11",
     "pandas>=2.0",

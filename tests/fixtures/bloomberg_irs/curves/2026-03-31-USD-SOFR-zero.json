@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "curve_id": "2026-03-31-USD-SOFR-490-zero",
+  "reference_date": "2026-03-31",
+  "currency": "USD",
+  "benchmark": "SOFR",
+  "purpose": "Test-only oracle curve for TC1 regression tests. Not a production curve methodology.",
+  "provenance": {
+    "zero_rate_percent": "Bloomberg curve export 'Zero Rate' column (490-USDSOFR, 31-Mar-2026), supplied by the SME on 09-Oct-2026; not present in market_data/2026-03-31/USD/market_data.json.",
+    "discount_factor": "Copied from market_data/2026-03-31/USD/market_data.json (same export).",
+    "export_date": "Export 'Date' column: reference date + nominal tenor days (7/week, 30/month, 365/year); a display label, not the pillar date.",
+    "inferred_tenor": "Inferred, not exported: unique standard tenor whose T+2 spot roll matches the day count implied by -ln(DF)/zero on ACT/365F (all 20 rows).",
+    "pillar_date": "US SOFR calendar, spot = reference + 2 business days, + inferred tenor, Modified Following, no end-of-month."
+  },
+  "conventions": {
+    "zero_rate_compounding": "continuous",
+    "zero_rate_day_count": "ACT/365F",
+    "interpolation": "linear in zero rate",
+    "front_extrapolation": "flat first-pillar zero to reference date"
+  },
+  "validation": "exp(-zero*days/365) reproduces every discount_factor within export rounding (max |err|/bound = 0.97).",
+  "observations": [
+    {
+      "export_date": "2026-04-07",
+      "inferred_tenor": "1W",
+      "pillar_date": "2026-04-09",
+      "zero_rate_percent": 3.70182,
+      "discount_factor": 0.999088
+    },
+    {
+      "export_date": "2026-04-14",
+      "inferred_tenor": "2W",
+      "pillar_date": "2026-04-16",
+      "zero_rate_percent": 3.70182,
+      "discount_factor": 0.998379
+    },
+    {
+      "export_date": "2026-04-21",
+      "inferred_tenor": "3W",
+      "pillar_date": "2026-04-23",
+      "zero_rate_percent": 3.70094,
+      "discount_factor": 0.997671
+    },
+    {
+      "export_date": "2026-04-30",
+      "inferred_tenor": "1M",
+      "pillar_date": "2026-05-04",
+      "zero_rate_percent": 3.70544,
+      "discount_factor": 0.996554
+    },
+    {
+      "export_date": "2026-05-30",
+      "inferred_tenor": "2M",
+      "pillar_date": "2026-06-02",
+      "zero_rate_percent": 3.7097,
+      "discount_factor": 0.993617
+    },
+    {
+      "export_date": "2026-06-29",
+      "inferred_tenor": "3M",
+      "pillar_date": "2026-07-02",
+      "zero_rate_percent": 3.71046,
+      "discount_factor": 0.990591
+    },
+    {
+      "export_date": "2026-07-29",
+      "inferred_tenor": "4M",
+      "pillar_date": "2026-08-03",
+      "zero_rate_percent": 3.70721,
+      "discount_factor": 0.987384
+    },
+    {
+      "export_date": "2026-08-28",
+      "inferred_tenor": "5M",
+      "pillar_date": "2026-09-02",
+      "zero_rate_percent": 3.70252,
+      "discount_factor": 0.9844
+    },
+    {
+      "export_date": "2026-09-27",
+      "inferred_tenor": "6M",
+      "pillar_date": "2026-10-02",
+      "zero_rate_percent": 3.69965,
+      "discount_factor": 0.981423
+    },
+    {
+      "export_date": "2026-10-27",
+      "inferred_tenor": "7M",
+      "pillar_date": "2026-11-02",
+      "zero_rate_percent": 3.69836,
+      "discount_factor": 0.978352
+    },
+    {
+      "export_date": "2026-11-26",
+      "inferred_tenor": "8M",
+      "pillar_date": "2026-12-02",
+      "zero_rate_percent": 3.69651,
+      "discount_factor": 0.975394
+    },
+    {
+      "export_date": "2026-12-26",
+      "inferred_tenor": "9M",
+      "pillar_date": "2027-01-04",
+      "zero_rate_percent": 3.69401,
+      "discount_factor": 0.972159
+    },
+    {
+      "export_date": "2027-01-25",
+      "inferred_tenor": "10M",
+      "pillar_date": "2027-02-02",
+      "zero_rate_percent": 3.69122,
+      "discount_factor": 0.969332
+    },
+    {
+      "export_date": "2027-02-24",
+      "inferred_tenor": "11M",
+      "pillar_date": "2027-03-02",
+      "zero_rate_percent": 3.68706,
+      "discount_factor": 0.966628
+    },
+    {
+      "export_date": "2027-03-26",
+      "inferred_tenor": "12M",
+      "pillar_date": "2027-04-02",
+      "zero_rate_percent": 3.68376,
+      "discount_factor": 0.963638
+    },
+    {
+      "export_date": "2027-09-22",
+      "inferred_tenor": "18M",
+      "pillar_date": "2027-10-04",
+      "zero_rate_percent": 3.65444,
+      "discount_factor": 0.946232
+    },
+    {
+      "export_date": "2028-03-30",
+      "inferred_tenor": "2Y",
+      "pillar_date": "2028-04-03",
+      "zero_rate_percent": 3.60422,
+      "discount_factor": 0.930085
+    },
+    {
+      "export_date": "2029-03-30",
+      "inferred_tenor": "3Y",
+      "pillar_date": "2029-04-02",
+      "zero_rate_percent": 3.56121,
+      "discount_factor": 0.89841
+    },
+    {
+      "export_date": "2030-03-30",
+      "inferred_tenor": "4Y",
+      "pillar_date": "2030-04-02",
+      "zero_rate_percent": 3.5692,
+      "discount_factor": 0.866701
+    },
+    {
+      "export_date": "2031-03-30",
+      "inferred_tenor": "5Y",
+      "pillar_date": "2031-04-02",
+      "zero_rate_percent": 3.60763,
+      "discount_factor": 0.834704
+    }
+  ]
+}

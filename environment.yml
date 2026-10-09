@@ -18,8 +18,12 @@ dependencies:
   - pip
 
   # --- QuantLib ---
-  # conda-forge has pre-built QuantLib with all C++ deps resolved
-  - quantlib-python>=1.31
+  # conda-forge has pre-built QuantLib with all C++ deps resolved.
+  # Pinned exactly: QuantLib 1.43 fixes overnight-coupon accrual when the accrual
+  # start is a fixing holiday (QuantLib PR #2556). Earlier releases drop the first
+  # day's interest (TC1 Period 1: -1.05 bp). Change only with the IRS regression
+  # tests (tests/unit/test_irs/test_quantlib_*.py, test_tc1_period1_*.py).
+  - quantlib-python==1.43
 
   # --- Scientific ---
   - numpy>=1.24
