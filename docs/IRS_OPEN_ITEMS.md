@@ -18,6 +18,7 @@ Last updated: 09-Oct-2026 · QuantLib 1.43
 | OI-7 | TC3 Period 4 / 28-Apr-2028 discount factor vs Bloomberg | Open: awaiting Bloomberg curve-490 data (with OI-1) | `test_tc3_pricing_service_e2e.py` |
 | OI-8 | Contractual maturity vs adjusted accrual dates; calendar mapping | Implemented with provisional convention and FD-only calendar | `test_tc1_pricing_service_e2e.py`, `test_tc3_pricing_service_e2e.py` |
 | OI-9 | TC3 Bloomberg `leg_*_market` NPVs differ from the cashflow-leg NPVs | Open: unexplained, not used as references | `test_tc3_pricing_service_e2e.py` |
+| OI-10 | Seasoned trades: already-paid cashflows and historical fixings | Out of scope: cashflow extractor refuses already-paid cashflows | `test_irs_cashflows.py::test_already_paid_cashflows_are_refused` |
 
 ---
 
@@ -239,3 +240,13 @@ cashflows and are the references used. The `leg_*_market` values differ from the
 by ±34,056.20 and appear to split the NPV by premium (1.92% + 0.84% ≈ 2.76%); their
 definition is not confirmed. They are recorded and not used. Needs the Bloomberg
 field definition.
+
+## OI-10: Seasoned trades
+
+`instruments/rates/irs/cashflows.py` (`irs_cashflow_rows`) refuses any coupon that
+pays on or before the valuation date and raises `CashflowExtractionError` before
+discounting. QuantLib's discounting engine excludes such cashflows (default
+`includeReferenceDateEvents = False`), so reporting them would not match the priced
+NPV. Seasoned trades are out of scope: the fresh floating leg also has no source of
+historical SOFR fixings (`MarketEnvironment.fixings` is not used), so pricing one
+would fail on missing fixings. TC1 and TC3 are forward-starting and unaffected.
