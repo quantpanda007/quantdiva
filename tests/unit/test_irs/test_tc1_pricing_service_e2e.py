@@ -42,9 +42,25 @@ from services.pricers.pricing_service import PricingService
 
 VALUATION_DATE = date(2026, 3, 31)
 
+# Bloomberg business-day adjustment labels seen in the fixtures. Strict lookup:
+# any other label raises KeyError instead of being guessed.
+BLOOMBERG_BUSINESS_DAY_CONVENTIONS = {"Mod Foll": "modified_following"}
+
+
+def accrual_date_adjustment(contract_detail: dict) -> dict:
+    """Leg date adjustment from a Bloomberg ``contract_detail`` section."""
+    return {
+        "calendar": contract_detail["calculation_calendar"],
+        "business_day_convention": BLOOMBERG_BUSINESS_DAY_CONVENTIONS[
+            contract_detail["bus_day_adjustment"]
+        ],
+    }
+
 
 def _tc1_params(case: dict, source: dict) -> dict:
-    """Request params from the canonical case; lookback from the Bloomberg source."""
+    """Request params from the canonical case; lookback and the leg date adjustment
+    (calendar, business-day convention) from the Bloomberg source."""
+    assert source["leg_1"]["type"] == "Fixed" and source["leg_2"]["type"] == "Floating"
     trade = case["trade"]
     pay, receive = trade["pay_leg"], trade["receive_leg"]
     periods = [
@@ -71,6 +87,9 @@ def _tc1_params(case: dict, source: dict) -> dict:
             "day_count": pay["day_count"],
             "payment_frequency": pay["payment_frequency"].lower(),
             "fixed_rate": pay["fixed_coupon"]["value"] / 100.0,
+            "accrual_date_adjustment": accrual_date_adjustment(
+                source["leg_1"]["contract_detail"]
+            ),
             "periods": copy.deepcopy(periods),
         },
         "floating_leg": {
@@ -81,6 +100,9 @@ def _tc1_params(case: dict, source: dict) -> dict:
             "spread": receive["floating_spread"]["value"] / 10000.0,
             "leverage": receive["leverage"],
             "reset_frequency": receive["reset_frequency"].lower(),
+            "accrual_date_adjustment": accrual_date_adjustment(
+                source["leg_2"]["contract_detail"]
+            ),
             "observation": {
                 "lookback_days": source["leg_2"]["days_before_accrual"],
                 "cutoff_days": observation["cutoff_days"],
@@ -183,6 +205,25 @@ def test_request_builds_the_fresh_instrument(service_run):
     assert type(instrument) is FreshOISInstrument
     assert instrument.trade.floating_terms.observation.lookback_days == 0  # OI-3
     assert instrument.trade.floating_terms.observation.cutoff_days == 1
+
+
+def test_contractual_maturity_equals_final_accrual_end(service_run):
+    """TC1 maturity is a business day, so contractual maturity = final accrual end."""
+    trade = service_run["instrument"].trade
+    assert service_run["instrument"].maturity() == date(2027, 11, 30)
+    assert trade.maturity_date == date(2027, 11, 30)
+    for periods in (trade.fixed_periods, trade.floating_periods):
+        assert periods[-1].accrual_end == trade.maturity_date
+    for adjustment in (trade.fixed_date_adjustment, trade.floating_date_adjustment):
+        assert adjustment.calendar == "FD"
+        assert adjustment.business_day_convention.value == "modified_following"
+
+
+def test_unadjusted_convention_accepted_when_maturity_is_a_business_day(tc1_params):
+    params = copy.deepcopy(tc1_params)
+    for leg in ("fixed_leg", "floating_leg"):
+        params[leg]["accrual_date_adjustment"]["business_day_convention"] = "unadjusted"
+    assert FreshOISInstrument.from_dict(params).maturity() == date(2027, 11, 30)
 
 
 def test_leg_npvs_come_from_the_swap_the_engine_priced(service_run):
@@ -312,6 +353,33 @@ def _mutate(params, path, value=..., delete=False):
         (("fixed_leg", "periods"), [], False, "non-empty list"),
         (("fixed_leg", "periods", 1, "notional"), 0, False, "positive"),
         (("maturity_date",), "2027-12-01", False, "end on the maturity_date"),
+        # accrual_date_adjustment: missing, malformed, unsupported
+        (("fixed_leg", "accrual_date_adjustment"), None, True, "missing required keys"),
+        (("floating_leg", "accrual_date_adjustment"), None, True, "missing required keys"),
+        (("fixed_leg", "accrual_date_adjustment"), "FD", False, "must be a mapping"),
+        (("fixed_leg", "accrual_date_adjustment", "calendar"), None, True, "missing required"),
+        (
+            ("floating_leg", "accrual_date_adjustment", "business_day_convention"),
+            None,
+            True,
+            "missing required",
+        ),
+        (("fixed_leg", "accrual_date_adjustment", "roll"), "Forward", False, "unknown keys"),
+        (("fixed_leg", "accrual_date_adjustment", "calendar"), "GT", False, "not supported"),
+        (("floating_leg", "accrual_date_adjustment", "calendar"), "fd", False, "not supported"),
+        (("fixed_leg", "accrual_date_adjustment", "calendar"), None, False, "not supported"),
+        (
+            ("fixed_leg", "accrual_date_adjustment", "business_day_convention"),
+            "Mod Foll",
+            False,
+            "business_day_convention",
+        ),
+        (
+            ("floating_leg", "accrual_date_adjustment", "business_day_convention"),
+            5,
+            False,
+            "business_day_convention",
+        ),
     ],
 )
 def test_invalid_parameters_fail_explicitly(tc1_params, path, value, delete, message):

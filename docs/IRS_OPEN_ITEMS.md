@@ -9,12 +9,15 @@ Last updated: 09-Oct-2026 · QuantLib 1.43
 
 | ID | Item | Status | Monitored by |
 |---|---|---|---|
-| OI-1 | TC1 Period 2 / 30-Nov-2027 discount factor vs Bloomberg | Open: awaiting Bloomberg curve-490 data | `test_tc1_bloomberg_reconciliation.py` |
+| OI-1 | TC1 Period 2 / 30-Nov-2027 discount factor vs Bloomberg (also TC3 Period 3) | Open: awaiting Bloomberg curve-490 data | `test_tc1_bloomberg_reconciliation.py`, `test_tc3_pricing_service_e2e.py` |
 | OI-2 | Bloomberg rate cutoff vs QuantLib `lockoutDays` | Open: mapping not confirmed | `test_tc1_bloomberg_reconciliation.py::test_baseline_conventions_are_the_recorded_ones` |
 | OI-3 | TC1 lookback: case fixture 1 vs Bloomberg source 0 | Open: fixture not changed | `test_tc1_period1_regression.py::test_lookback_is_taken_from_bloomberg_source` |
 | OI-4 | Legacy SOFR path (`interest_rate_swap.py`, `yield_curve.py`) | Excluded, uncommitted experimental work | not part of the fresh IRS suite |
-| OI-5 | Curve market-data source, tenor mapping, request-level curve input | Partly done: service path wired; curve data still from the test fixture | `test_irs_zero_curve.py`, `test_tc1_pricing_service_e2e.py` |
+| OI-5 | Curve market-data source, tenor mapping, request-level curve input | Partly done: service path wired; curve data still from the test fixture | `test_irs_zero_curve.py`, `test_tc1_pricing_service_e2e.py`, `test_tc3_pricing_service_e2e.py` |
 | OI-6 | Bloomberg-derived data and the public GitHub remote | Decision deferred: keep all commits local | — |
+| OI-7 | TC3 Period 4 / 28-Apr-2028 discount factor vs Bloomberg | Open: awaiting Bloomberg curve-490 data (with OI-1) | `test_tc3_pricing_service_e2e.py` |
+| OI-8 | Contractual maturity vs adjusted accrual dates; calendar mapping | Implemented with provisional convention and FD-only calendar | `test_tc1_pricing_service_e2e.py`, `test_tc3_pricing_service_e2e.py` |
+| OI-9 | TC3 Bloomberg `leg_*_market` NPVs differ from the cashflow-leg NPVs | Open: unexplained, not used as references | `test_tc3_pricing_service_e2e.py` |
 
 ---
 
@@ -47,6 +50,11 @@ NPV 24,023.04; total NPV −7,955.73.
   interpolation everywhere (log-linear DF, cubic and monotone-cubic all break
   the 28-May-2027 check).
 - The gap is about 5× the display-rounding band, so it is real but small.
+- TC3 Period 3 has the same dates (28-May-2027 → 30-Nov-2027) and the same
+  result: Bloomberg DF 0.941092, Optima DF +2.56e-6, coupon −0.054 bp (−$1.10 on
+  TC3's 395,000 notional). The compounded SOFR is identical to TC1 Period 2 once
+  the spreads (70 bp vs 10 bp) are removed, so this is one curve difference seen
+  in two trades.
 
 **Hypotheses (unconfirmed):**
 - Bloomberg curve members between 18M (04-Oct-2027) and 2Y (03-Apr-2028) that the
@@ -62,9 +70,10 @@ NPV 24,023.04; total NPV −7,955.73.
 2. Curve settings: interpolation method and quantity, turn-of-year or
    meeting-date settings, interpolation day basis.
 3. Full-precision zero rate and DF at 30-Nov-2027 and 28-May-2027 (control),
-   and at the 04-Oct-2027 and 03-Apr-2028 pillars.
-4. Confirmation that the SWPM trade used curve 490 for both projection and
-   discounting from that snapshot.
+   at 28-Apr-2028 (OI-7), and at the 04-Oct-2027, 03-Apr-2028 and
+   02-Apr-2029 pillars.
+4. Confirmation that the SWPM trades (TC1 and TC3) used curve 490 for both
+   projection and discounting from that snapshot.
 
 **Rule:** do not change interpolation or add adjustments to match the two
 cashflows. When the data arrives, re-run the analysis, then update the recorded
@@ -115,6 +124,8 @@ without explicit decisions.
   `"analytical"` and engine `("ois", "discounting")` (`FreshIRSDiscountingEngine`,
   which never falls back to another curve).
 - The service result equals the recorded reconciliation baseline exactly.
+- TC3 (amortising, semiannual, short final stub, contractual maturity on a
+  Sunday) prices through the same path with no instrument- or engine-specific code.
 
 **Still open:**
 - The curve data comes from the committed test fixture
@@ -141,3 +152,90 @@ without explicit decisions.
 fixtures, including the zero-curve fixture in commit `581e68b`, are committed
 locally only. Decision: keep all commits local, no push, until the data-sharing
 implications are reviewed.
+
+## OI-7: 28-Apr-2028 discount factor (TC3 Period 4)
+
+Linked to OI-1 (same curve, same missing Bloomberg data), but measured and tracked
+separately: it sits in a different curve segment and has the opposite sign.
+
+**Observed (Bloomberg, as displayed):** Period 4 (30-Nov-2027 → 28-Apr-2028,
+150 days, notional 197,500) equivalent coupon 4.12404%, payment 3,393.74,
+DF 0.927854.
+
+| Metric | Optima − Bloomberg |
+|---|---:|
+| 28-Apr-2028 DF | −5.30e-6 |
+| Period 4 coupon | +0.217 bp |
+| Period 4 payment | +$1.79 |
+| Period 4 payment effect on PV | +$1.66 |
+
+TC3 totals (Optima − Bloomberg, cashflow-leg references): floating leg +$0.59,
+fixed leg +$0.0015, NPV +$0.59. The floating-leg total is the net of the OI-1
+Period 3 effect (−$1.04) and this one (+$1.66), so the small total hides two
+larger opposing differences.
+
+**Established:** TC3 Periods 1 and 2 reconcile within display precision (coupons
+≤ 0.001 bp, DFs ≤ 2.5e-7) and the four fixed cashflows within $0.005, so the
+amortisation, spread and stub handling are not the source. Period 4 is the first
+TC case that uses the curve beyond the 2Y pillar (03-Apr-2028 → 02-Apr-2029
+segment), and its accrual spans the 18M–2Y segment.
+
+**Rule:** as OI-1. No interpolation or curve changes to match; resolve with the
+Bloomberg curve-490 data and update the TC3 baseline and this entry together.
+
+## OI-8: Contractual maturity vs adjusted accrual dates
+
+**Date meanings (fresh IRS, `FreshOISInstrument`):**
+- `effective_date`: contractual start date as supplied.
+- `maturity_date`: contractual, unadjusted maturity, stored and returned by
+  `maturity()` exactly as supplied; never normalised.
+- Accrual and payment dates: supplied explicitly per period. The schedule and leg
+  builders use them as given (QuantLib `NullCalendar`, `Unadjusted`); no builder
+  generates or adjusts dates.
+- `accrual_date_adjustment` (required, per leg): `calendar` and
+  `business_day_convention`. Used **only** to validate the final accrual end; it
+  cannot change a price.
+
+**Validation rule (provisional):** start exact, end adjusted.
+- The first accrual start must equal `effective_date` exactly.
+- The final accrual end must equal `maturity_date` adjusted with that leg's
+  calendar and convention.
+
+This is the convention observed in Bloomberg TC1, TC3 and TC4, not a universal IRS
+rule: all three start on a non-business day that Bloomberg leaves unadjusted
+(31-May-2026, 31-May-2026, 01-Jan-2026), and TC3 and TC4 end on a Sunday
+contractual maturity that Bloomberg adjusts Modified Following (30-Apr-2028 →
+28-Apr-2028; 28-Feb-2027 → 26-Feb-2027). Revisit if another case contradicts it.
+
+**Calendar mapping (assumption):** Bloomberg `FD` → QuantLib
+`UnitedStates(FederalReserve)`. On every TC1/TC3/TC4 date checked, the Federal
+Reserve, Government Bond and SOFR calendars give the same result, so the data
+cannot confirm the mapping. Only `FD` is mapped; any other code (for example `SZ`
+in TC2, `RB` in TC5) is rejected until confirmed.
+
+**Known limitations:**
+- One-way check: an already-adjusted date passed as `maturity_date` also validates
+  (adjusting a business day leaves it unchanged), and is then stored as given. The
+  check proves consistency, not that the supplied date is the contractual one.
+  Covered by `test_tc3_pricing_service_e2e.py::test_one_way_validation_limitation`.
+- Payment dates are not checked against accrual ends or a payment delay; all TC
+  cases so far have pay delay 0.
+- Interior accrual dates are not checked against the calendar.
+- The pure schedule generator (`instruments/rates/irs/schedule.py`) produces
+  unadjusted dates and is not on the pricing path; it does not use this
+  adjustment.
+
+## OI-9: TC3 Bloomberg `leg_*_market` NPVs
+
+`references/TC3.json` has two sets of leg values:
+
+| Section | Leg 1 (pay fixed) | Leg 2 (receive float) | Sum |
+|---|---:|---:|---:|
+| `cashflow_leg_*` npv | −18,850.36 | 40,653.83 | 21,803.47 |
+| `leg_*_market` npv | 15,205.84 | 6,597.63 | 21,803.47 |
+
+Both sum to the trade NPV. The `cashflow_leg_*` values are the PVs of the listed
+cashflows and are the references used. The `leg_*_market` values differ from them
+by ±34,056.20 and appear to split the NPV by premium (1.92% + 0.84% ≈ 2.76%); their
+definition is not confirmed. They are recorded and not used. Needs the Bloomberg
+field definition.

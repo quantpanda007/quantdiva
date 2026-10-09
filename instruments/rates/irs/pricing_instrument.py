@@ -9,6 +9,16 @@ floating legs, ``ql.Swap`` assembly). It is independent of the legacy
 Rules:
 * every parameter is required, unknown keys are rejected, nothing is defaulted;
 * rates and spreads are decimals (0.05, 0.001), never percentages or bp;
+* ``maturity_date`` is the contractual (unadjusted) maturity and is stored as
+  given. Each leg's final accrual end must equal that date adjusted with the
+  leg's own ``accrual_date_adjustment`` (calendar and business-day convention);
+  the first accrual start must equal ``effective_date`` exactly. This "start
+  exact, end adjusted" rule is provisional, taken from Bloomberg TC1, TC3 and TC4
+  (open item OI-8). The check is one-way: an already-adjusted date supplied as
+  ``maturity_date`` also passes, because adjusting a business day leaves it
+  unchanged;
+* the adjustment is used for validation only. Coupons are still built from the
+  explicit period dates, so it cannot change a price;
 * the projection curve is ``market_env.forecast_curves[currency]``; if it is
   missing the build fails, there is no fallback to another curve;
 * the pricing engine is attached by the caller (PricingService); this class
@@ -24,7 +34,13 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 import QuantLib as ql
 
-from core.enums.definitions import AssetClass, DayCountConvention, Frequency, InstrumentType
+from core.enums.definitions import (
+    AssetClass,
+    BusinessDayConvention,
+    DayCountConvention,
+    Frequency,
+    InstrumentType,
+)
 from core.interfaces.base import BaseInstrument, MarketEnvironment
 from core.types.value_objects import Money, TradeId
 from instruments.rates.irs.domain import IRSLegKind, IRSLegTerms, ObservationConventions
@@ -58,6 +74,20 @@ _PAYMENT_FREQUENCIES = {
 _RESET_FREQUENCIES = {"daily": Frequency.DAILY}
 _FIXED_SIDES = ("pay", "receive")
 
+# Bloomberg calendar codes. Only "FD" is mapped; it is taken to be the US Federal
+# Reserve calendar (assumption, OI-8). Other codes are rejected, not guessed.
+_CALENDARS = {
+    "FD": lambda: ql.UnitedStates(ql.UnitedStates.FederalReserve),
+}
+_BUSINESS_DAY_CONVENTIONS = {convention.value: convention for convention in BusinessDayConvention}
+_QL_BUSINESS_DAY_CONVENTIONS = {
+    BusinessDayConvention.FOLLOWING: ql.Following,
+    BusinessDayConvention.MODIFIED_FOLLOWING: ql.ModifiedFollowing,
+    BusinessDayConvention.PRECEDING: ql.Preceding,
+    BusinessDayConvention.MODIFIED_PRECEDING: ql.ModifiedPreceding,
+    BusinessDayConvention.UNADJUSTED: ql.Unadjusted,
+}
+
 _TOP_KEYS = frozenset(
     {
         "trade_id",
@@ -70,10 +100,13 @@ _TOP_KEYS = frozenset(
         "floating_leg",
     }
 )
-_FIXED_KEYS = frozenset({"day_count", "payment_frequency", "fixed_rate", "periods"})
+_FIXED_KEYS = frozenset(
+    {"day_count", "payment_frequency", "fixed_rate", "accrual_date_adjustment", "periods"}
+)
 _FLOATING_KEYS = frozenset(
     {
         "day_count",
+        "accrual_date_adjustment",
         "payment_frequency",
         "benchmark",
         "benchmark_tenor",
@@ -88,6 +121,7 @@ _OBSERVATION_KEYS = frozenset(
     {"lookback_days", "cutoff_days", "reset_timing", "compounding", "lookback_type"}
 )
 _PERIOD_KEYS = frozenset({"accrual_start", "accrual_end", "payment_date", "notional"})
+_ADJUSTMENT_KEYS = frozenset({"calendar", "business_day_convention"})
 
 
 def _require_mapping(value: Any, path: str) -> Mapping[str, Any]:
@@ -175,6 +209,54 @@ def _periods(value: Any, currency: str, path: str) -> Tuple[CouponPeriod, ...]:
 
 
 @dataclass(frozen=True)
+class AccrualDateAdjustment:
+    """Calendar and business-day convention used to adjust a leg's accrual dates.
+
+    Used only to check the final accrual end against the contractual maturity.
+    """
+
+    calendar: str
+    business_day_convention: BusinessDayConvention
+
+    def __post_init__(self) -> None:
+        if self.calendar not in _CALENDARS:
+            raise InvalidIRSParameters(
+                f"calendar {self.calendar!r} is not supported; supported: {sorted(_CALENDARS)}"
+            )
+        if not isinstance(self.business_day_convention, BusinessDayConvention):
+            raise InvalidIRSParameters("business_day_convention must be a BusinessDayConvention")
+
+    def adjust(self, value: date) -> date:
+        calendar = _CALENDARS[self.calendar]()
+        adjusted = calendar.adjust(
+            ql.Date(value.day, value.month, value.year),
+            _QL_BUSINESS_DAY_CONVENTIONS[self.business_day_convention],
+        )
+        return date(adjusted.year(), adjusted.month(), adjusted.dayOfMonth())
+
+    def describe(self) -> str:
+        return f"{self.business_day_convention.value}, calendar {self.calendar}"
+
+
+def _adjustment(value: Any, path: str) -> AccrualDateAdjustment:
+    row = _require_mapping(value, path)
+    _check_keys(row, _ADJUSTMENT_KEYS, path)
+    calendar = row["calendar"]
+    if not isinstance(calendar, str) or calendar not in _CALENDARS:
+        raise InvalidIRSParameters(
+            f"{path}.calendar: {calendar!r} is not supported; supported: {sorted(_CALENDARS)}"
+        )
+    return AccrualDateAdjustment(
+        calendar=calendar,
+        business_day_convention=_choice(
+            row["business_day_convention"],
+            _BUSINESS_DAY_CONVENTIONS,
+            f"{path}.business_day_convention",
+        ),
+    )
+
+
+@dataclass(frozen=True)
 class FreshOISTrade:
     """Typed, validated inputs for one fixed-vs-overnight swap."""
 
@@ -188,6 +270,8 @@ class FreshOISTrade:
     floating_terms: IRSLegTerms
     fixed_periods: Tuple[CouponPeriod, ...]
     floating_periods: Tuple[CouponPeriod, ...]
+    fixed_date_adjustment: AccrualDateAdjustment
+    floating_date_adjustment: AccrualDateAdjustment
 
     def __post_init__(self) -> None:
         if self.fixed_leg_side not in _FIXED_SIDES:
@@ -198,11 +282,30 @@ class FreshOISTrade:
             raise InvalidIRSParameters("floating_terms must describe a floating leg")
         if not self.effective_date < self.maturity_date:
             raise InvalidIRSParameters("effective_date must be before maturity_date")
-        for name, periods in (("fixed", self.fixed_periods), ("floating", self.floating_periods)):
+        legs = (
+            ("fixed", self.fixed_periods, self.fixed_date_adjustment),
+            ("floating", self.floating_periods, self.floating_date_adjustment),
+        )
+        for name, periods, adjustment in legs:
+            if not isinstance(adjustment, AccrualDateAdjustment):
+                raise InvalidIRSParameters(f"{name} leg requires an AccrualDateAdjustment")
+            # Start exact: the first accrual start is the effective date, unadjusted.
             if periods[0].accrual_start != self.effective_date:
-                raise InvalidIRSParameters(f"{name} periods must start on the effective_date")
-            if periods[-1].accrual_end != self.maturity_date:
-                raise InvalidIRSParameters(f"{name} periods must end on the maturity_date")
+                raise InvalidIRSParameters(
+                    f"{name} periods must start on the effective_date "
+                    f"{self.effective_date.isoformat()} (unadjusted); first accrual_start is "
+                    f"{periods[0].accrual_start.isoformat()}"
+                )
+            # End adjusted: compare with the adjusted maturity; maturity_date itself
+            # is left as supplied.
+            expected_end = adjustment.adjust(self.maturity_date)
+            if periods[-1].accrual_end != expected_end:
+                raise InvalidIRSParameters(
+                    f"{name} periods must end on the maturity_date "
+                    f"{self.maturity_date.isoformat()} adjusted ({adjustment.describe()}), "
+                    f"i.e. {expected_end.isoformat()}; final accrual_end is "
+                    f"{periods[-1].accrual_end.isoformat()}"
+                )
 
     @classmethod
     def from_params(cls, params: Mapping[str, Any]) -> "FreshOISTrade":
@@ -276,6 +379,12 @@ class FreshOISTrade:
             floating_terms=floating_terms,
             fixed_periods=fixed_periods,
             floating_periods=floating_periods,
+            fixed_date_adjustment=_adjustment(
+                fixed["accrual_date_adjustment"], "fixed_leg.accrual_date_adjustment"
+            ),
+            floating_date_adjustment=_adjustment(
+                floating["accrual_date_adjustment"], "floating_leg.accrual_date_adjustment"
+            ),
         )
 
 
