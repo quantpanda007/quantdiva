@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "instrument_type": "ois",
+  "params": {
+    "trade_id": "SLLSL9RX",
+    "currency": "USD",
+    "valuation_date": "2026-03-31",
+    "effective_date": "2026-01-01",
+    "maturity_date": "2027-02-28",
+    "fixed_leg_side": "pay",
+    "fixed_leg": {
+      "day_count": "ACT/360",
+      "payment_frequency": "quarterly",
+      "fixed_rate": 0.05,
+      "accrual_date_adjustment": {
+        "calendar": "FD",
+        "business_day_convention": "modified_following"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-01-01",
+          "accrual_end": "2026-03-31",
+          "payment_date": "2026-03-31",
+          "notional": 930000
+        },
+        {
+          "accrual_start": "2026-03-31",
+          "accrual_end": "2026-06-30",
+          "payment_date": "2026-06-30",
+          "notional": 744000
+        },
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2026-09-30",
+          "payment_date": "2026-09-30",
+          "notional": 558000
+        },
+        {
+          "accrual_start": "2026-09-30",
+          "accrual_end": "2026-12-31",
+          "payment_date": "2026-12-31",
+          "notional": 372000
+        },
+        {
+          "accrual_start": "2026-12-31",
+          "accrual_end": "2027-02-26",
+          "payment_date": "2027-02-26",
+          "notional": 186000
+        }
+      ]
+    },
+    "floating_leg": {
+      "day_count": "ACT/360",
+      "payment_frequency": "quarterly",
+      "benchmark": "SOFRRATE",
+      "benchmark_tenor": "1D",
+      "spread": 0.003,
+      "leverage": 1.0,
+      "reset_frequency": "daily",
+      "accrual_date_adjustment": {
+        "calendar": "FD",
+        "business_day_convention": "modified_following"
+      },
+      "observation": {
+        "lookback_days": 0,
+        "cutoff_days": 1,
+        "reset_timing": "In Arrears",
+        "compounding": "ExcludeSprd",
+        "lookback_type": "Lookback"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-01-01",
+          "accrual_end": "2026-03-31",
+          "payment_date": "2026-03-31",
+          "notional": 930000
+        },
+        {
+          "accrual_start": "2026-03-31",
+          "accrual_end": "2026-06-30",
+          "payment_date": "2026-06-30",
+          "notional": 744000
+        },
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2026-09-30",
+          "payment_date": "2026-09-30",
+          "notional": 558000
+        },
+        {
+          "accrual_start": "2026-09-30",
+          "accrual_end": "2026-12-31",
+          "payment_date": "2026-12-31",
+          "notional": 372000
+        },
+        {
+          "accrual_start": "2026-12-31",
+          "accrual_end": "2027-02-26",
+          "payment_date": "2027-02-26",
+          "notional": 186000
+        }
+      ]
+    }
+  }
+}
