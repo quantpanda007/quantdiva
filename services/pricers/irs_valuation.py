@@ -29,8 +29,14 @@ from typing import Any, Dict, Mapping, Tuple
 
 import QuantLib as ql
 
-from instruments.rates.irs.cashflows import IRSCashflowRow, irs_cashflow_rows
+from instruments.rates.irs.cashflows import (
+    IRSCashflowRow,
+    SettledCashflow,
+    irs_cashflow_rows,
+    settled_cashflows,
+)
 from instruments.rates.irs.pricing_instrument import FreshOISInstrument
+from market.curves.irs_fixings import overnight_fixings_applied
 from market.curves.irs_market_snapshot import (
     InvalidMarketData,
     parse_market_snapshot,
@@ -44,7 +50,8 @@ MODEL = "analytical"
 ENGINE = "discounting"
 
 # Trade floating benchmark -> curve benchmark it must be projected on (strict).
-BENCHMARK_CURVES = {"SOFRRATE": "SOFR"}
+BENCHMARK_CURVES = {"SOFRRATE": "SOFR", "SF0006M": "SARON", "MUTKCALM": "TONA",
+                    "IRSWOF": "MIBOR"}
 
 _TRADE_KEYS = frozenset({"schema_version", "instrument_type", "params"})
 
@@ -71,6 +78,8 @@ class IRSValuation:
     forecast_curve_id: str
     model: str
     engine: str
+    # Coupons paying on or before the valuation date: excluded, as by the engine.
+    settled: Tuple[SettledCashflow, ...] = ()
 
     def to_dict(self) -> Dict[str, Any]:
         """JSON-ready dictionary (dates as ISO strings)."""
@@ -78,10 +87,13 @@ class IRSValuation:
         def plain(value: Any) -> Any:
             return value.isoformat() if isinstance(value, date) else value
 
-        result = {key: plain(value) for key, value in asdict(self).items() if key != "cashflows"}
-        result["cashflows"] = [
-            {key: plain(value) for key, value in asdict(row).items()} for row in self.cashflows
-        ]
+        result = {key: plain(value) for key, value in asdict(self).items()
+                  if key not in ("cashflows", "settled")}
+        for name in ("cashflows", "settled"):
+            result[name] = [
+                {key: plain(value) for key, value in asdict(row).items()}
+                for row in getattr(self, name)
+            ]
         return result
 
 
@@ -155,15 +167,23 @@ def price_irs(trade_document: Any, market_document: Any) -> IRSValuation:
 
     previous = ql.Settings.instance().evaluationDate
     try:
-        result = PricingService().price(
-            instrument=instrument,
-            market_env=environment,
-            model_type=MODEL,
-            engine_type=ENGINE,
-        )
-        legs = instrument.leg_npvs()
-        # Read while the pricing evaluation date is still set; same curve as the engine.
-        cashflows = irs_cashflow_rows(instrument.last_built, environment.discount_curves[currency])
+        # Overnight fixings (market data) are in QuantLib's index history only while this
+        # trade is priced and its cashflows read; the previous history is restored.
+        with overnight_fixings_applied(environment.fixings):
+            result = PricingService().price(
+                instrument=instrument,
+                market_env=environment,
+                model_type=MODEL,
+                engine_type=ENGINE,
+            )
+            legs = instrument.leg_npvs()
+            # Read while the pricing evaluation date is still set; same curve as the engine.
+            cashflows = irs_cashflow_rows(
+                instrument.last_built, environment.discount_curves[currency]
+            )
+            settled = settled_cashflows(
+                instrument.last_built, ql.Settings.instance().evaluationDate
+            )
     finally:
         ql.Settings.instance().evaluationDate = previous
 
@@ -180,6 +200,7 @@ def price_irs(trade_document: Any, market_document: Any) -> IRSValuation:
         forecast_curve_id=assignment.forecast_curve_id,
         model=result.model_used,
         engine=result.engine_used,
+        settled=settled,
     )
 
 

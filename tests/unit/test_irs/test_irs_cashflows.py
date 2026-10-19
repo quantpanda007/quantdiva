@@ -34,6 +34,7 @@ from api.v1.helpers import build_instrument_from_request
 from api.v1.schemas import InstrumentRequest
 from instruments.rates.irs.cashflows import (
     CashflowExtractionError,
+    settled_cashflows,
     IRSCashflowRow,
     irs_cashflow_rows,
 )
@@ -287,30 +288,37 @@ def test_wrong_evaluation_date_is_rejected(priced, environment):
         ql.Settings.instance().evaluationDate = previous
 
 
-@pytest.mark.parametrize(
-    "valuation",
-    [
-        ql.Date(28, 5, 2027),  # TC1 period 1 pays on the valuation date (28-May-2027)
-        ql.Date(15, 6, 2027),  # TC1 period 1 paid before the valuation date
-    ],
-    ids=["payment_on_valuation_date", "payment_before_valuation_date"],
-)
-def test_already_paid_cashflows_are_refused(priced, valuation):
-    """Seasoned trades are out of scope: a coupon paying on or before the valuation
-    date is refused explicitly, before any discounting (no raw QuantLib
-    negative-time error)."""
+def test_settled_cashflows_are_excluded_like_the_engine(priced):
+    """Seasoned trades: a coupon paying on the valuation date is excluded (as by
+    ql.DiscountingSwapEngine) and listed as settled; later coupons are still valued."""
     built = priced["TC1"]["instrument"].last_built
+    valuation = ql.Date(28, 5, 2027)  # TC1 period 1 pays on this date
     curve = ql.YieldTermStructureHandle(ql.FlatForward(valuation, 0.04, ql.Actual365Fixed()))
     previous = ql.Settings.instance().evaluationDate
     try:
         ql.Settings.instance().evaluationDate = valuation
-        with pytest.raises(
-            CashflowExtractionError,
-            match=r"fixed period 1 pays on 2027-05-28, on or before the valuation date "
-            + valuation.ISO(),
-        ):
-            irs_cashflow_rows(built, curve)
+        settled = settled_cashflows(built, valuation)
+        assert {(s.leg, s.period) for s in settled} == {("fixed", 1), ("floating", 1)}
+        rows = irs_cashflow_rows(built, curve)
+        assert [(r.leg, r.period) for r in rows] == [("fixed", 2), ("floating", 2)]
+        for r in rows:
+            assert r.present_value == pytest.approx(r.amount * r.discount_factor)
         assert ql.Settings.instance().evaluationDate == valuation  # not changed
+    finally:
+        ql.Settings.instance().evaluationDate = previous
+
+
+def test_missing_historical_fixings_are_reported_clearly(priced):
+    """A coupon still to be paid whose fixings precede the valuation date needs them."""
+    built = priced["TC1"]["instrument"].last_built
+    valuation = ql.Date(15, 6, 2027)  # TC1 period 2 observes SOFR from 28-May-2027
+    curve = ql.YieldTermStructureHandle(ql.FlatForward(valuation, 0.04, ql.Actual365Fixed()))
+    previous = ql.Settings.instance().evaluationDate
+    try:
+        ql.Settings.instance().evaluationDate = valuation
+        with pytest.raises(CashflowExtractionError,
+                           match="floating period 2 .* fixings before the valuation date"):
+            irs_cashflow_rows(built, curve)
     finally:
         ql.Settings.instance().evaluationDate = previous
 

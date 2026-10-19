@@ -19,6 +19,11 @@ Rules:
   unchanged;
 * the adjustment is used for validation only. Coupons are still built from the
   explicit period dates, so it cannot change a price;
+* the floating leg is either daily-compounded overnight (``reset_frequency``
+  "daily", with ``observation``) or a term-rate IBOR-fallback leg (``reset_frequency``
+  "semiannual", with ``term_rate`` and explicit ``resets`` per period; see
+  ``instruments.rates.irs.term_rate_leg``). Resets are trade inputs: no reset
+  schedule is generated, and each reset date is checked against the fixing calendar;
 * the projection curve is ``market_env.forecast_curves[currency]``; if it is
   missing the build fails, there is no fallback to another curve;
 * the pricing engine is attached by the caller (PricingService); this class
@@ -49,6 +54,16 @@ from instruments.rates.irs.floating_leg import build_floating_leg
 from instruments.rates.irs.instrument import QuantLibIRSInstrument, assemble_quantlib_irs
 from instruments.rates.irs.quantlib_schedule import translate_leg_schedule
 from instruments.rates.irs.schedule import CouponPeriod, LegSchedule
+from instruments.rates.irs.term_rate_leg import (
+    CONTRACTUAL_ACCRUAL,
+    DEFAULT_OBSERVATION_METHOD,
+    OBSERVATION_METHODS,
+    TERM_BENCHMARKS,
+    FallbackTermBenchmark,
+    TermRateLegSpec,
+    TermRateReset,
+    build_term_rate_floating_leg,
+)
 from registry import instrument_registry
 
 
@@ -72,12 +87,30 @@ _PAYMENT_FREQUENCIES = {
     "monthly": Frequency.MONTHLY,
 }
 _RESET_FREQUENCIES = {"daily": Frequency.DAILY}
+# Term-rate (IBOR-fallback) legs: resets are explicit trade inputs, see term_rate_leg.
+_TERM_RESET_FREQUENCIES = {"semiannual": Frequency.SEMIANNUAL}
+_TERM_COMPOUNDING = ("flat", "none")
 _FIXED_SIDES = ("pay", "receive")
 
-# Bloomberg calendar codes. Only "FD" is mapped; it is taken to be the US Federal
-# Reserve calendar (assumption, OI-8). Other codes are rejected, not guessed.
+# Bloomberg calendar codes. "FD" is taken to be the US Federal Reserve calendar
+# (assumption, OI-8). "SZ" is QuantLib's Switzerland calendar (its only market);
+# it reproduces every TC7 accrual and payment date. "JN" -> ql.Japan and "RB" ->
+# ql.India (NSE): the INR and JPY OIS bootstraps on these calendars reproduce
+# Bloomberg's TC5/TC8/TC9 and TC6/TC10 discount factors (OI-15, OI-16); not
+# SME-confirmed. Other codes are rejected.
 _CALENDARS = {
     "FD": lambda: ql.UnitedStates(ql.UnitedStates.FederalReserve),
+    "SZ": ql.Switzerland,
+    "JN": ql.Japan,
+    "RB": ql.India,
+}
+# Fixing calendars for term-rate resets. "EN" (England) is QuantLib's UnitedKingdom
+# settlement calendar: TC7's 27-Aug-2027 reset is one London business day before
+# 31-Aug-2027 (30-Aug-2027 is a UK bank holiday but a Swiss business day).
+_FIXING_CALENDARS = {
+    "EN": ql.UnitedKingdom,
+    "SZ": ql.Switzerland,
+    "RB": ql.India,
 }
 _BUSINESS_DAY_CONVENTIONS = {convention.value: convention for convention in BusinessDayConvention}
 _QL_BUSINESS_DAY_CONVENTIONS = {
@@ -117,6 +150,12 @@ _FLOATING_KEYS = frozenset(
         "periods",
     }
 )
+_TERM_FLOATING_KEYS = (_FLOATING_KEYS - {"observation"}) | {"term_rate"}
+_TERM_RATE_KEYS = frozenset({"compounding", "fixing_calendar", "fixing_days"})
+# Optional: observation-date method of an RFR-fallback benchmark (term_rate_leg); absent
+# means the existing reset-date fallback (Method B).
+_TERM_RATE_OPTIONAL_KEYS = frozenset({"observation_dates"})
+_RESET_KEYS = frozenset({"reset_date", "start", "end"})
 _OBSERVATION_KEYS = frozenset(
     {"lookback_days", "cutoff_days", "reset_timing", "compounding", "lookback_type"}
 )
@@ -256,6 +295,145 @@ def _adjustment(value: Any, path: str) -> AccrualDateAdjustment:
     )
 
 
+def _term_rate_floating(
+    floating: Mapping[str, Any], currency: str
+) -> Tuple[IRSLegTerms, Tuple[CouponPeriod, ...], TermRateLegSpec]:
+    """Parse a term-rate (IBOR-fallback) floating leg with explicit resets."""
+    _check_keys(floating, _TERM_FLOATING_KEYS, "floating_leg")
+    benchmark_name = _non_empty_str(floating["benchmark"], "floating_leg.benchmark")
+    benchmark = TERM_BENCHMARKS.get(benchmark_name)
+    if benchmark is None:
+        raise InvalidIRSParameters(
+            f"floating_leg.benchmark: {benchmark_name!r} has no term-rate definition; "
+            f"supported: {sorted(TERM_BENCHMARKS)}"
+        )
+    tenor = _non_empty_str(floating["benchmark_tenor"], "floating_leg.benchmark_tenor")
+    if tenor != benchmark.tenor or currency != benchmark.currency:
+        raise InvalidIRSParameters(
+            f"floating_leg: {benchmark_name} is a {benchmark.currency} {benchmark.tenor} "
+            f"benchmark, not {currency} {tenor}"
+        )
+    term = _require_mapping(floating["term_rate"], "floating_leg.term_rate")
+    _check_keys({k: v for k, v in term.items() if k not in _TERM_RATE_OPTIONAL_KEYS},
+                _TERM_RATE_KEYS, "floating_leg.term_rate")
+    observation_method = DEFAULT_OBSERVATION_METHOD
+    if "observation_dates" in term:
+        observation_method = _non_empty_str(
+            term["observation_dates"], "floating_leg.term_rate.observation_dates")
+        if observation_method not in OBSERVATION_METHODS:
+            raise InvalidIRSParameters(
+                f"floating_leg.term_rate.observation_dates: {observation_method!r} is not one "
+                f"of {sorted(OBSERVATION_METHODS)}")
+        if (observation_method == CONTRACTUAL_ACCRUAL
+                and not isinstance(benchmark, FallbackTermBenchmark)):
+            raise InvalidIRSParameters(
+                f"floating_leg.term_rate.observation_dates: {CONTRACTUAL_ACCRUAL!r} applies "
+                f"to RFR-fallback benchmarks only, not {benchmark_name}")
+    compounding = _non_empty_str(term["compounding"], "floating_leg.term_rate.compounding")
+    if compounding not in _TERM_COMPOUNDING:
+        raise InvalidIRSParameters(
+            f"floating_leg.term_rate.compounding: {compounding!r} is not one of "
+            f"{list(_TERM_COMPOUNDING)}"
+        )
+    fixing_code = _non_empty_str(term["fixing_calendar"], "floating_leg.term_rate.fixing_calendar")
+    if fixing_code not in _FIXING_CALENDARS:
+        raise InvalidIRSParameters(
+            f"floating_leg.term_rate.fixing_calendar: {fixing_code!r} is not supported; "
+            f"supported: {sorted(_FIXING_CALENDARS)}"
+        )
+    fixing_calendar = _FIXING_CALENDARS[fixing_code]()
+    fixing_days = _int(term["fixing_days"], "floating_leg.term_rate.fixing_days")
+    if fixing_days < 0:
+        raise InvalidIRSParameters("floating_leg.term_rate.fixing_days: cannot be negative")
+
+    raw_periods = floating["periods"]
+    if not isinstance(raw_periods, (list, tuple)) or not raw_periods:
+        raise InvalidIRSParameters("floating_leg.periods: must be a non-empty list")
+    plain_rows, resets = [], []
+    for i, raw in enumerate(raw_periods):
+        path = f"floating_leg.periods[{i}]"
+        row = _require_mapping(raw, path)
+        _check_keys(row, _PERIOD_KEYS | {"resets"}, path)
+        plain_rows.append({key: row[key] for key in _PERIOD_KEYS})
+        if not isinstance(row["resets"], (list, tuple)) or not row["resets"]:
+            raise InvalidIRSParameters(f"{path}.resets: must be a non-empty list")
+        period_resets = []
+        for j, raw_reset in enumerate(row["resets"]):
+            reset_path = f"{path}.resets[{j}]"
+            reset_row = _require_mapping(raw_reset, reset_path)
+            _check_keys(reset_row, _RESET_KEYS, reset_path)
+            reset = TermRateReset(
+                reset_date=_date(reset_row["reset_date"], f"{reset_path}.reset_date"),
+                start=_date(reset_row["start"], f"{reset_path}.start"),
+                end=_date(reset_row["end"], f"{reset_path}.end"),
+            )
+            if not reset.start < reset.end:
+                raise InvalidIRSParameters(f"{reset_path}: start must be before end")
+            # A reset fixes in advance (on or before its sub-period start) on a fixing-
+            # calendar business day. Its rate period starts a benchmark-defined lag after
+            # the reset date (term_rate_leg.rate_period_start), so a reset may also fix an
+            # earlier rate period than the sub-period it applies to (TC2) or be shared by
+            # consecutive sub-periods (TC9).
+            fixing = ql.Date(reset.reset_date.day, reset.reset_date.month, reset.reset_date.year)
+            if not fixing_calendar.isBusinessDay(fixing):
+                raise InvalidIRSParameters(
+                    f"{reset_path}.reset_date {reset.reset_date.isoformat()} is not a "
+                    f"{fixing_code} business day"
+                )
+            if reset.reset_date > reset.start:
+                raise InvalidIRSParameters(
+                    f"{reset_path}.reset_date {reset.reset_date.isoformat()} is after the "
+                    f"sub-period start {reset.start.isoformat()} (resets fix in advance)"
+                )
+            period_resets.append(reset)
+        resets.append(tuple(period_resets))
+    periods = _periods(plain_rows, currency, "floating_leg.periods")
+    for i, (period, period_resets) in enumerate(zip(periods, resets)):
+        path = f"floating_leg.periods[{i}].resets"
+        bounds = [period_resets[0].start] + [r.end for r in period_resets]
+        if bounds[0] != period.accrual_start or bounds[-1] != period.accrual_end or any(
+            a.end != b.start for a, b in zip(period_resets, period_resets[1:])
+        ):
+            raise InvalidIRSParameters(
+                f"{path}: sub-periods must run contiguously from accrual_start "
+                f"{period.accrual_start.isoformat()} to accrual_end "
+                f"{period.accrual_end.isoformat()}"
+            )
+        if compounding == "none" and len(period_resets) != 1:
+            raise InvalidIRSParameters(
+                f"{path}: compounding 'none' allows one reset per period, got "
+                f"{len(period_resets)}"
+            )
+    leverage = _decimal(floating["leverage"], "floating_leg.leverage")
+    if leverage != 1:
+        raise InvalidIRSParameters("floating_leg.leverage: term-rate legs support 1 only")
+    terms = IRSLegTerms(
+        kind=IRSLegKind.FLOATING,
+        payment_frequency=_choice(
+            floating["payment_frequency"], _PAYMENT_FREQUENCIES, "floating_leg.payment_frequency"
+        ),
+        day_count=_choice(floating["day_count"], _DAY_COUNTS, "floating_leg.day_count"),
+        original_notional=periods[0].notional,
+        benchmark=benchmark_name,
+        benchmark_tenor=tenor,
+        floating_spread_rate=_decimal_rate(floating["spread"], "floating_leg.spread"),
+        floating_leverage=leverage,
+        reset_frequency=_choice(
+            floating["reset_frequency"], _TERM_RESET_FREQUENCIES, "floating_leg.reset_frequency"
+        ),
+    )
+    spec = TermRateLegSpec(
+        benchmark=benchmark,
+        compounding=compounding,
+        fixing_calendar_code=fixing_code,
+        fixing_calendar=fixing_calendar,
+        fixing_days=fixing_days,
+        resets=tuple(resets),
+        observation_method=observation_method,
+    )
+    return terms, periods, spec
+
+
 @dataclass(frozen=True)
 class FreshOISTrade:
     """Typed, validated inputs for one fixed-vs-overnight swap."""
@@ -272,6 +450,8 @@ class FreshOISTrade:
     floating_periods: Tuple[CouponPeriod, ...]
     fixed_date_adjustment: AccrualDateAdjustment
     floating_date_adjustment: AccrualDateAdjustment
+    # Set only for a term-rate (IBOR-fallback) floating leg; None for an overnight leg.
+    floating_term_rate: Optional[TermRateLegSpec] = None
 
     def __post_init__(self) -> None:
         if self.fixed_leg_side not in _FIXED_SIDES:
@@ -327,46 +507,11 @@ class FreshOISTrade:
         )
 
         floating = _require_mapping(params["floating_leg"], "floating_leg")
-        _check_keys(floating, _FLOATING_KEYS, "floating_leg")
-        observation = _require_mapping(floating["observation"], "floating_leg.observation")
-        _check_keys(observation, _OBSERVATION_KEYS, "floating_leg.observation")
-        floating_periods = _periods(floating["periods"], currency, "floating_leg.periods")
-        floating_terms = IRSLegTerms(
-            kind=IRSLegKind.FLOATING,
-            payment_frequency=_choice(
-                floating["payment_frequency"],
-                _PAYMENT_FREQUENCIES,
-                "floating_leg.payment_frequency",
-            ),
-            day_count=_choice(floating["day_count"], _DAY_COUNTS, "floating_leg.day_count"),
-            original_notional=floating_periods[0].notional,
-            benchmark=_non_empty_str(floating["benchmark"], "floating_leg.benchmark"),
-            benchmark_tenor=_non_empty_str(
-                floating["benchmark_tenor"], "floating_leg.benchmark_tenor"
-            ),
-            floating_spread_rate=_decimal_rate(floating["spread"], "floating_leg.spread"),
-            floating_leverage=_decimal(floating["leverage"], "floating_leg.leverage"),
-            reset_frequency=_choice(
-                floating["reset_frequency"], _RESET_FREQUENCIES, "floating_leg.reset_frequency"
-            ),
-            observation=ObservationConventions(
-                lookback_days=_int(
-                    observation["lookback_days"], "floating_leg.observation.lookback_days"
-                ),
-                cutoff_days=_int(
-                    observation["cutoff_days"], "floating_leg.observation.cutoff_days"
-                ),
-                reset_timing=_non_empty_str(
-                    observation["reset_timing"], "floating_leg.observation.reset_timing"
-                ),
-                compounding=_non_empty_str(
-                    observation["compounding"], "floating_leg.observation.compounding"
-                ),
-                lookback_type=_non_empty_str(
-                    observation["lookback_type"], "floating_leg.observation.lookback_type"
-                ),
-            ),
-        )
+        term_rate = None
+        if floating.get("reset_frequency") in _TERM_RESET_FREQUENCIES:
+            floating_terms, floating_periods, term_rate = _term_rate_floating(floating, currency)
+        else:
+            floating_terms, floating_periods = _overnight_floating(floating, currency)
 
         return cls(
             trade_id=_non_empty_str(params["trade_id"], "trade_id"),
@@ -385,7 +530,55 @@ class FreshOISTrade:
             floating_date_adjustment=_adjustment(
                 floating["accrual_date_adjustment"], "floating_leg.accrual_date_adjustment"
             ),
+            floating_term_rate=term_rate,
         )
+
+
+def _overnight_floating(
+    floating: Mapping[str, Any], currency: str
+) -> Tuple[IRSLegTerms, Tuple[CouponPeriod, ...]]:
+    """Parse a daily-compounded overnight floating leg (the original schema)."""
+    _check_keys(floating, _FLOATING_KEYS, "floating_leg")
+    observation = _require_mapping(floating["observation"], "floating_leg.observation")
+    _check_keys(observation, _OBSERVATION_KEYS, "floating_leg.observation")
+    floating_periods = _periods(floating["periods"], currency, "floating_leg.periods")
+    floating_terms = IRSLegTerms(
+        kind=IRSLegKind.FLOATING,
+        payment_frequency=_choice(
+            floating["payment_frequency"],
+            _PAYMENT_FREQUENCIES,
+            "floating_leg.payment_frequency",
+        ),
+        day_count=_choice(floating["day_count"], _DAY_COUNTS, "floating_leg.day_count"),
+        original_notional=floating_periods[0].notional,
+        benchmark=_non_empty_str(floating["benchmark"], "floating_leg.benchmark"),
+        benchmark_tenor=_non_empty_str(
+            floating["benchmark_tenor"], "floating_leg.benchmark_tenor"
+        ),
+        floating_spread_rate=_decimal_rate(floating["spread"], "floating_leg.spread"),
+        floating_leverage=_decimal(floating["leverage"], "floating_leg.leverage"),
+        reset_frequency=_choice(
+            floating["reset_frequency"], _RESET_FREQUENCIES, "floating_leg.reset_frequency"
+        ),
+        observation=ObservationConventions(
+            lookback_days=_int(
+                observation["lookback_days"], "floating_leg.observation.lookback_days"
+            ),
+            cutoff_days=_int(
+                observation["cutoff_days"], "floating_leg.observation.cutoff_days"
+            ),
+            reset_timing=_non_empty_str(
+                observation["reset_timing"], "floating_leg.observation.reset_timing"
+            ),
+            compounding=_non_empty_str(
+                observation["compounding"], "floating_leg.observation.compounding"
+            ),
+            lookback_type=_non_empty_str(
+                observation["lookback_type"], "floating_leg.observation.lookback_type"
+            ),
+        ),
+    )
+    return floating_terms, floating_periods
 
 
 @instrument_registry.register_decorator(InstrumentType.OIS.value)
@@ -425,9 +618,19 @@ class FreshOISInstrument(BaseInstrument):
             LegSchedule(periods=self._trade.floating_periods, principal_repayments=())
         )
         fixed = build_fixed_leg(self._trade.fixed_terms, fixed_schedule)
-        floating = build_floating_leg(
-            self._trade.floating_terms, floating_schedule, currency, forwarding_curve=forecast
-        )
+        if self._trade.floating_term_rate is not None:
+            spec = self._trade.floating_term_rate
+            floating = build_term_rate_floating_leg(
+                self._trade.floating_terms,
+                floating_schedule,
+                spec,
+                forecast,
+                fixings=(market_env.fixings or {}).get(spec.benchmark.name, {}),
+            )
+        else:
+            floating = build_floating_leg(
+                self._trade.floating_terms, floating_schedule, currency, forwarding_curve=forecast
+            )
         if self._trade.fixed_leg_side == "pay":
             built = assemble_quantlib_irs(fixed, floating)
         else:

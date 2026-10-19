@@ -1,0 +1,549 @@
+{
+  "trade": {
+    "product": "Swap",
+    "swap_id": "SLLSL9S3",
+    "counterparty": "SWAP CNTRPARTY",
+    "currency": "INR",
+    "effective_date": "2026-06-30",
+    "maturity_date": "2028-05-31",
+    "valuation_date": "2026-03-31",
+    "curve_date": "2026-03-31",
+    "legs": {
+      "fixed": {
+        "leg_id": "SLLSL9S4",
+        "pay_receive": "Pay",
+        "notional": 1900000,
+        "currency": "INR",
+        "effective_date": "2026-06-30",
+        "maturity_date": "2028-05-31",
+        "coupon": 10.0,
+        "pay_frequency": "Quarterly",
+        "day_count": "ACT/365",
+        "calc_basis": "Money Mkt",
+        "first_payment": "2026-09-30",
+        "next_last_payment": "2028-03-31",
+        "business_day_adjustment": "Mod Foll",
+        "roll_convention": "Forward (EOM)",
+        "calculation_calendar": "RB",
+        "payment_type": "Coupon",
+        "principal_exchange": "Never",
+        "amortization_schedule": [
+          {
+            "accrual_start": "2026-06-30",
+            "accrual_end": "2026-09-30",
+            "pay_date": "2026-09-30",
+            "amort_rate_percent": 0.0,
+            "amort_amount": 0.0,
+            "balance": 1900000.0,
+            "coupon": 10.0
+          },
+          {
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2026-12-31",
+            "pay_date": "2026-12-31",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 1662500.0,
+            "coupon": 10.0
+          },
+          {
+            "accrual_start": "2026-12-31",
+            "accrual_end": "2027-03-31",
+            "pay_date": "2027-03-31",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 1425000.0,
+            "coupon": 10.0
+          },
+          {
+            "accrual_start": "2027-03-31",
+            "accrual_end": "2027-06-30",
+            "pay_date": "2027-06-30",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 1187500.0,
+            "coupon": 10.0
+          },
+          {
+            "accrual_start": "2027-06-30",
+            "accrual_end": "2027-09-30",
+            "pay_date": "2027-09-30",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 950000.0,
+            "coupon": 10.0
+          },
+          {
+            "accrual_start": "2027-09-30",
+            "accrual_end": "2027-12-31",
+            "pay_date": "2027-12-31",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 712500.0,
+            "coupon": 10.0
+          },
+          {
+            "accrual_start": "2027-12-31",
+            "accrual_end": "2028-03-31",
+            "pay_date": "2028-03-31",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 475000.0,
+            "coupon": 10.0
+          },
+          {
+            "accrual_start": "2028-03-31",
+            "accrual_end": "2028-05-31",
+            "pay_date": "2028-05-31",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 237500.0,
+            "coupon": 10.0
+          }
+        ],
+        "npv": -72220.10,
+        "accrued": 0.0,
+        "premium": -3.80,
+        "dv01": -200.15
+      },
+      "floating": {
+        "leg_id": "SLLSL9S5",
+        "pay_receive": "Receive",
+        "notional": 1900000,
+        "currency": "INR",
+        "effective_date": "2026-06-30",
+        "maturity_date": "2028-05-31",
+        "index": "IRSWOF",
+        "index_tenor": "6M",
+        "spread_bp": 50.0,
+        "leverage": 1.0,
+        "latest_index": 5.74185,
+        "reset_frequency": "SemiAnnual",
+        "pay_frequency": "Quarterly",
+        "day_count": "ACT/365",
+        "reset_type": "In Advance",
+        "calculation_calendar": "RB",
+        "fixing_calendar": "RB",
+        "roll_convention": "Forward (EOM)",
+        "days_before_accrual": 1,
+        "first_payment": "2026-09-30",
+        "next_last_payment": "2028-03-31",
+        "business_day_adjustment": "Mod Foll",
+        "rst_business_day_adjustment": "No Adjustment",
+        "payment_delay": 0,
+        "principal_exchange": "Never",
+        "amortization_schedule": [
+          {
+            "accrual_start": "2026-06-30",
+            "accrual_end": "2026-09-30",
+            "pay_date": "2026-09-30",
+            "reset_date": "2026-06-29",
+            "amort_rate_percent": 0.0,
+            "amort_amount": 0.0,
+            "balance": 1900000.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          },
+          {
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2026-12-31",
+            "pay_date": "2026-12-31",
+            "reset_date": "2026-09-29",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 1662500.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          },
+          {
+            "accrual_start": "2026-12-31",
+            "accrual_end": "2027-03-31",
+            "pay_date": "2027-03-31",
+            "reset_date": "2026-09-29",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 1425000.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          },
+          {
+            "accrual_start": "2027-03-31",
+            "accrual_end": "2027-06-30",
+            "pay_date": "2027-06-30",
+            "reset_date": "2027-03-30",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 1187500.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          },
+          {
+            "accrual_start": "2027-06-30",
+            "accrual_end": "2027-09-30",
+            "pay_date": "2027-09-30",
+            "reset_date": "2027-03-30",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 950000.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          },
+          {
+            "accrual_start": "2027-09-30",
+            "accrual_end": "2027-12-31",
+            "pay_date": "2027-12-31",
+            "reset_date": "2027-09-29",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 712500.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          },
+          {
+            "accrual_start": "2027-12-31",
+            "accrual_end": "2028-03-31",
+            "pay_date": "2028-03-31",
+            "reset_date": "2027-09-29",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 475000.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          },
+          {
+            "accrual_start": "2028-03-31",
+            "accrual_end": "2028-05-31",
+            "pay_date": "2028-05-31",
+            "reset_date": "2028-03-30",
+            "amort_rate_percent": 12.5,
+            "amort_amount": 237500.0,
+            "balance": 237500.0,
+            "leverage": 1.0,
+            "spread_bp": 50.0
+          }
+        ],
+        "npv": 10399.35,
+        "accrued": 0.0,
+        "premium": 0.55,
+        "dv01": -1.35
+      }
+    },
+    "additional_detail": {
+      "principal_exchange": "Never",
+      "min_stub_period": 7,
+      "stub_threshold_adjustment": true,
+      "credit_provisions": {
+        "unwind_type": "None"
+      },
+      "fee_schedule": [
+        {
+          "fee_date": "2026-03-31",
+          "payoff_side": "Receive",
+          "amount": 0.0
+        }
+      ]
+    },
+    "valuation_results": {
+      "par_coupon": 6.891842,
+      "premium": -3.25372,
+      "principal": -61820.75,
+      "bp_value": -325.37235,
+      "accrued": 0.0,
+      "npv": -61820.75,
+      "pv01": -198.90,
+      "dv01": -201.50,
+      "gamma_1bp": -0.05
+    },
+    "cashflows": {
+      "currency": "INR",
+      "accrued": 0.0,
+      "net_npv": -61820.75,
+      "net_cashflows": [
+        {
+          "pay_date": "2026-09-30",
+          "payments_receive": 29892.46,
+          "payments_pay": -47890.41,
+          "net_payment": -17997.95,
+          "discount": 0.971633,
+          "pv": -17487.40
+        },
+        {
+          "pay_date": "2026-12-31",
+          "payments_receive": 29265.96,
+          "payments_pay": -41904.11,
+          "net_payment": -12638.15,
+          "discount": 0.956418,
+          "pv": -12087.35
+        },
+        {
+          "pay_date": "2027-03-31",
+          "payments_receive": 24539.78,
+          "payments_pay": -35136.99,
+          "net_payment": -10597.20,
+          "discount": 0.941231,
+          "pv": -9974.42
+        },
+        {
+          "pay_date": "2027-06-30",
+          "payments_receive": 21008.18,
+          "payments_pay": -29606.16,
+          "net_payment": -8597.99,
+          "discount": 0.926290,
+          "pv": -7964.23
+        },
+        {
+          "pay_date": "2027-09-30",
+          "payments_receive": 16991.23,
+          "payments_pay": -23945.21,
+          "net_payment": -6953.97,
+          "discount": 0.911114,
+          "pv": -6335.86
+        },
+        {
+          "pay_date": "2027-12-31",
+          "payments_receive": 13267.92,
+          "payments_pay": -17958.90,
+          "net_payment": -4690.98,
+          "discount": 0.895864,
+          "pv": -4202.48
+        },
+        {
+          "pay_date": "2028-03-31",
+          "payments_receive": 8749.14,
+          "payments_pay": -11842.47,
+          "net_payment": -3093.33,
+          "discount": 0.880719,
+          "pv": -2724.35
+        },
+        {
+          "pay_date": "2028-05-31",
+          "payments_receive": 2769.84,
+          "payments_pay": -3969.18,
+          "net_payment": -1199.34,
+          "discount": 0.871026,
+          "pv": -1044.66
+        }
+      ],
+      "fixed_leg": {
+        "npv": -198898.34,
+        "accrued": 0.0,
+        "cashflows": [
+          {
+            "pay_date": "2026-09-30",
+            "accrual_start": "2026-06-30",
+            "accrual_end": "2026-09-30",
+            "days": 92,
+            "notional": -1900000.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -47890.41,
+            "discount": 0.971633,
+            "pv": -46531.90
+          },
+          {
+            "pay_date": "2026-12-31",
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2026-12-31",
+            "days": 92,
+            "notional": -1662500.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -41904.11,
+            "discount": 0.956418,
+            "pv": -40077.85
+          },
+          {
+            "pay_date": "2027-03-31",
+            "accrual_start": "2026-12-31",
+            "accrual_end": "2027-03-31",
+            "days": 90,
+            "notional": -1425000.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -35136.99,
+            "discount": 0.941231,
+            "pv": -33072.03
+          },
+          {
+            "pay_date": "2027-06-30",
+            "accrual_start": "2027-03-31",
+            "accrual_end": "2027-06-30",
+            "days": 91,
+            "notional": -1187500.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -29606.16,
+            "discount": 0.926290,
+            "pv": -27423.89
+          },
+          {
+            "pay_date": "2027-09-30",
+            "accrual_start": "2027-06-30",
+            "accrual_end": "2027-09-30",
+            "days": 92,
+            "notional": -950000.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -23945.21,
+            "discount": 0.911114,
+            "pv": -21816.80
+          },
+          {
+            "pay_date": "2027-12-31",
+            "accrual_start": "2027-09-30",
+            "accrual_end": "2027-12-31",
+            "days": 92,
+            "notional": -712500.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -17958.90,
+            "discount": 0.895864,
+            "pv": -16088.73
+          },
+          {
+            "pay_date": "2028-03-31",
+            "accrual_start": "2027-12-31",
+            "accrual_end": "2028-03-31",
+            "days": 91,
+            "notional": -475000.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -11842.47,
+            "discount": 0.880719,
+            "pv": -10429.88
+          },
+          {
+            "pay_date": "2028-05-31",
+            "accrual_start": "2028-03-31",
+            "accrual_end": "2028-05-31",
+            "days": 61,
+            "notional": -237500.00,
+            "principal": 0.0,
+            "equiv_coupon": 10.0,
+            "payment": -3969.18,
+            "discount": 0.871026,
+            "pv": -3457.26
+          }
+        ]
+      },
+      "floating_leg": {
+        "npv": 137077.59,
+        "accrued": 0.0,
+        "cashflows": [
+          {
+            "pay_date": "2026-09-30",
+            "accrual_start": "2026-06-30",
+            "accrual_end": "2026-09-30",
+            "days": 92,
+            "notional": 1900000.00,
+            "principal": 0.0,
+            "reset_date": "2026-06-29",
+            "reset_rate": 5.74185,
+            "equiv_coupon": 6.24180,
+            "payment": 29892.46,
+            "discount": 0.971633,
+            "pv": 29044.50
+          },
+          {
+            "pay_date": "2026-12-31",
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2026-12-31",
+            "days": 92,
+            "notional": 1662500.00,
+            "principal": 0.0,
+            "reset_date": "2026-09-29",
+            "reset_rate": 6.48403,
+            "equiv_coupon": 6.98400,
+            "payment": 29265.96,
+            "discount": 0.956418,
+            "pv": 27990.50
+          },
+          {
+            "pay_date": "2027-03-31",
+            "accrual_start": "2026-12-31",
+            "accrual_end": "2027-03-31",
+            "days": 90,
+            "notional": 1425000.00,
+            "principal": 0.0,
+            "reset_date": "2026-09-29",
+            "reset_rate": 6.48403,
+            "equiv_coupon": 6.98400,
+            "payment": 24539.78,
+            "discount": 0.941231,
+            "pv": 23097.61
+          },
+          {
+            "pay_date": "2027-06-30",
+            "accrual_start": "2027-03-31",
+            "accrual_end": "2027-06-30",
+            "days": 91,
+            "notional": 1187500.00,
+            "principal": 0.0,
+            "reset_date": "2027-03-30",
+            "reset_rate": 6.59588,
+            "equiv_coupon": 7.09590,
+            "payment": 21008.18,
+            "discount": 0.926290,
+            "pv": 19459.66
+          },
+          {
+            "pay_date": "2027-09-30",
+            "accrual_start": "2027-06-30",
+            "accrual_end": "2027-09-30",
+            "days": 92,
+            "notional": 950000.00,
+            "principal": 0.0,
+            "reset_date": "2027-03-30",
+            "reset_rate": 6.59588,
+            "equiv_coupon": 7.09590,
+            "payment": 16991.23,
+            "discount": 0.911114,
+            "pv": 15480.94
+          },
+          {
+            "pay_date": "2027-12-31",
+            "accrual_start": "2027-09-30",
+            "accrual_end": "2027-12-31",
+            "days": 92,
+            "notional": 712500.00,
+            "principal": 0.0,
+            "reset_date": "2027-09-29",
+            "reset_rate": 6.88794,
+            "equiv_coupon": 7.38790,
+            "payment": 13267.92,
+            "discount": 0.895864,
+            "pv": 11886.25
+          },
+          {
+            "pay_date": "2028-03-31",
+            "accrual_start": "2027-12-31",
+            "accrual_end": "2028-03-31",
+            "days": 91,
+            "notional": 475000.00,
+            "principal": 0.0,
+            "reset_date": "2027-09-29",
+            "reset_rate": 6.88794,
+            "equiv_coupon": 7.38790,
+            "payment": 8749.14,
+            "discount": 0.880719,
+            "pv": 7705.53
+          },
+          {
+            "pay_date": "2028-05-31",
+            "accrual_start": "2028-03-31",
+            "accrual_end": "2028-05-31",
+            "days": 61,
+            "notional": 237500.00,
+            "principal": 0.0,
+            "reset_date": "2028-03-30",
+            "reset_rate": 6.47836,
+            "equiv_coupon": 6.97840,
+            "payment": 2769.84,
+            "discount": 0.871026,
+            "pv": 2412.60
+          }
+        ]
+      }
+    }
+  }
+}

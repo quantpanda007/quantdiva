@@ -5,6 +5,7 @@ engines
 infra
 instruments
 market
+market_data
 models
 numerics
 registry

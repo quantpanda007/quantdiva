@@ -1,0 +1,248 @@
+{
+  "trade": {
+    "product": "Swap",
+    "swap_id": "SLLSL9S9",
+    "counterparty": "SWAP CNTRPARTY",
+    "ticker": "SLLSL9S9",
+    "valuation_date": "2026-03-31",
+    "curve_date": "2026-03-31",
+    "currency": "INR",
+    "notional": 7500000,
+    "effective_date": "2026-06-30",
+    "maturity_date": "2027-09-30"
+  },
+  "leg_1": {
+    "leg_id": "SLLSL9SA",
+    "type": "Fixed",
+    "pay_receive": "Pay",
+    "notional": 7500000,
+    "currency": "INR",
+    "effective_date": "2026-06-30",
+    "maturity_date": "2027-09-30",
+    "coupon": 9.0,
+    "coupon_unit": "%",
+    "pay_frequency": "Annual",
+    "day_count": "ACT/365",
+    "calculation_basis": "Money Mkt",
+    "amortization": [
+      {
+        "accrual_start": "2026-06-30",
+        "accrual_end": "2027-06-30",
+        "pay_date": "2027-06-30",
+        "amort_rate": 0.0,
+        "amort_amount": 0.0,
+        "balance": 7500000,
+        "coupon": 9.0
+      },
+      {
+        "accrual_start": "2027-06-30",
+        "accrual_end": "2027-09-30",
+        "pay_date": "2027-09-30",
+        "amort_rate": 50.0,
+        "amort_amount": 3750000,
+        "balance": 3750000,
+        "coupon": 9.0
+      }
+    ],
+    "market": {
+      "discount_curve": "INR OIS",
+      "npv": -198319.21,
+      "accrued": 0.0,
+      "premium": -2.64,
+      "dv01": -805.67
+    },
+    "contract_detail": {
+      "first_payment": "2027-06-30",
+      "next_last_payment": "2027-06-30",
+      "bus_day_adjustment": "Mod Foll",
+      "adjust": "Acc & Pay Dates",
+      "roll_convention": "Forward (EOM)",
+      "calculation_calendar": "RB",
+      "pay_delay": 0,
+      "payment_type": "Coupon"
+    }
+  },
+  "leg_2": {
+    "leg_id": "SLLSL9SB",
+    "type": "Floating",
+    "pay_receive": "Receive",
+    "notional": 7500000,
+    "currency": "INR",
+    "effective_date": "2026-06-30",
+    "maturity_date": "2027-09-30",
+    "index": "IRSWOF",
+    "index_tenor": "6M",
+    "spread": 100.0,
+    "spread_unit": "bp",
+    "leverage": 1.0,
+    "latest_index": 6.13010,
+    "reset_frequency": "SemiAnnual",
+    "pay_frequency": "Annual",
+    "day_count": "ACT/365",
+    "days_before_accrual": 1,
+    "reset_type": "In Advance",
+    "compounding": "Flat",
+    "amortization": [
+      {
+        "accrual_start": "2026-06-30",
+        "accrual_end": "2027-06-30",
+        "pay_date": "2027-06-30",
+        "reset_date": "2026-06-29",
+        "amort_rate": 0.0,
+        "amort_amount": 0.0,
+        "balance": 7500000,
+        "leverage": 1.0,
+        "spread": 100.0
+      },
+      {
+        "accrual_start": "2027-06-30",
+        "accrual_end": "2027-09-30",
+        "pay_date": "2027-09-30",
+        "reset_date": "2027-06-29",
+        "amort_rate": 50.0,
+        "amort_amount": 3750000,
+        "balance": 3750000,
+        "leverage": 1.0,
+        "spread": 100.0
+      }
+    ],
+    "market": {
+      "discount_curve": "INR OIS",
+      "forward_curve": "INR OIS",
+      "npv": 78519.24,
+      "accrued": 0.0,
+      "premium": 1.05,
+      "dv01": 7.77
+    },
+    "contract_detail": {
+      "first_payment": "2027-06-30",
+      "next_last_payment": "2027-06-30",
+      "bus_day_adjustment": "Mod Foll",
+      "reset_bus_day_adjustment": "No Adjustment",
+      "adjust": "Acc & Pay Dates",
+      "roll_convention": "Forward (EOM)",
+      "calculation_calendar": "RB",
+      "fixing_calendar": "RB",
+      "pay_delay": 0,
+      "payment_type": "Coupon"
+    }
+  },
+  "additional_detail": {
+    "principal_exchange": "Never",
+    "min_stub_period": 7,
+    "stub_threshold_adjustment": true,
+    "credit_provisions": {
+      "unwind_type": "None"
+    },
+    "ibor_fallback": {},
+    "fee_schedule": [
+      {
+        "fee_date": "2026-03-31",
+        "payoff_side": "Receive",
+        "amount": 0.0
+      }
+    ]
+  },
+  "cashflow": {
+    "currency": "INR",
+    "net": [
+      {
+        "pay_date": "2027-06-30",
+        "payments_receive": 559485.34,
+        "payments_pay": -675000.00,
+        "net_payment": -115514.66,
+        "discount_factor": 0.926290,
+        "pv": -107000.05
+      },
+      {
+        "pay_date": "2027-09-30",
+        "payments_receive": 71019.84,
+        "payments_pay": -85068.49,
+        "net_payment": -14048.65,
+        "discount_factor": 0.911114,
+        "pv": -12799.92
+      }
+    ],
+    "accrued": 0.0,
+    "npv": -119799.97
+  },
+  "cashflow_leg_1": {
+    "leg": "Pay Fixed",
+    "currency": "INR",
+    "accrued": 0.0,
+    "npv": -702752.68,
+    "cashflows": [
+      {
+        "pay_date": "2027-06-30",
+        "accrual_start": "2026-06-30",
+        "accrual_end": "2027-06-30",
+        "days": 365,
+        "notional": -7500000.00,
+        "principal": 0.0,
+        "equivalent_coupon": 9.00000,
+        "payment": -675000.00,
+        "discount_factor": 0.926290,
+        "pv": -625245.62
+      },
+      {
+        "pay_date": "2027-09-30",
+        "accrual_start": "2027-06-30",
+        "accrual_end": "2027-09-30",
+        "days": 92,
+        "notional": -3750000.00,
+        "principal": 0.0,
+        "equivalent_coupon": 9.00000,
+        "payment": -85068.49,
+        "discount_factor": 0.911114,
+        "pv": -77507.06
+      }
+    ]
+  },
+  "cashflow_leg_2": {
+    "leg": "Receive Float",
+    "currency": "INR",
+    "accrued": 0.0,
+    "npv": 582952.71,
+    "cashflows": [
+      {
+        "pay_date": "2027-06-30",
+        "accrual_start": "2026-06-30",
+        "accrual_end": "2027-06-30",
+        "days": 365,
+        "notional": 7500000.00,
+        "principal": 0.0,
+        "effective_reset_date": null,
+        "equivalent_coupon": 7.45980,
+        "payment": 559485.34,
+        "discount_factor": 0.926290,
+        "pv": 518245.57
+      },
+      {
+        "pay_date": "2027-09-30",
+        "accrual_start": "2027-06-30",
+        "accrual_end": "2027-09-30",
+        "days": 92,
+        "notional": 3750000.00,
+        "principal": 0.0,
+        "effective_reset_date": "2026-12-30",
+        "equivalent_coupon": 7.51370,
+        "payment": 71019.84,
+        "discount_factor": 0.911114,
+        "pv": 64707.14
+      }
+    ]
+  },
+  "valuation_results": {
+    "par_coupon": 7.465748,
+    "premium": -1.59733,
+    "principal": -119799.97,
+    "bp_value": -159.73329,
+    "accrued": 0.0,
+    "npv": -119799.97
+  },
+  "risk": {
+    "pv01": -780.84,
+    "dv01": -797.90,
+    "gamma_1bp": -0.19
+  }
+}

@@ -27,8 +27,10 @@ Exit codes: 0 audit completed with no case errors; 1 at least one case error;
 2 refused output path; 3 shared state corrupted.
 
 Blockers come from production capability checks (curve assignments in the market
-snapshot, ``BENCHMARK_CURVES``, ``AccrualDateAdjustment`` calendars, the
-instrument's daily-only reset) and from data-presence checks. No market data,
+snapshots, ``BENCHMARK_CURVES``, ``AccrualDateAdjustment`` calendars, the
+instrument's floating-leg support: daily overnight compounding, or a term-rate
+fallback leg in ``TERM_BENCHMARKS``), from unresolved contract terms
+(``UNRESOLVED_CONTRACT_TERMS``) and from data-presence checks. No market data,
 convention or fixing is invented. Pricing reuses ``price_irs``; for a
 partially-audited case it makes the same production calls (``build_trade``,
 ``resolve_market_environment``, ``PricingService.price``, ``leg_npvs``).
@@ -54,6 +56,12 @@ import QuantLib as ql
 from core.enums.definitions import BusinessDayConvention
 from instruments.rates.irs.cashflows import CashflowExtractionError
 from instruments.rates.irs.floating_leg import QuantLibFloatingLeg
+from instruments.rates.irs.term_rate_leg import (
+    TERM_BENCHMARKS,
+    QuantLibTermRateFloatingLeg,
+    TermRateFixingRequired,
+)
+from market.curves.irs_fixings import overnight_fixings_applied
 from instruments.rates.irs.pricing_instrument import (
     AccrualDateAdjustment,
     InvalidIRSParameters,
@@ -74,7 +82,19 @@ AUDIT_SCHEMA_VERSION = 1
 CASE_IDS = tuple(f"TC{i}" for i in range(1, 11))
 FIXTURES = ROOT / "tests" / "fixtures" / "bloomberg_irs"
 EXAMPLES = ROOT / "examples" / "irs"
-MARKET_SNAPSHOT_FILE = EXAMPLES / "usd_sofr_2026-03-31.json"
+# One snapshot file per currency; the audit merges them into one market document.
+MARKET_SNAPSHOT_FILES = (
+    EXAMPLES / "usd_sofr_2026-03-31.json",
+    EXAMPLES / "chf_saron_2026-03-31.json",
+    EXAMPLES / "inr_mibor_2026-03-31.json",
+    EXAMPLES / "jpy_tona_2026-03-31.json",
+    EXAMPLES / "fixings_2026-03-31.json",
+)
+# Cases whose contractual terms are unresolved: not priced whatever the capability.
+# (TC2's fixing-date rule, OI-11, is resolved by evidence on 14-Oct-2026: the source reset
+# dates with the rate period starting 1 EN business day later reproduce all seven of
+# Bloomberg's observable effective reset dates.)
+UNRESOLVED_CONTRACT_TERMS: Dict[str, str] = {}
 MARKET_DATA_DIR = ROOT / "market_data" / "2026-03-31"
 VALUATION_DATE = date(2026, 3, 31)
 
@@ -267,7 +287,8 @@ def _rows(rows: List[Dict[str, Any]], leg: str) -> List[Dict[str, Any]]:
     out = []
     for r in rows:
         coupon = r.get(
-            "equivalent_coupon", r.get("equivalent_coupon_pct", r.get("coupon_rate_pct"))
+            "equivalent_coupon",
+            r.get("equivalent_coupon_pct", r.get("coupon_rate_pct", r.get("equiv_coupon"))),
         )
         out.append(
             {
@@ -280,6 +301,10 @@ def _rows(rows: List[Dict[str, Any]], leg: str) -> List[Dict[str, Any]]:
                 "payment": r["payment"],
                 "discount_factor": r.get("discount_factor", r.get("discount")),
                 "pv": r["pv"],
+                # Floating reset information as displayed; None where the layout has none.
+                "effective_reset_date": r.get("effective_reset_date"),
+                "reset_date": r.get("reset_date"),
+                "reset_rate_pct": r.get("reset_rate"),
             }
         )
     return out
@@ -376,7 +401,8 @@ def blockers_for(terms: Terms, coverage: Dict[str, Any]) -> List[Dict[str, str]]
     if coverage["snapshot_assignment"] is None:
         add(
             "NO_CURVE_ASSIGNMENT",
-            f"market snapshot {_rel(MARKET_SNAPSHOT_FILE)} assigns no curve for {terms.currency}",
+            f"market snapshots {[_rel(p) for p in MARKET_SNAPSHOT_FILES]} assign no curve "
+            f"for {terms.currency}",
         )
         if coverage["market_data_file"] is None:
             add("NO_MARKET_DATA", f"no market_data file for {terms.currency}")
@@ -392,12 +418,17 @@ def blockers_for(terms: Terms, coverage: Dict[str, Any]) -> List[Dict[str, str]]
             f"floating index {fl['index']} {fl['index_tenor']} is not in BENCHMARK_CURVES "
             f"{sorted(BENCHMARK_CURVES)}",
         )
-    if str(fl["reset_frequency"]).lower() != "daily":
+    term_rate_supported = (
+        fl["index"] in TERM_BENCHMARKS
+        and str(fl.get("compounding") or "none").lower() in ("flat", "none")
+    )
+    if str(fl["reset_frequency"]).lower() != "daily" and not term_rate_supported:
         add(
             "UNSUPPORTED_FLOATING_LEG",
             f"reset {fl['reset_frequency']} ({fl.get('reset_type') or 'reset type not given'}, "
             f"compounding {fl.get('compounding') or 'not given'}); the fresh instrument "
-            "supports daily overnight compounding only",
+            "supports daily overnight compounding, and term-rate fallback legs for "
+            f"{sorted(TERM_BENCHMARKS)} only",
         )
     for leg_name, calendar in (("fixed", terms.fixed["calendar"]), ("floating", fl["calendar"])):
         try:
@@ -406,15 +437,24 @@ def blockers_for(terms: Terms, coverage: Dict[str, Any]) -> List[Dict[str, str]]
             )
         except InvalidIRSParameters:
             add("UNSUPPORTED_CALENDAR", f"{leg_name} calculation calendar {calendar!r}")
-    for p in terms.periods:
-        if p["accrual_start"] < terms.valuation_date < p["pay_date"]:
-            add(
-                "NEEDS_FIXINGS",
-                f"period {p['accrual_start']} -> {p['pay_date']} is in progress at the valuation "
-                "date; historical fixings are not supported (OI-10)",
-            )
-            break
+    if terms.case_id in UNRESOLVED_CONTRACT_TERMS:
+        add("CONTRACT_TERMS_UNRESOLVED", UNRESOLVED_CONTRACT_TERMS[terms.case_id])
+    # Fixings are not checked here: historical and valuation-date fixings are market data,
+    # and pricing itself reports any that are missing (MISSING_FIXINGS).
     return blockers
+
+
+def _missing_fixings(exc: BaseException) -> bool:
+    """True when pricing failed only because a required fixing was not supplied."""
+    seen = exc
+    while seen is not None:
+        if isinstance(seen, TermRateFixingRequired):
+            return True
+        if (isinstance(seen, CashflowExtractionError)
+                and "fixings before the valuation" in str(seen)):
+            return True
+        seen = seen.__cause__ or seen.__context__
+    return False
 
 
 def data_quality(terms: Terms, bloomberg: Dict[str, Any]) -> List[str]:
@@ -468,13 +508,21 @@ def _compare_rows(rows: List[Dict[str, Any]], bloomberg_rows: List[Dict[str, Any
     out = []
     for row in rows:
         b = by_key.get((row["leg"], row["payment_date"]))
+        spread = row.get("spread")
         entry = {
             "leg": row["leg"],
             "period": row["period"],
             "payment_date": row["payment_date"],
             "accrual_start": row["accrual_start"],
             "accrual_end": row["accrual_end"],
+            "accrual_days": (
+                date.fromisoformat(row["accrual_end"]) - date.fromisoformat(row["accrual_start"])
+            ).days,
+            "day_count_fraction": _r(row.get("day_count_fraction")),
             "notional": _r(row["notional"]),
+            # Floating rows: the coupon is the projected index rate plus the spread.
+            "spread_pct": None if spread is None else _r(spread * 100),
+            "index_rate_pct": None if spread is None else _r((row["rate"] - spread) * 100),
             "rate_pct": _r(row["rate"] * 100),
             "amount": _r(row["amount"]),
             "discount_factor": _r(row["discount_factor"]),
@@ -492,6 +540,12 @@ def _compare_rows(rows: List[Dict[str, Any]], bloomberg_rows: List[Dict[str, Any
                 "payment": b["payment"],
                 "discount_factor": b["discount_factor"],
                 "pv": b["pv"],
+                "accrual_start": b["accrual_start"],
+                "accrual_end": b["accrual_end"],
+                "notional": b["notional"],
+                "effective_reset_date": b.get("effective_reset_date"),
+                "reset_date": b.get("reset_date"),
+                "reset_rate_pct": b.get("reset_rate_pct"),
             }
             entry["difference"] = {
                 "rate_bp": _r(None if d_rate is None else d_rate * 100),
@@ -591,6 +645,336 @@ def latest_index_evidence(terms: Terms, instrument, environment, bloomberg) -> O
     }
 
 
+# --- derived inputs (values Optima calculates, read from the production objects) ------------
+
+
+DERIVED_INPUTS_SCHEMA_VERSION = 1
+
+
+def _iso(value: ql.Date) -> str:
+    return date(value.year(), value.month(), value.dayOfMonth()).isoformat()
+
+
+def curve_position(zero_curve, when: date) -> Dict[str, Any]:
+    """Where a date sits on a built zero curve: the bracketing pillars, the linear-zero
+    weight and the interpolated zero rate (ACT/365F, continuous), with the discount factor
+    rebuilt from them. A description of the production curve, not a second curve: the
+    production discount factor is read from the curve itself and must agree."""
+    reference = zero_curve.market_data.reference_date
+    t = (when - reference).days / 365.0
+    pillars = [(o.tenor, p, float(o.zero_rate), (p - reference).days / 365.0)
+               for o, p in zip(zero_curve.market_data.observations, zero_curve.pillar_dates)]
+    production = zero_curve.term_structure.discount(ql.Date(when.day, when.month, when.year))
+    if t <= pillars[0][3]:
+        lo = hi = pillars[0]
+        weight, zero = 0.0, pillars[0][2]
+    elif t >= pillars[-1][3]:
+        lo = hi = pillars[-1]
+        weight, zero = 1.0, pillars[-1][2]
+    else:
+        index = next(i for i in range(len(pillars) - 1) if pillars[i][3] <= t <= pillars[i + 1][3])
+        lo, hi = pillars[index], pillars[index + 1]
+        weight = (t - lo[3]) / (hi[3] - lo[3])
+        zero = lo[2] + weight * (hi[2] - lo[2])
+    rebuilt = math.exp(-zero * t)
+    return {
+        "date": when.isoformat(),
+        "lower_pillar": f"{lo[0]} {lo[1].isoformat()}",
+        "upper_pillar": f"{hi[0]} {hi[1].isoformat()}",
+        "weight": _r(weight),
+        "zero_rate_pct": _r(zero * 100),
+        "discount_factor": _r(production),
+        "rebuilt_matches_curve": abs(rebuilt - production) <= 1e-12,
+    }
+
+
+def _derived(leg: str, period: int, payment_date: str, item: str, value: Any, unit: str,
+             inputs: str, method: str, basis: str, sub_period: Optional[int] = None,
+             detail: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    return {
+        "leg": leg, "period": period, "sub_period": sub_period, "payment_date": payment_date,
+        "item": item, "value": value, "unit": unit, "inputs": inputs, "method": method,
+        "basis": basis, "detail": detail or {},
+    }
+
+
+def _coupon_detail(coupon) -> Dict[str, Any]:
+    return {"accrual_start": _iso(coupon.accrualStartDate()),
+            "accrual_end": _iso(coupon.accrualEndDate()),
+            "notional": float(coupon.nominal()), "accrual_fraction": coupon.accrualPeriod()}
+
+
+def _fixed_rows(leg, curve, valuation: ql.Date) -> List[Dict[str, Any]]:
+    out = []
+    for number, coupon in enumerate(leg.coupons, start=1):
+        pay = _iso(coupon.date())
+        if coupon.date() <= valuation:
+            out.append(_derived("fixed", number, pay, "excluded_cashflow", None, "-",
+                                "payment date on or before the valuation date",
+                                "ql.DiscountingSwapEngine excludes it (OI-10)", "OI-10"))
+            continue
+        out.append(_derived(
+            "fixed", number, pay, "coupon_amount", _r(coupon.amount()), "currency",
+            f"notional {coupon.nominal():g} x fixed rate {coupon.rate() * 100:g}% x "
+            f"{coupon.dayCounter().name()} {coupon.accrualPeriod():.10f}",
+            "ql.FixedRateCoupon (instruments/rates/irs/fixed_leg.py)", "trade terms",
+            detail=_coupon_detail(coupon),
+        ))
+        position = curve_position(curve, date.fromisoformat(pay))
+        out.append(_derived(
+            "fixed", number, pay, "discount_factor", position["discount_factor"], "-",
+            f"curve {curve.market_data.currency} {curve.market_data.benchmark}: "
+            f"{position['lower_pillar']} / {position['upper_pillar']}, weight "
+            f"{position['weight']:.6f}, zero {position['zero_rate_pct']:.6f}%",
+            "linear zero, ACT/365F continuous (market/curves/irs_zero_curve.py:243)",
+            "market data at pillars; interpolation between pillars is Optima's convention",
+            detail=position,
+        ))
+    return out
+
+
+# Trade floating benchmark -> market-snapshot fixing name of its overnight index.
+_OVERNIGHT_FIXING_NAMES = {"SOFRRATE": "SOFR", "MUTKCALM": "TONA"}
+
+
+def _overnight_rows(leg, curve, valuation: ql.Date,
+                    fixing_provenance: Dict[str, str]) -> List[Dict[str, Any]]:
+    out = []
+    settings = leg.observation_settings
+    contractual = settings.contractual
+    for number, coupon in enumerate(leg.coupons, start=1):
+        pay = _iso(coupon.date())
+        if coupon.date() <= valuation:
+            out.append(_derived("floating", number, pay, "excluded_cashflow", None, "-",
+                                "payment date on or before the valuation date; its fixings "
+                                "are historical", "ql.DiscountingSwapEngine excludes it; no "
+                                "historical fixings are supported (OI-10)", "OI-10"))
+            continue
+        fixings = list(coupon.fixingDates())
+        historical = sum(1 for d in fixings if d < valuation)
+        window = f"{fixings[0].ISO()} -> {fixings[-1].ISO()}"
+        out.append(_derived(
+            "floating", number, pay, "observation_window", window, "dates",
+            f"accrual {_iso(coupon.accrualStartDate())} -> {_iso(coupon.accrualEndDate())}; "
+            f"lookback {settings.lookback_days} bd, no observation shift, lockout "
+            f"{settings.quantlib_lockout_days}; rate cutoff {contractual.cutoff_days} not applied",
+            "ql.OvernightLeg (instruments/rates/irs/floating_leg.py:203-221), SOFR calendar",
+            "lookback from the Bloomberg source (OI-3 for the TC1 fixture); rate cutoff not "
+            "mapped to lockout (OI-2)",
+            detail={"first_fixing": fixings[0].ISO(), "last_fixing": fixings[-1].ISO(),
+                    "fixings": len(fixings), "historical_fixings": historical,
+                    "valuation_date_fixing": any(d == valuation for d in fixings)},
+        ))
+        index_rate = (coupon.rate() - coupon.spread()) / coupon.gearing()
+        index_name = leg.terms.benchmark
+        stored = set(leg.index.timeSeries().dates())
+        known = [d for d in fixings if d in stored]
+        note = ""
+        if known:
+            note = (f"; {len(known)} fixing(s) on or before the valuation date from market data "
+                    f"({', '.join(d.ISO() for d in known)}): "
+                    + fixing_provenance.get(_OVERNIGHT_FIXING_NAMES.get(index_name, ""), ""))
+        elif any(d == valuation for d in fixings):
+            note = "; the valuation-date fixing is projected (no fixing supplied)"
+        out.append(_derived(
+            "floating", number, pay, "compounded_index_rate", _r(index_rate * 100), "pct",
+            f"{len(fixings)} daily {index_name} fixings, projected from the forecast curve"
+            + note,
+            "ql.CompoundingOvernightIndexedCouponPricer (compound, spread excluded)",
+            "market data + overnight index; observation conventions as above",
+            detail={"fixings_from_market_data": [d.ISO() for d in known]},
+        ))
+        out.append(_derived(
+            "floating", number, pay, "coupon_amount", _r(coupon.amount()), "currency",
+            f"notional {coupon.nominal():g} x (index {index_rate * 100:.6f}% + spread "
+            f"{coupon.spread() * 100:g}%) x ACT/360 {coupon.accrualPeriod():.10f}",
+            "ql.OvernightIndexedCoupon.amount()", "derived from the projected index rate",
+            detail=_coupon_detail(coupon),
+        ))
+        position = curve_position(curve, date.fromisoformat(pay))
+        out.append(_derived(
+            "floating", number, pay, "discount_factor", position["discount_factor"], "-",
+            f"curve {curve.market_data.currency} {curve.market_data.benchmark}: "
+            f"{position['lower_pillar']} / {position['upper_pillar']}, weight "
+            f"{position['weight']:.6f}, zero {position['zero_rate_pct']:.6f}%",
+            "linear zero, ACT/365F continuous (market/curves/irs_zero_curve.py:243)",
+            "market data at pillars; interpolation between pillars is Optima's convention",
+            detail=position,
+        ))
+    return out
+
+
+def _term_rate_rows(leg, curve, valuation: ql.Date,
+                    fixing_provenance: Dict[str, str]) -> List[Dict[str, Any]]:
+    out = []
+    benchmark = leg.spec.benchmark
+    fallback = not hasattr(benchmark, "spot_lag")
+    status = ("provisional fallback convention (OI-12)" if fallback
+              else "provisional projected-term convention (OI-15)")
+    rate_item = "compounded_rfr" if fallback else "projected_term_rate"
+    rate_method = ("fallback_rate: ql.OvernightIndexedCoupon, compound, observation shift "
+                   "(term_rate_leg.py)" if fallback
+                   else "projected_term_rate: simple forward on the forecast curve "
+                   "(term_rate_leg.py)")
+    method = getattr(leg.spec, "observation_method", "reset_date_fallback")
+    contractual = method == "contractual_accrual"
+    if contractual:
+        status = ("Method A (contractual_accrual): PROVISIONAL operational choice, not "
+                  "Bloomberg- or SME-confirmed (OI-17)")
+        rate_method = ("contractual_accrual_rate: ql.OvernightIndexedCoupon, compound, "
+                       "no observation shift (term_rate_leg.py)")
+    elif fallback:
+        status += "; Method B (reset_date_fallback)"
+    for number, (coupon, period) in enumerate(zip(leg.coupons, leg.period_details), start=1):
+        pay = _iso(coupon.date())
+        for k, reset in enumerate(period.resets, start=1):
+            if reset.source == "fixing":
+                out.append(_derived(
+                    "floating", number, pay, "reset_rate", _r(reset.reset_rate * 100), "pct",
+                    f"historical {benchmark.name} fixing of {reset.reset_date.isoformat()}",
+                    "market-data fixing (term_rate_leg._reset_rate)",
+                    "market data: " + fixing_provenance.get(benchmark.name, "fixing"),
+                    sub_period=k, detail={"reset_date": reset.reset_date.isoformat(),
+                                          "source": "fixing"},
+                ))
+            else:
+                window = (f"{reset.observation_start.isoformat()} -> "
+                          f"{reset.observation_end.isoformat()}")
+                if contractual:
+                    basis = (f"contractual period {reset.start.isoformat()} -> "
+                             f"{reset.end.isoformat()}, no shift (reset "
+                             f"{reset.reset_date.isoformat()} not used)")
+                    source_fn = rate_method.split(":")[0]
+                else:
+                    basis = (f"reset {reset.reset_date.isoformat()}; rate period from "
+                             f"{reset.rate_start.isoformat()} ({benchmark.tenor}"
+                             + (f", shift {benchmark.shift_days} bd)" if fallback else ")"))
+                    source_fn = ("term_rate_leg.rate_period_start + "
+                                 + rate_method.split(":")[0])
+                out.append(_derived(
+                    "floating", number, pay, "observation_window", window, "dates",
+                    basis, source_fn, status, sub_period=k,
+                    detail={"observation_method": method,
+                            "observation_rule": getattr(reset, "observation_rule", ""),
+                            "reset_date": reset.reset_date.isoformat(),
+                            "contractual_start": reset.start.isoformat(),
+                            "contractual_end": reset.end.isoformat(),
+                            "rate_start": reset.rate_start.isoformat(),
+                            "ibor_period_end": (reset.ibor_period_end.isoformat()
+                                                if reset.ibor_period_end else None),
+                            "observation_start": reset.observation_start.isoformat(),
+                            "observation_end": reset.observation_end.isoformat()},
+                ))
+                out.append(_derived(
+                    "floating", number, pay, rate_item, _r(reset.rfr_compounded_rate * 100),
+                    "pct", f"{benchmark.rfr} curve over {window}", rate_method, status,
+                    sub_period=k,
+                ))
+                out.append(_derived(
+                    "floating", number, pay, "reset_rate", _r(reset.reset_rate * 100), "pct",
+                    f"{rate_item} {reset.rfr_compounded_rate * 100:.8f}% + spread adjustment "
+                    f"{reset.spread_adjustment * 100:g}%",
+                    "term_rate_leg._reset_rate", status, sub_period=k,
+                    detail={"reset_date": reset.reset_date.isoformat(), "source": "projected"},
+                ))
+            out.append(_derived(
+                "floating", number, pay, "sub_period_amount", _r(reset.amount), "currency",
+                f"accrual fraction {reset.accrual_fraction:.10f}; "
+                + ("flat compounding, margin not compounded" if len(period.resets) > 1
+                   else "single reset"),
+                "flat_compounded_amount (term_rate_leg.py)",
+                "flat compounding confirmed by Bloomberg payments; reset rate as above",
+                sub_period=k,
+                detail={"accrual_fraction": reset.accrual_fraction,
+                        "notional": float(coupon.nominal()),
+                        "margin": float(leg.terms.floating_spread_rate),
+                        "reset_rate": reset.reset_rate},
+            ))
+        out.append(_derived(
+            "floating", number, pay, "equivalent_coupon", _r(period.equivalent_rate * 100), "pct",
+            f"payment / (notional {coupon.nominal():g} x {coupon.accrualPeriod():.10f})",
+            "term_rate_leg.build_term_rate_floating_leg (represented as ql.FixedRateCoupon)",
+            "representation of the payment", detail=_coupon_detail(coupon),
+        ))
+        out.append(_derived(
+            "floating", number, pay, "coupon_amount", _r(coupon.amount()), "currency",
+            "sum of the sub-period amounts",
+            "ql.FixedRateCoupon at the equivalent coupon", "derived from the reset rates",
+            detail=_coupon_detail(coupon),
+        ))
+        position = curve_position(curve, date.fromisoformat(pay))
+        out.append(_derived(
+            "floating", number, pay, "discount_factor", position["discount_factor"], "-",
+            f"curve {curve.market_data.currency} {curve.market_data.benchmark}: "
+            f"{position['lower_pillar']} / {position['upper_pillar']}, weight "
+            f"{position['weight']:.6f}, zero {position['zero_rate_pct']:.6f}%",
+            "linear zero, ACT/365F continuous (market/curves/irs_zero_curve.py:243)",
+            "market data at pillars; interpolation between pillars is Optima's convention",
+            detail=position,
+        ))
+    return out
+
+
+def _with_engine_check(derived: Dict[str, Any], legs: Dict[str, float], engine_npv: float,
+                       price_irs_npv: Optional[float]) -> Dict[str, Any]:
+    """Tie the derived rows to the engine: future-cashflow PVs must equal the engine's leg
+    NPVs, and a rebuild must reproduce price_irs exactly."""
+    check = {
+        "engine_npv": _r(engine_npv),
+        "engine_leg_npv": {k: _r(v) for k, v in legs.items()},
+        "future_cashflow_pv_matches_engine": all(
+            # derived PVs are stored at 12 significant digits (_r)
+            abs(derived["future_cashflow_pv"][k] - legs[k]) <= max(1e-8, 1e-10 * abs(legs[k]))
+            for k in ("fixed", "floating")
+        ),
+    }
+    if price_irs_npv is not None:
+        check["price_irs_npv"] = _r(price_irs_npv)
+        check["rebuild_matches_price_irs"] = engine_npv == price_irs_npv
+    return {**derived, "engine_check": check}
+
+
+def derived_inputs(instrument, market_doc, currency: str) -> Dict[str, Any]:
+    """Values Optima calculates rather than reads from the trade input, read from the
+    production-built swap (``instrument.last_built``) after pricing, with the evaluation
+    date set to the valuation date and restored afterwards. Nothing is re-priced."""
+    snapshot = parse_market_snapshot(market_doc)
+    assignment = snapshot.assignment(currency)
+    curve = resolve_market_environment(snapshot).curves[assignment.discount_curve_id]
+    built = instrument.last_built
+    valuation = ql.Date(VALUATION_DATE.day, VALUATION_DATE.month, VALUATION_DATE.year)
+    previous = ql.Settings.instance().evaluationDate
+    ql.Settings.instance().evaluationDate = valuation
+    try:
+        rows: List[Dict[str, Any]] = []
+        for side, leg in (("pay", built.pay_leg), ("receive", built.receive_leg)):
+            if isinstance(leg, QuantLibTermRateFloatingLeg):
+                leg_rows = _term_rate_rows(leg, curve, valuation, snapshot.fixing_provenance)
+            elif isinstance(leg, QuantLibFloatingLeg) and leg.index is not None:
+                leg_rows = _overnight_rows(leg, curve, valuation, snapshot.fixing_provenance)
+            else:
+                leg_rows = _fixed_rows(leg, curve, valuation)
+            rows += [{**row, "side": side} for row in leg_rows]
+        future_pv = {}
+        for side, leg in (("pay", built.pay_leg), ("receive", built.receive_leg)):
+            sign = -1.0 if side == "pay" else 1.0
+            kind = "floating" if isinstance(leg, QuantLibFloatingLeg) else "fixed"
+            future_pv[kind] = _r(sum(
+                sign * c.amount() * curve.term_structure.discount(c.date())
+                for c in leg.quantlib_leg if c.date() > valuation
+            ))
+    finally:
+        ql.Settings.instance().evaluationDate = previous
+    rows.sort(key=lambda r: (r["leg"] != "fixed", r["period"], r["sub_period"] or 0))
+    return {
+        "schema_version": DERIVED_INPUTS_SCHEMA_VERSION,
+        "discount_curve": assignment.discount_curve_id,
+        "forecast_curve": assignment.forecast_curve_id,
+        "future_cashflow_pv": future_pv,
+        "rows": rows,
+    }
+
+
 # --- audit ---------------------------------------------------------------------------
 
 
@@ -635,7 +1019,7 @@ CASE_RECORD_KEYS = (
     "case_id", "trade_id", "source_layout", "currency", "valuation_date", "effective_date",
     "maturity_date", "fixed_leg", "floating_leg", "features", "market_data", "bloomberg",
     "blockers", "observations", "limitations", "hypotheses", "trade_input", "pricing",
-    "differences", "cashflows", "status", "error",
+    "differences", "cashflows", "derived_inputs", "settled", "status", "error",
 )
 
 
@@ -679,6 +1063,8 @@ def _audit_case(case_id: str, market_doc, snapshot, stage: _Stage) -> Dict[str, 
         "pricing": None,
         "differences": None,
         "cashflows": None,
+        "derived_inputs": None,
+        "settled": [],
     }
     trade_path = trade_input_path(case_id)
     if not blockers and not trade_path.exists():
@@ -691,12 +1077,21 @@ def _audit_case(case_id: str, market_doc, snapshot, stage: _Stage) -> Dict[str, 
     stage.name = "reading trade input"
     trade_doc = _read(trade_path)
     record["trade_input"] = _rel(trade_path)
+    fixings = snapshot.fixings
     try:
         stage.name = "pricing with price_irs"
         valuation = price_irs(trade_doc, market_doc)
-    except CashflowExtractionError as exc:
+    except Exception as exc:  # noqa: BLE001 - classified below, otherwise re-raised
+        if not _missing_fixings(exc):
+            if not isinstance(exc, CashflowExtractionError):
+                raise
+        else:
+            record["status"] = "blocked"
+            record["blockers"].append({"code": "MISSING_FIXINGS", "detail": str(exc)})
+            return record
         stage.name = "engine-only pricing after cashflow extraction was refused"
-        instrument, environment, result, legs = _engine_only(trade_doc, market_doc)
+        with overnight_fixings_applied(fixings):
+            instrument, environment, result, legs = _engine_only(trade_doc, market_doc)
         record["status"] = "partially_audited"
         record["limitations"].append(
             {
@@ -716,6 +1111,10 @@ def _audit_case(case_id: str, market_doc, snapshot, stage: _Stage) -> Dict[str, 
             "model": result.model_used,
         }
         record["differences"] = _differences(record["pricing"], bloomberg)
+        stage.name = "reading derived inputs from the production-built swap"
+        with overnight_fixings_applied(fixings):
+            record["derived_inputs"] = _with_engine_check(
+                derived_inputs(instrument, market_doc, terms.currency), legs, result.npv, None)
         stage.name = "latest_index hypothesis test"
         evidence = latest_index_evidence(terms, instrument, environment, bloomberg)
         if evidence is not None:
@@ -732,6 +1131,17 @@ def _audit_case(case_id: str, market_doc, snapshot, stage: _Stage) -> Dict[str, 
         "model": valuation.model,
     }
     record["differences"] = _differences(record["pricing"], bloomberg)
+    record["settled"] = [
+        {"leg": s.leg, "period": s.period, "accrual_start": s.accrual_start.isoformat(),
+         "accrual_end": s.accrual_end.isoformat(), "payment_date": s.payment_date.isoformat()}
+        for s in valuation.settled
+    ]
+    stage.name = "reading derived inputs from a production rebuild of the swap"
+    with overnight_fixings_applied(fixings):
+        instrument, _, rebuilt, legs = _engine_only(trade_doc, market_doc)
+        record["derived_inputs"] = _with_engine_check(
+            derived_inputs(instrument, market_doc, terms.currency), legs, rebuilt.npv,
+            valuation.npv)
     stage.name = "comparing cashflows with Bloomberg"
     # Production extractor rows (ISO dates) from the valuation result.
     record["cashflows"] = _compare_rows(valuation.to_dict()["cashflows"], bloomberg["cashflows"])
@@ -803,36 +1213,75 @@ def market_data_date_cross_check(cases: List[Dict[str, Any]]) -> List[Dict[str, 
     return out
 
 
+# Current open questions (14-Oct-2026). The evidence requests that answer them, with the
+# outcomes each would imply, are in scripts/irs_evidence_register.py (R1-R9).
 OPEN_QUESTIONS = [
-    "What does Bloomberg's latest_index represent (the valuation-date fixing, or the last "
-    "published rate carried forward), and how is it applied? Needed before supporting fixings.",
-    "Bloomberg curve 490 members and settings between the 18M and 3Y pillars (OI-1, OI-7).",
-    "CHF, JPY and INR curves: zero rates with tenors, curve conventions and benchmarks; the "
-    "market_data files hold only market rates and DFs at display dates.",
-    "Index definitions for SF0006M (CHF) and IRSWOF (INR) as Bloomberg projects them, and "
-    "MUTKCALM (JPY TONA) mapping.",
+    "TC7 (SF0006M, provisional fallback, OI-12/OI-13): remaining reset gaps -0.054/-0.052/"
+    "-0.014 bp; curve interpolation vs compounding/rounding (R1: curve-234 DFs at 7+ "
+    "decimals). latest_index is not used for these resets (SME, 14-Oct-2026).",
+    "INR IRSWOF (OI-15): how SWPM sets the rate for reset periods shorter than 6M, whether "
+    "TC9's first reset is projected or stored, and the index definition (R6).",
+    "Bloomberg curve 490 members and settings between the 18M and 3Y pillars (OI-1, OI-7; R2).",
+    "TC2 SARON observation convention (OI-17, R9): Method A (contractual accrual, no shift) "
+    "is the provisional default; Method B (reset-date fallback) is preserved. Method B "
+    "needs SARON fixings 29-Jan-2026 to 30-Mar-2026 (R3) and has the P1 observation-end "
+    "question (rule 30-Jul-2026, Bloomberg 29-Jul-2026; R8).",
+    "Confirm the market-data fixings: SOFR and TONA for 31-Mar-2026 (R4, R5) and the TC8 "
+    "IRSWOF fixing of 27-Feb-2026 (R7).",
     "Meaning of Bloomberg 'market' / 'leg_valuation' leg values that differ from cashflow-leg "
-    "NPVs (OI-9 pattern).",
+    "NPVs (OI-9 pattern; seen in all ten cases).",
 ]
 
 
-def shared_state() -> Tuple[int, Tuple[str, ...], int]:
+# Overnight indexes the production path can create (SOFR legs; SARON for the CHF
+# term-rate fallback). Their fixing counts are part of the monitored shared state.
+MONITORED_INDEXES = (ql.Sofr, ql.Saron, ql.Tonar)
+
+
+def shared_state() -> Tuple[int, Tuple[str, ...], Tuple[int, ...]]:
     """QuantLib global state the audit must leave unchanged: the evaluation date, the
-    number of stored SOFR fixings, and the names of indexes with a stored history.
+    names of indexes with a stored history, and the number of stored fixings of each
+    monitored index.
 
     Reading a time series registers an (empty) history under the index name, so the
-    SOFR count is read first; otherwise this check would change its own result."""
+    monitored counts are read first; otherwise this check would change its own result."""
     evaluation_date = ql.Settings.instance().evaluationDate.serialNumber()
-    sofr_fixings = len(ql.Sofr().timeSeries())
+    fixings = tuple(len(index().timeSeries()) for index in MONITORED_INDEXES)
     return (
         evaluation_date,
         tuple(sorted(ql.IndexManager.instance().histories())),
-        sofr_fixings,
+        fixings,
     )
 
 
+def load_market_document() -> Dict[str, Any]:
+    """Merge the per-currency snapshot files into one market document. Every file must
+    have the same valuation date, and a curve id or currency may appear only once."""
+    docs = [_read(path) for path in MARKET_SNAPSHOT_FILES]
+    dates = {d["valuation_date"] for d in docs}
+    if len(dates) != 1:
+        raise ValueError(f"market snapshots have different valuation dates: {sorted(dates)}")
+    merged: Dict[str, Any] = {
+        "schema_version": docs[0]["schema_version"],
+        "valuation_date": docs[0]["valuation_date"],
+        "provenance": " | ".join(d["provenance"] for d in docs),
+        "curves": {},
+        "assignments": {},
+        "fixings": {},
+    }
+    for path, doc in zip(MARKET_SNAPSHOT_FILES, docs):
+        for section in ("curves", "assignments", "fixings"):
+            if section not in doc:
+                continue
+            clash = set(merged[section]) & set(doc[section])
+            if clash:
+                raise ValueError(f"{_rel(path)}: {section} {sorted(clash)} already defined")
+            merged[section].update(doc[section])
+    return merged
+
+
 def run_audit() -> Dict[str, Any]:
-    market_doc = _read(MARKET_SNAPSHOT_FILE)
+    market_doc = load_market_document()
     snapshot = parse_market_snapshot(market_doc)
     cases = []
     for case_id in CASE_IDS:
@@ -859,7 +1308,7 @@ def run_audit() -> Dict[str, Any]:
         "quantlib_version": ql.__version__,
         "inputs": {
             "fixtures": _rel(FIXTURES),
-            "market_snapshot": _rel(MARKET_SNAPSHOT_FILE),
+            "market_snapshots": [_rel(p) for p in MARKET_SNAPSHOT_FILES],
             "market_data_dir": _rel(MARKET_DATA_DIR),
             "tolerances": {
                 "coupon_pct": COUPON_DISPLAY_TOL_PCT,

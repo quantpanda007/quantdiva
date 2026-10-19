@@ -19,6 +19,13 @@ import QuantLib as ql
 from core.types.value_objects import PricingDate, Tenor
 
 
+# PROVISIONAL SOFR market-data interpretation (not SME-confirmed).
+# Keep the assumptions centralized so the scale and interval accrual can be
+# updated without changing the curve-building API if the SME clarifies them.
+_PROVISIONAL_SIMPLE_FORWARD_RATE_DIVISOR = 100.0
+_PROVISIONAL_SIMPLE_FORWARD_DAY_COUNT = ql.Actual360()
+
+
 # ---------------------------------------------------------------------------
 # Flat Curve (testing / quick pricing)
 # ---------------------------------------------------------------------------
@@ -62,6 +69,11 @@ class CurveDefinition:
     deposits: List[Tuple[str, float]] = field(default_factory=list)
     futures: List[Tuple[date, float]] = field(default_factory=list)
     swaps: List[Tuple[str, float]] = field(default_factory=list)
+    # Direct dated discount-factor observations: [(pillar date, DF), ...].
+    discount_factors: List[Tuple[date, float]] = field(default_factory=list)
+    # Dated simple forwards: [(interval end date, displayed market rate), ...].
+    # The provisional interval interpretation is centralized in the builder.
+    forward_rates: List[Tuple[date, float]] = field(default_factory=list)
 
     def __post_init__(self):
         if self.calendar is None:
@@ -82,9 +94,65 @@ class YieldCurveBuilder:
     """Bootstraps a yield curve from deposit, futures, and swap quotes."""
 
     def build(self, definition: CurveDefinition) -> ql.YieldTermStructureHandle:
-        """Bootstrap curve from the definition."""
+        """Build a direct DF curve, simple-forward projection curve, or bootstrap."""
         ql_date = definition.pricing_date.to_ql()
         ql.Settings.instance().evaluationDate = ql_date
+
+        if definition.forward_rates:
+            if (
+                definition.discount_factors
+                or definition.deposits
+                or definition.futures
+                or definition.swaps
+            ):
+                raise ValueError(
+                    "Simple forward observations cannot be mixed with other curve inputs"
+                )
+            dates, factors = self._discount_factors_from_simple_forwards(
+                ql_date, definition.forward_rates
+            )
+            curve = ql.DiscountCurve(dates, factors, definition.day_count)
+            curve.enableExtrapolation()
+            return ql.YieldTermStructureHandle(curve)
+
+        if definition.discount_factors:
+            if definition.deposits or definition.futures or definition.swaps:
+                raise ValueError(
+                    "Direct discount factors cannot be mixed with curve rate quotes"
+                )
+
+            # DiscountCurve takes discount factors directly. Include the
+            # reference-date anchor required by QuantLib; no rate conversion
+            # or rate-helper bootstrap is involved.
+            dated_factors = []
+            for pillar_date, discount_factor in definition.discount_factors:
+                if isinstance(pillar_date, date):
+                    ql_pillar = ql.Date(
+                        pillar_date.day, pillar_date.month, pillar_date.year
+                    )
+                else:
+                    ql_pillar = pillar_date
+                dated_factors.append((ql_pillar, float(discount_factor)))
+
+            reference_factors = [
+                factor for pillar, factor in dated_factors if pillar == ql_date
+            ]
+            if reference_factors and any(factor != 1.0 for factor in reference_factors):
+                raise ValueError("Reference-date discount factor must equal 1.0")
+            if not reference_factors:
+                dated_factors.append((ql_date, 1.0))
+
+            dated_factors.sort(key=lambda item: item[0].serialNumber())
+            dates = [pillar for pillar, _ in dated_factors]
+            factors = [factor for _, factor in dated_factors]
+            if len(set(dates)) != len(dates):
+                raise ValueError("Discount-factor pillar dates must be unique")
+            if any(factor <= 0.0 for factor in factors):
+                raise ValueError("Discount factors must be positive")
+
+            curve = ql.DiscountCurve(dates, factors, definition.day_count)
+            curve.enableExtrapolation()
+            return ql.YieldTermStructureHandle(curve)
 
         helpers = []
 
@@ -125,6 +193,53 @@ class YieldCurveBuilder:
         curve = ql.PiecewiseLogCubicDiscount(ql_date, helpers, definition.day_count)
         curve.enableExtrapolation()
         return ql.YieldTermStructureHandle(curve)
+
+    @staticmethod
+    def _discount_factors_from_simple_forwards(
+        reference_date: ql.Date,
+        forward_rates: List[Tuple[date, float]],
+    ) -> Tuple[List[ql.Date], List[float]]:
+        """Convert provisional dated simple forwards to cumulative discount factors.
+
+        Under the current provisional convention, each quote date ends its
+        accrual interval: the first interval begins on the reference date and
+        later intervals begin on the previous quote date. Displayed rates are
+        percentages and Actual/360 supplies the simple accrual fraction.
+        """
+        dates = [reference_date]
+        factors = [1.0]
+        previous_date = reference_date
+        previous_factor = 1.0
+
+        for pillar_date, displayed_rate in forward_rates:
+            if isinstance(pillar_date, date):
+                ql_pillar = ql.Date(
+                    pillar_date.day, pillar_date.month, pillar_date.year
+                )
+            else:
+                ql_pillar = pillar_date
+            if ql_pillar <= previous_date:
+                raise ValueError(
+                    "Simple-forward quote dates must be strictly increasing "
+                    "after the reference date"
+                )
+
+            rate = float(displayed_rate) / _PROVISIONAL_SIMPLE_FORWARD_RATE_DIVISOR
+            tau = _PROVISIONAL_SIMPLE_FORWARD_DAY_COUNT.yearFraction(
+                previous_date, ql_pillar
+            )
+            denominator = 1.0 + rate * tau
+            if denominator <= 0.0:
+                raise ValueError(
+                    "Simple-forward quote implies a non-positive discount factor"
+                )
+
+            previous_factor /= denominator
+            dates.append(ql_pillar)
+            factors.append(previous_factor)
+            previous_date = ql_pillar
+
+        return dates, factors
 
     def _get_ibor_index(self, definition: CurveDefinition) -> ql.IborIndex:
         index_map = {

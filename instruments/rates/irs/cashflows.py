@@ -21,10 +21,13 @@ Precondition: QuantLib's evaluation date must equal the discount curve's
 reference date (the valuation date). The function checks this and raises
 ``CashflowExtractionError``; it never sets the evaluation date itself.
 
-Already-paid cashflows are refused: if any coupon pays on or before the
-valuation date, ``CashflowExtractionError`` is raised before anything is
-discounted. (The engine excludes such cashflows; seasoned trades, including
-historical fixings, are out of scope for now.)
+Settled cashflows (seasoned trades): a coupon paying on or before the valuation
+date is excluded, exactly as ``ql.DiscountingSwapEngine`` excludes it (QuantLib's
+default ``includeReferenceDateEvents = False``), so the rows still sum to the
+engine NPV. ``settled_cashflows`` lists what was excluded. A coupon that is still
+to be paid but whose fixings fall before the valuation date needs those fixings
+(index history or explicit fixing inputs); if they are missing,
+``CashflowExtractionError`` is raised with the coupon identified.
 """
 
 from __future__ import annotations
@@ -38,6 +41,7 @@ import QuantLib as ql
 from instruments.rates.irs.fixed_leg import QuantLibFixedLeg
 from instruments.rates.irs.floating_leg import QuantLibFloatingLeg
 from instruments.rates.irs.instrument import QuantLibIRSInstrument
+from instruments.rates.irs.term_rate_leg import QuantLibTermRateFloatingLeg
 
 
 class CashflowExtractionError(RuntimeError):
@@ -75,6 +79,14 @@ def _leg_kind(leg) -> str:
     raise CashflowExtractionError(f"unsupported leg type {type(leg).__name__}")
 
 
+def _spread(leg, coupon) -> float:
+    """A term-rate leg's coupons are fixed-rate coupons at the equivalent rate; their
+    contractual spread is on the leg terms. Overnight coupons carry their own spread."""
+    if isinstance(leg, QuantLibTermRateFloatingLeg):
+        return float(leg.terms.floating_spread_rate)
+    return coupon.spread()
+
+
 def _leg_rows(
     leg,
     side: str,
@@ -101,12 +113,14 @@ def _leg_rows(
                 "contractual period"
             )
         if coupon.date() <= valuation_date:
+            continue  # settled: excluded, as by the engine (see settled_cashflows)
+        try:
+            amount = sign * coupon.amount()
+        except RuntimeError as exc:
             raise CashflowExtractionError(
-                f"{kind} period {number} pays on {coupon.date().ISO()}, on or before the "
-                f"valuation date {valuation_date.ISO()}; already-paid cashflows are not "
-                "supported (seasoned trades are out of scope)"
-            )
-        amount = sign * coupon.amount()
+                f"{kind} period {number} (pays {coupon.date().ISO()}) cannot be valued: "
+                f"{exc}; fixings before the valuation date must be supplied"
+            ) from exc
         discount_factor = discount_curve.discount(coupon.date())
         rows.append(
             IRSCashflowRow(
@@ -119,13 +133,41 @@ def _leg_rows(
                 notional=float(period.notional.amount),
                 day_count_fraction=coupon.accrualPeriod(),
                 rate=coupon.rate(),
-                spread=coupon.spread() if kind == "floating" else None,
+                spread=_spread(leg, coupon) if kind == "floating" else None,
                 amount=amount,
                 discount_factor=discount_factor,
                 present_value=amount * discount_factor,
             )
         )
     return tuple(rows)
+
+
+@dataclass(frozen=True)
+class SettledCashflow:
+    """A coupon paying on or before the valuation date: excluded from valuation."""
+
+    leg: str
+    side: str
+    period: int
+    accrual_start: date
+    accrual_end: date
+    payment_date: date
+
+
+def settled_cashflows(
+    built: QuantLibIRSInstrument, valuation_date: ql.Date
+) -> Tuple[SettledCashflow, ...]:
+    """Coupons excluded from valuation because they pay on or before the valuation date."""
+    out = []
+    for leg, side in ((built.pay_leg, "pay"), (built.receive_leg, "receive")):
+        kind = _leg_kind(leg)
+        for number, (period, coupon) in enumerate(
+            zip(leg.contractual_schedule.periods, leg.coupons), start=1
+        ):
+            if coupon.date() <= valuation_date:
+                out.append(SettledCashflow(kind, side, number, period.accrual_start,
+                                           period.accrual_end, period.payment_date))
+    return tuple(out)
 
 
 def irs_cashflow_rows(

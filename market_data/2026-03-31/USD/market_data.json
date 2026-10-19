@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "market_data_id": "2026-03-31-USD-SOFR",
+  "reference_date": "2026-03-31",
+  "currency": "USD",
+  "benchmark": "SOFR",
+  "source": {
+    "filename": "market_data_31_3_2026.xlsx",
+    "sheet": "490-USDSOFR",
+    "columns": [
+      "Date",
+      "Market Rate",
+      "Discount Factor"
+    ]
+  },
+  "observations": [
+    {"date": "2026-04-07", "market_rate": 3.6524, "discount_factor": 0.999088},
+    {"date": "2026-04-14", "market_rate": 3.6537, "discount_factor": 0.998379},
+    {"date": "2026-04-21", "market_rate": 3.65405, "discount_factor": 0.997671},
+    {"date": "2026-04-30", "market_rate": 3.66085, "discount_factor": 0.996554},
+    {"date": "2026-05-30", "market_rate": 3.6705, "discount_factor": 0.993617},
+    {"date": "2026-06-29", "market_rate": 3.6768, "discount_factor": 0.990591},
+    {"date": "2026-07-29", "market_rate": 3.67945, "discount_factor": 0.987384},
+    {"date": "2026-08-28", "market_rate": 3.6803, "discount_factor": 0.9844},
+    {"date": "2026-09-27", "market_rate": 3.683, "discount_factor": 0.981423},
+    {"date": "2026-10-27", "market_rate": 3.6875, "discount_factor": 0.978352},
+    {"date": "2026-11-26", "market_rate": 3.69125, "discount_factor": 0.975394},
+    {"date": "2026-12-26", "market_rate": 3.6949, "discount_factor": 0.972159},
+    {"date": "2027-01-25", "market_rate": 3.6975, "discount_factor": 0.969332},
+    {"date": "2027-02-24", "market_rate": 3.6985, "discount_factor": 0.966628},
+    {"date": "2027-03-26", "market_rate": 3.70095, "discount_factor": 0.963638},
+    {"date": "2027-09-22", "market_rate": 3.66, "discount_factor": 0.946232},
+    {"date": "2028-03-30", "market_rate": 3.62105, "discount_factor": 0.930085},
+    {"date": "2029-03-30", "market_rate": 3.57805, "discount_factor": 0.89841},
+    {"date": "2030-03-30", "market_rate": 3.58525, "discount_factor": 0.866701},
+    {"date": "2031-03-30", "market_rate": 3.62155, "discount_factor": 0.834704}
+  ]
+}

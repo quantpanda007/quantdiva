@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "case_id": "TC10",
+  "trade_id": "SLLSL9SF",
+  "source_json": "tests/fixtures/bloomberg_irs/source/TC10.json",
+  "source_oracle_sections": {
+    "valuation": {
+      "trade_npv": 256979.0,
+      "accrued": 0.0,
+      "par_coupon": 1.424756,
+      "premium": 0.47239,
+      "principal": 256979.0,
+      "bp_value": 47.23881,
+      "pv01": -6050.0,
+      "dv01": -6007.0,
+      "gamma_1bp": -1.22
+    },
+    "leg_valuation": {
+      "fixed_leg": {
+        "npv": -54324517.0,
+        "accrued": 0.0,
+        "premium": -99.86,
+        "dv01": -6041.0
+      },
+      "floating_leg": {
+        "npv": 54581497.0,
+        "accrued": 0.0,
+        "premium": 100.33,
+        "dv01": 33.0
+      }
+    },
+    "net_cashflows": [
+      {
+        "pay_date": "2027-03-31",
+        "receive_amount": 753656.0,
+        "pay_amount": -544000.0,
+        "net_amount": 209656.0,
+        "discount_factor": 0.989262,
+        "pv": 207404.0
+      },
+      {
+        "pay_date": "2027-06-30",
+        "receive_amount": 118106.0,
+        "pay_amount": -67813.0,
+        "net_amount": 50292.0,
+        "discount_factor": 0.98572,
+        "pv": 49574.0
+      }
+    ],
+    "fixed_leg_cashflows": [
+      {
+        "pay_date": "2027-03-31",
+        "accrual_start": "2026-03-31",
+        "accrual_end": "2027-03-31",
+        "days": 365,
+        "notional": 54400000.0,
+        "coupon_rate_pct": 1.0,
+        "payment": -544000.0,
+        "discount_factor": 0.989262,
+        "pv": -538158.0
+      },
+      {
+        "pay_date": "2027-06-30",
+        "accrual_start": "2027-03-31",
+        "accrual_end": "2027-06-30",
+        "days": 91,
+        "notional": 27200000.0,
+        "coupon_rate_pct": 1.0,
+        "payment": -67813.0,
+        "discount_factor": 0.98572,
+        "pv": -66845.0
+      }
+    ],
+    "floating_leg_cashflows": [
+      {
+        "pay_date": "2027-03-31",
+        "accrual_start": "2026-03-31",
+        "accrual_end": "2027-03-31",
+        "days": 365,
+        "notional": 54400000.0,
+        "effective_reset_date": "2027-03-30",
+        "equivalent_coupon_pct": 1.3854,
+        "payment": 753656.0,
+        "discount_factor": 0.989262,
+        "pv": 745563.0
+      },
+      {
+        "pay_date": "2027-06-30",
+        "accrual_start": "2027-03-31",
+        "accrual_end": "2027-06-30",
+        "days": 91,
+        "notional": 27200000.0,
+        "effective_reset_date": "2027-06-29",
+        "equivalent_coupon_pct": 1.74163,
+        "payment": 118106.0,
+        "discount_factor": 0.98572,
+        "pv": 116419.0
+      }
+    ]
+  }
+}

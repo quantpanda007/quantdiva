@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "case_id": "TC3",
+  "source": {
+    "trade_id": "SLLSL90",
+    "bloomberg_source_json": "tests/fixtures/bloomberg_irs/source/TC3.json"
+  },
+  "input_sections": {
+    "trade": {
+      "product": "Swap",
+      "swap_id": "SLLSL90",
+      "counterparty": "SWAP CNTRPARTY",
+      "ticker": "SLLSL90",
+      "valuation_date": "2026-03-31",
+      "curve_date": "2026-03-31",
+      "currency": "USD",
+      "notional": 790000,
+      "effective_date": "2026-05-31",
+      "maturity_date": "2028-04-30"
+    },
+    "leg_1": {
+      "leg_id": "SLLSL9S1",
+      "type": "Fixed",
+      "pay_receive": "Pay",
+      "notional": 790000,
+      "currency": "USD",
+      "effective_date": "2026-05-31",
+      "maturity_date": "2028-04-30",
+      "coupon": 2.0,
+      "coupon_unit": "%",
+      "pay_frequency": "SemiAnnual",
+      "day_count": "ACT/360",
+      "calculation_basis": "Money Mkt",
+      "amortization": [
+        {
+          "accrual_start": "2026-05-31",
+          "accrual_end": "2026-11-30",
+          "pay_date": "2026-11-30",
+          "amort_rate": 0.0,
+          "amort_amount": 0.0,
+          "balance": 790000,
+          "coupon": 2.0
+        },
+        {
+          "accrual_start": "2026-11-30",
+          "accrual_end": "2027-05-28",
+          "pay_date": "2027-05-28",
+          "amort_rate": 25.0,
+          "amort_amount": 197500,
+          "balance": 592500,
+          "coupon": 2.0
+        },
+        {
+          "accrual_start": "2027-05-28",
+          "accrual_end": "2027-11-30",
+          "pay_date": "2027-11-30",
+          "amort_rate": 25.0,
+          "amort_amount": 197500,
+          "balance": 395000,
+          "coupon": 2.0
+        },
+        {
+          "accrual_start": "2027-11-30",
+          "accrual_end": "2028-04-28",
+          "pay_date": "2028-04-28",
+          "amort_rate": 25.0,
+          "amort_amount": 197500,
+          "balance": 197500,
+          "coupon": 2.0
+        }
+      ],
+      "contract_detail": {
+        "first_payment": "2026-11-30",
+        "next_last_payment": "2027-11-30",
+        "bus_day_adjustment": "Mod Foll",
+        "adjust": "Acc & Pay Dates",
+        "calculation_calendar": "FD",
+        "pay_delay": 0,
+        "payment_type": "Coupon",
+        "roll_convention": "Forward"
+      }
+    },
+    "leg_2": {
+      "leg_id": "SLLSL9S2",
+      "type": "Floating",
+      "pay_receive": "Receive",
+      "notional": 790000,
+      "currency": "USD",
+      "effective_date": "2026-05-31",
+      "maturity_date": "2028-04-30",
+      "index": "SOFRRATE",
+      "index_tenor": "1D",
+      "spread": 70.0,
+      "spread_unit": "bp",
+      "leverage": 1.0,
+      "reset_frequency": "Daily",
+      "pay_frequency": "SemiAnnual",
+      "day_count": "ACT/360",
+      "days_before_accrual": 0,
+      "days_before_type": "Lookback",
+      "rate_cut_off_days": 1,
+      "reset_type": "In Arrears",
+      "compounding": "ExcludeSprd",
+      "amortization": [
+        {
+          "accrual_start": "2026-05-31",
+          "accrual_end": "2026-11-30",
+          "pay_date": "2026-11-30",
+          "amort_rate": 0.0,
+          "amort_amount": 0.0,
+          "balance": 790000,
+          "leverage": 1.0,
+          "spread": 70.0
+        },
+        {
+          "accrual_start": "2026-11-30",
+          "accrual_end": "2027-05-28",
+          "pay_date": "2027-05-28",
+          "amort_rate": 25.0,
+          "amort_amount": 197500,
+          "balance": 592500,
+          "leverage": 1.0,
+          "spread": 70.0
+        },
+        {
+          "accrual_start": "2027-05-28",
+          "accrual_end": "2027-11-30",
+          "pay_date": "2027-11-30",
+          "amort_rate": 25.0,
+          "amort_amount": 197500,
+          "balance": 395000,
+          "leverage": 1.0,
+          "spread": 70.0
+        },
+        {
+          "accrual_start": "2027-11-30",
+          "accrual_end": "2028-04-28",
+          "pay_date": "2028-04-28",
+          "amort_rate": 25.0,
+          "amort_amount": 197500,
+          "balance": 197500,
+          "leverage": 1.0,
+          "spread": 70.0
+        }
+      ],
+      "contract_detail": {
+        "first_payment": "2026-11-30",
+        "next_last_payment": "2027-11-30",
+        "bus_day_adjustment": "Mod Foll",
+        "reset_bus_day_adjustment": "No Adjustment",
+        "adjust": "Acc & Pay Dates",
+        "roll_convention": "Forward",
+        "calculation_calendar": "FD",
+        "fixing_calendar": "GT",
+        "pay_delay": 0,
+        "payment_type": "BD"
+      }
+    },
+    "additional_detail": {
+      "principal_exchange": "Never",
+      "min_stub_period": 7,
+      "stub_threshold_adjustment": true,
+      "credit_provisions": {
+        "unwind_type": "None"
+      },
+      "ibor_fallback": {},
+      "fee_schedule": [
+        {
+          "fee_date": "2026-03-31",
+          "payoff_side": "Receive",
+          "amount": 0.0
+        }
+      ]
+    },
+    "market_curve_references": {
+      "leg_1": {
+        "discount_curve": "USD SOFR"
+      },
+      "leg_2": {
+        "discount_curve": "USD SOFR",
+        "forward_curve": "USD SOFR"
+      }
+    }
+  }
+}

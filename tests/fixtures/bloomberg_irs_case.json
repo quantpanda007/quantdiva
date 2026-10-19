@@ -1,0 +1,107 @@
+{
+  "case_id": "SLLSL9RR",
+  "source": {
+    "trade_case": "Bloomberg case SLLSL9RR and SME clarifications supplied in this conversation",
+    "market_data_file": "market_data/2026-03-31/USD/market_data_31_3_2026.xlsx",
+    "market_data_sheet": "490-USDSOFR",
+    "market_data_columns": {
+      "Market Rate": "Simple forward rate, as confirmed by SME; numeric value preserved as displayed",
+      "Discount Factor": "Discount factor, as confirmed by SME"
+    }
+  },
+  "trade": {
+    "trade_id": "SLLSL9RR",
+    "currency": "USD",
+    "notional": {
+      "amount": 530000,
+      "currency": "USD"
+    },
+    "effective_date": "2026-05-31",
+    "maturity_date": "2027-11-30",
+    "fixed_leg": {
+      "direction": "payer",
+      "rate": 0.05,
+      "rate_percent": 5.0,
+      "payment_frequency": "Annual",
+      "day_count": "ACT/360"
+    },
+    "floating_leg": {
+      "direction": "receiver",
+      "index": "SOFR",
+      "index_tenor": "1D",
+      "reset_frequency": "Daily",
+      "payment_frequency": "Annual",
+      "day_count": "ACT/360",
+      "spread_bps": 10,
+      "spread_decimal": 0.001,
+      "leverage": 1.0
+    },
+    "principal_exchange": "Never",
+    "amortization": {
+      "type": "Notional reduction",
+      "reduction_percent": 50,
+      "reduction_amount": 265000,
+      "remaining_notional": 265000,
+      "reduction_between_coupon_periods": {
+        "date": "2027-05-28",
+        "from_notional": 530000,
+        "to_notional": 265000
+      },
+      "schedule": [
+        {
+          "period_start": "2026-05-31",
+          "period_end": "2027-05-28",
+          "notional": 530000,
+          "currency": "USD"
+        },
+        {
+          "period_start": "2027-05-28",
+          "period_end": "2027-11-30",
+          "notional": 265000,
+          "currency": "USD"
+        }
+      ],
+      "coupon_notional_rule": "The reduced notional applies to coupon cashflows for subsequent periods; no principal exchange is specified."
+    }
+  },
+  "conventions": {
+    "rate_cutoff_days": 1,
+    "lookback_days": 1,
+    "days_before_type": "Lookback",
+    "reset_type": "In Arrears",
+    "compounding": "ExcludeSprd",
+    "business_day_convention": {
+      "source_label": "Mod Roll",
+      "normalized_name": "Modified Following"
+    },
+    "schedule_generation": "Backward"
+  },
+  "market_environment": {
+    "currency": "USD",
+    "curve_date": "2026-03-31",
+    "reference_date": "2026-03-31",
+    "valuation_date": "2026-03-31",
+    "market_data_points": [
+      {"date": "2026-04-07", "market_rate": 3.6524, "discount_factor": 0.999088},
+      {"date": "2026-04-14", "market_rate": 3.6537, "discount_factor": 0.998379},
+      {"date": "2026-04-21", "market_rate": 3.65405, "discount_factor": 0.997671},
+      {"date": "2026-04-30", "market_rate": 3.66085, "discount_factor": 0.996554},
+      {"date": "2026-05-30", "market_rate": 3.6705, "discount_factor": 0.993617},
+      {"date": "2026-06-29", "market_rate": 3.6768, "discount_factor": 0.990591},
+      {"date": "2026-07-29", "market_rate": 3.67945, "discount_factor": 0.987384},
+      {"date": "2026-08-28", "market_rate": 3.6803, "discount_factor": 0.9844},
+      {"date": "2026-09-27", "market_rate": 3.683, "discount_factor": 0.981423},
+      {"date": "2026-10-27", "market_rate": 3.6875, "discount_factor": 0.978352},
+      {"date": "2026-11-26", "market_rate": 3.69125, "discount_factor": 0.975394},
+      {"date": "2026-12-26", "market_rate": 3.6949, "discount_factor": 0.972159},
+      {"date": "2027-01-25", "market_rate": 3.6975, "discount_factor": 0.969332},
+      {"date": "2027-02-24", "market_rate": 3.6985, "discount_factor": 0.966628},
+      {"date": "2027-03-26", "market_rate": 3.70095, "discount_factor": 0.963638},
+      {"date": "2027-09-22", "market_rate": 3.66, "discount_factor": 0.946232},
+      {"date": "2028-03-30", "market_rate": 3.62105, "discount_factor": 0.930085},
+      {"date": "2029-03-30", "market_rate": 3.57805, "discount_factor": 0.89841},
+      {"date": "2030-03-30", "market_rate": 3.58525, "discount_factor": 0.866701},
+      {"date": "2031-03-30", "market_rate": 3.62155, "discount_factor": 0.834704}
+    ]
+  }
+}

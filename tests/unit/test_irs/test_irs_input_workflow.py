@@ -253,15 +253,31 @@ def test_evaluation_date_restored_when_pricing_fails(trades, market, sentinel_ev
 
 
 def test_evaluation_date_restored_when_cashflow_extraction_fails(
-    trades, market, sentinel_evaluation_date
+    trades, market, sentinel_evaluation_date, monkeypatch
 ):
-    """A fixed coupon paying on the valuation date passes trade validation (payment
-    dates are not checked against accrual ends, OI-8), prices (the engine excludes
-    it) and is then refused by the cashflow extractor (OI-10)."""
+    """If cashflow extraction fails after pricing, the evaluation date is restored."""
+    import services.pricers.irs_valuation as valuation_module
+
+    def failing(*args, **kwargs):
+        raise CashflowExtractionError("simulated extraction failure")
+
+    monkeypatch.setattr(valuation_module, "irs_cashflow_rows", failing)
+    with pytest.raises(CashflowExtractionError, match="simulated extraction failure"):
+        price_irs(trades["TC1"], market)
+    assert ql.Settings.instance().evaluationDate == sentinel_evaluation_date
+
+
+def test_coupon_paying_on_the_valuation_date_is_settled(trades, market,
+                                                        sentinel_evaluation_date):
+    """A fixed coupon paying on the valuation date passes trade validation (payment dates
+    are not checked against accrual ends, OI-8), is excluded by the engine and is listed
+    as settled rather than refused (OI-10, seasoned trades)."""
     trade = _edit(trades["TC1"], ("params", "fixed_leg", "periods", 0, "payment_date"),
                   "2026-03-31")
-    with pytest.raises(CashflowExtractionError, match="on or before the valuation date"):
-        price_irs(trade, market)
+    result = price_irs(trade, market)
+    assert [(s.leg, s.period) for s in result.settled] == [("fixed", 1)]
+    assert [(r.leg, r.period) for r in result.cashflows if r.leg == "fixed"] == [("fixed", 2)]
+    assert sum(r.present_value for r in result.cashflows) == pytest.approx(result.npv)
     assert ql.Settings.instance().evaluationDate == sentinel_evaluation_date
 
 

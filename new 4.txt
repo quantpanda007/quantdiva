@@ -1,0 +1,106 @@
+
+1) Test scope of calculation by reconciling the 1d P&L vectors used in this calculation
+with the 1d production VaR. Any difference would indicate a problem with the trade
+perimeter which may invalidate the conclusions drawn from the analysis. Note
+developers provided some analysis (tables 32-33) but single COB only and no
+analysis to justify claim that differences were operationally driven.
+
+2) Test the materiality of the telescopic window approximation by running with a)
+current implementation; b) 10-day rolling sums (sourcing missing data or truncating
+lookback window); and c) telescopic with sqrt(t) scaling on the shortened scenarios.
+Run for range of COB dates as need to see impact when VaR scenarios fall in the
+telescopic period. Error may indicate need to change methodology as likely to be a
+systematic bias downwards.
+
+3) Test the 10-day overlapping benchmark itself using a block bootstrap on the
+underlying P&L vector to quantify the error in the quantile estimator. Run with
+multiple block lengths (10, 15, 20) to demonstrate robustness; output 90% CI on
+each red-flag COB and assess whether 1d scaled sits within the CI. Error in the
+benchmark helps contextualise materiality of error in the 1d-10d scaling
+approximation and inform thresholds on KPIs.
+
+4) Test orthogonality assumption between systematic and residual components in
+equity decomposition. Go beyond Spearman rank correlations and compute
+Pearson correlations on raw P&L vectors; rolling 60-day correlations to detect time-varying
+dependence; regression r2 between residual and systematic. Also run these statistics on the tail as well as full distribution.
+Outcome may indicate extent to
+which residual is genuinely idiosyncratic component – if strong systematic
+component in residual then rolling 1d sums still not justified.
+
+5) Directly test materiality of both equity and credit decomposition approaches by
+switching it off and rerunning calculation with summed 1d P&Ls for equity and credit
+individually and together. Outcome helps to quantify the materiality of the most
+complex component of the methodology.
+
+6) Directly test materiality of both equity and credit decomposition, this time by
+comparing with genuine 10d full revaluation shocks. Appreciate this is going to be
+challenging but I think we need it for at least a subset of positions as this is the real
+benchmark and it doesn’t exist anywhere at the moment so we are left relying on
+approximations to construct the benchmark without any empirical way of testing
+their validity. For example, how are we supposed to trust the assumption that no
+compounding scalar is required on the equity residuals without any insight into the
+nature of the positions and the corresponding idiosyncratic risk? Or how are we
+supposed to trust the construction of the compounding scalar on the credit
+residuals?
+
+
+
+    a. Note that when looking at full revaluation vs the approximation, we want to
+       decompose the gap between the two into a) option curvature at residual level
+       missed by using sum of 1d P&Ls; b) option curvature at systematic level
+       missed by using partial reval grids; and c) aggregation error at residual level
+       caused by summing up percentage shocks and treating as equivalent to a
+       single percentage shock (i.e. 1 + (1.03 – 1) + (1.03 ÷ 1) != 1.03 * 1.03).
+
+7) Test materiality of choice of equity indices by switching one or the other off, and also
+(if possible) by including others. Significant sensitivity to adding more indices would
+indicate that the model is not working as intended and be a source of model risk.
+Run for current and stress periods.
+
+8) Test sensitivity of credit compounding scalar (and the ultimate model output) to the
+omega weighting between CDS and bond exposures, and assess whether a single
+omega applied to a heterogeneous residual is appropriate vs computing position-
+level or sub-portfolio scalars. Justification of CS01-based weighting in
+documentation is weak and so significant sensitivity to this parameter would mean
+it needs more justification.
+
+
+9) Quantify impact of spot-vol boundary breaches – we’re expecting something from
+the developers on this as they’ve accepted that what they’ve provided doesn’t show
+the partial revaluation error for moves outside the grid boundaries, so need to review
+what they provide before determining our own testing. Ultimately the outcome
+needs to be that we test the materiality of partial vs full revaluation on the
+aggregated spot-vol grids for the large shocks that drive VaR and (more importantly)
+SVaR.
+
+10) Test book 4142 treatment. Repeat the supporting analysis used to justify the average
+of the two time series as the driver for the systematic component. Test correlation
+between systematic VaR and actual (name level) VaR using different (combinations
+of) indices (including no indices, i.e. all idiosyncratic). Poor correlation and/or
+significant sensitivity of results to choice of indices indicates material model risk
+and would mean the choice needs to be better justified.
+
+Outstanding stuff for the developers:
+
+    a) Still waiting for access to code or data – need to chase
+
+    b) Still waiting for the raw data behind the book 4142 index selection – need to chase
+
+    c) Still waiting on analysis on full reval vs partial reval using the correct spot vol grid
+       extrapolation methodology
+
+    d) Still waiting for better justification of the telescopic window approach as discussed
+
+
+New questions for developers:
+
+    e) Document says they are going to provide analysis to extend testing to cover the
+       SVaR covid window. This is really important because the divergence spiked then and
+       we need to understand drivers as lack of stability in model is a problem.
+
+    f) Question on the vol scaling applied to implied vol shocks in credit. Why is this a
+       feature of the 1d10d scaling analysis model. Shouldn’t we just be replicating the
+       shock methodology used in 1d production VaR? Are implied vol shocks vol-scaled in
+       VaR (for credit, but not for equity) as they are in this analysis?
+
+Note I have not considered the KPI at all in the testing plan, leaving that for now.

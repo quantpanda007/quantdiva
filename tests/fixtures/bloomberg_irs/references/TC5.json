@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "TC5",
+  "trade_id": "SLLSL9S9",
+  "source_json": "tests/fixtures/bloomberg_irs/source/TC5.json",
+  "source_oracle_sections": {
+    "leg_1_market": {
+      "discount_curve": "INR OIS",
+      "npv": -198319.21,
+      "accrued": 0.0,
+      "premium": -2.64,
+      "dv01": -805.67
+    },
+    "leg_2_market": {
+      "discount_curve": "INR OIS",
+      "forward_curve": "INR OIS",
+      "npv": 78519.24,
+      "accrued": 0.0,
+      "premium": 1.05,
+      "dv01": 7.77
+    },
+    "cashflow": {
+      "currency": "INR",
+      "net": [
+        {
+          "pay_date": "2027-06-30",
+          "payments_receive": 559485.34,
+          "payments_pay": -675000.0,
+          "net_payment": -115514.66,
+          "discount_factor": 0.92629,
+          "pv": -107000.05
+        },
+        {
+          "pay_date": "2027-09-30",
+          "payments_receive": 71019.84,
+          "payments_pay": -85068.49,
+          "net_payment": -14048.65,
+          "discount_factor": 0.911114,
+          "pv": -12799.92
+        }
+      ],
+      "accrued": 0.0,
+      "npv": -119799.97
+    },
+    "cashflow_leg_1": {
+      "leg": "Pay Fixed",
+      "currency": "INR",
+      "accrued": 0.0,
+      "npv": -702752.68,
+      "cashflows": [
+        {
+          "pay_date": "2027-06-30",
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2027-06-30",
+          "days": 365,
+          "notional": -7500000.0,
+          "principal": 0.0,
+          "equivalent_coupon": 9.0,
+          "payment": -675000.0,
+          "discount_factor": 0.92629,
+          "pv": -625245.62
+        },
+        {
+          "pay_date": "2027-09-30",
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "days": 92,
+          "notional": -3750000.0,
+          "principal": 0.0,
+          "equivalent_coupon": 9.0,
+          "payment": -85068.49,
+          "discount_factor": 0.911114,
+          "pv": -77507.06
+        }
+      ]
+    },
+    "cashflow_leg_2": {
+      "leg": "Receive Float",
+      "currency": "INR",
+      "accrued": 0.0,
+      "npv": 582952.71,
+      "cashflows": [
+        {
+          "pay_date": "2027-06-30",
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2027-06-30",
+          "days": 365,
+          "notional": 7500000.0,
+          "principal": 0.0,
+          "effective_reset_date": null,
+          "equivalent_coupon": 7.4598,
+          "payment": 559485.34,
+          "discount_factor": 0.92629,
+          "pv": 518245.57
+        },
+        {
+          "pay_date": "2027-09-30",
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "days": 92,
+          "notional": 3750000.0,
+          "principal": 0.0,
+          "effective_reset_date": "2026-12-30",
+          "equivalent_coupon": 7.5137,
+          "payment": 71019.84,
+          "discount_factor": 0.911114,
+          "pv": 64707.14
+        }
+      ]
+    },
+    "valuation_results": {
+      "par_coupon": 7.465748,
+      "premium": -1.59733,
+      "principal": -119799.97,
+      "bp_value": -159.73329,
+      "accrued": 0.0,
+      "npv": -119799.97
+    },
+    "risk": {
+      "pv01": -780.84,
+      "dv01": -797.9,
+      "gamma_1bp": -0.19
+    }
+  }
+}

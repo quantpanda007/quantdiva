@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "case_id": "TC8",
+  "trade_id": "SLLSL9S6",
+  "currency": "INR",
+  "valuation_date": "2026-03-31",
+  "provenance": {
+    "kind": "optima_regression_baseline",
+    "independent": false,
+    "source": "Optima production pricing (same implementation under test)",
+    "statement": "Optima regression baseline: captured from Optima's own production pricing (price_irs_engine -> PricingService -> ql.DiscountingSwapEngine) at the validation_phase1 checkpoint. NOT independent expected results and NOT Bloomberg values. A match shows the implementation still reproduces these outputs; it does not show they are correct. Bloomberg comparison: scripts/irs_reconciliation_report.py.",
+    "checkpoint": "validation_phase1",
+    "captured_at": "2026-10-15T19:10:12+05:30",
+    "captured_by": "scripts/irs_expected_output_suite.py capture",
+    "environment": {
+      "python": "3.11.17",
+      "quantlib": "1.43",
+      "platform": "Linux-6.18.44-fc-v114-x86_64-with-glibc2.39"
+    },
+    "observation_method": null,
+    "inputs": {
+      "trade_file": {
+        "path": "examples/irs/tc8_trade.json",
+        "sha256": "30fb955d5c89224e665477629e6e15d86f51795f2c4415aeef0d64ac59390e34"
+      },
+      "market_files": [
+        {
+          "path": "examples/irs/inr_mibor_2026-03-31.json",
+          "sha256": "a3ab7eebd7f469022dff1c655386fe6d040edafda5d08599a1893976b2b698cf"
+        },
+        {
+          "path": "examples/irs/fixings_2026-03-31.json",
+          "sha256": "8199b8abab5041120545d6b96e6f3e68bcefee47623d42d8b73e14fa24d16d59"
+        }
+      ]
+    },
+    "recapture_reason": null
+  },
+  "expected": {
+    "npv": -139219.46131479615,
+    "fixed_leg_npv": -373543.2987420521,
+    "floating_leg_npv": 234323.83742725596,
+    "cashflows": [
+      {
+        "leg": "fixed",
+        "side": "pay",
+        "period": 1,
+        "accrual_start": "2026-02-28",
+        "accrual_end": "2026-08-31",
+        "payment_date": "2026-08-31",
+        "notional": 4500000.0,
+        "day_count_fraction": 0.5041095890410959,
+        "rate": 0.1,
+        "amount": -226849.3150684928,
+        "discount_factor": 0.9763128638256513,
+        "present_value": -221475.9044514077
+      },
+      {
+        "leg": "fixed",
+        "side": "pay",
+        "period": 2,
+        "accrual_start": "2026-08-31",
+        "accrual_end": "2027-02-26",
+        "payment_date": "2027-02-26",
+        "notional": 3000000.0,
+        "day_count_fraction": 0.4904109589041096,
+        "rate": 0.1,
+        "amount": -147123.28767123318,
+        "discount_factor": 0.9468436461248046,
+        "present_value": -139302.75012849894
+      },
+      {
+        "leg": "fixed",
+        "side": "pay",
+        "period": 3,
+        "accrual_start": "2027-02-26",
+        "accrual_end": "2027-03-31",
+        "payment_date": "2027-03-31",
+        "notional": 1500000.0,
+        "day_count_fraction": 0.09041095890410959,
+        "rate": 0.1,
+        "amount": -13561.643835616533,
+        "discount_factor": 0.9412313372087008,
+        "present_value": -12764.644162145483
+      },
+      {
+        "leg": "floating",
+        "side": "receive",
+        "period": 1,
+        "accrual_start": "2026-02-28",
+        "accrual_end": "2026-08-31",
+        "payment_date": "2026-08-31",
+        "notional": 4500000.0,
+        "day_count_fraction": 0.5041095890410959,
+        "rate": 0.05859999999999999,
+        "amount": 132933.6986301367,
+        "discount_factor": 0.9763128638256513,
+        "present_value": 129784.88000852482
+      },
+      {
+        "leg": "floating",
+        "side": "receive",
+        "period": 2,
+        "accrual_start": "2026-08-31",
+        "accrual_end": "2027-02-26",
+        "payment_date": "2027-02-26",
+        "notional": 3000000.0,
+        "day_count_fraction": 0.4904109589041096,
+        "rate": 0.06854717214184557,
+        "amount": 100848.85326074233,
+        "discount_factor": 0.9468436461248046,
+        "present_value": 95488.09592890665
+      },
+      {
+        "leg": "floating",
+        "side": "receive",
+        "period": 3,
+        "accrual_start": "2027-02-26",
+        "accrual_end": "2027-03-31",
+        "payment_date": "2027-03-31",
+        "notional": 1500000.0,
+        "day_count_fraction": 0.09041095890410959,
+        "rate": 0.07090570935510716,
+        "amount": 9615.97976185702,
+        "discount_factor": 0.9412313372087008,
+        "present_value": 9050.861489824487
+      }
+    ],
+    "settled": []
+  }
+}

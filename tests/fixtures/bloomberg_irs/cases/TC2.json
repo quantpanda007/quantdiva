@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "case_id": "TC2",
+  "source": {
+    "trade_id": "SLLSL9SL",
+    "bloomberg_source_json": "tests/fixtures/bloomberg_irs/source/TC2.json"
+  },
+  "input_sections": {
+    "trade": {
+      "product": "Swap",
+      "swap_id": "SLLSL9SL",
+      "counterparty": "SWAP CNTRPARTY",
+      "ticker": "SLLSL9SL",
+      "valuation_date": "2026-03-31",
+      "curve_date": "2026-03-31",
+      "currency": "CHF",
+      "notional": 20000,
+      "effective_date": "2026-04-30",
+      "maturity_date": "2028-02-29"
+    },
+    "leg_1": {
+      "leg_id": "SLLSL9SM",
+      "type": "Fixed",
+      "pay_receive": "Pay",
+      "notional": 20000000,
+      "currency": "CHF",
+      "effective_date": "2026-04-30",
+      "maturity_date": "2028-02-29",
+      "coupon": 1.0,
+      "coupon_unit": "%",
+      "pay_frequency": "Quarterly",
+      "day_count": "30/360",
+      "calculation_basis": "Money Mkt",
+      "amortization": [
+        {
+          "accrual_start": "2026-04-30",
+          "accrual_end": "2026-07-31",
+          "pay_date": "2026-07-31",
+          "amort_rate": 0.0,
+          "amort_amount": 0.0,
+          "balance": 20000000,
+          "coupon": 1.0
+        },
+        {
+          "accrual_start": "2026-07-31",
+          "accrual_end": "2026-10-30",
+          "pay_date": "2026-10-30",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 17500000,
+          "coupon": 1.0
+        },
+        {
+          "accrual_start": "2026-10-30",
+          "accrual_end": "2027-01-29",
+          "pay_date": "2027-01-29",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 15000000,
+          "coupon": 1.0
+        },
+        {
+          "accrual_start": "2027-01-29",
+          "accrual_end": "2027-04-30",
+          "pay_date": "2027-04-30",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 12500000,
+          "coupon": 1.0
+        },
+        {
+          "accrual_start": "2027-04-30",
+          "accrual_end": "2027-07-30",
+          "pay_date": "2027-07-30",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 10000000,
+          "coupon": 1.0
+        },
+        {
+          "accrual_start": "2027-07-30",
+          "accrual_end": "2027-10-29",
+          "pay_date": "2027-10-29",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 7500000,
+          "coupon": 1.0
+        },
+        {
+          "accrual_start": "2027-10-29",
+          "accrual_end": "2028-01-31",
+          "pay_date": "2028-01-31",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 5000000,
+          "coupon": 1.0
+        },
+        {
+          "accrual_start": "2028-01-31",
+          "accrual_end": "2028-02-29",
+          "pay_date": "2028-02-29",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 2500000,
+          "coupon": 1.0
+        }
+      ],
+      "contract_detail": {
+        "first_payment": "2026-07-31",
+        "next_last_payment": "2028-01-31",
+        "bus_day_adjustment": "Mod Foll",
+        "adjust": "Acc & Pay Dates",
+        "calculation_calendar": "SZ",
+        "pay_delay": 0,
+        "payment_type": "Coupon",
+        "roll_convention": "Forward",
+        "principal_exchange": "Never"
+      }
+    },
+    "leg_2": {
+      "leg_id": "SLLSL9SN",
+      "type": "Floating",
+      "pay_receive": "Receive",
+      "notional": 20000000,
+      "currency": "CHF",
+      "effective_date": "2026-04-30",
+      "maturity_date": "2028-02-29",
+      "index": "SF0006M",
+      "index_tenor": "6M",
+      "spread": 10.0,
+      "spread_unit": "bp",
+      "leverage": 1.0,
+      "latest_index": 0.02771,
+      "reset_frequency": "SemiAnnual",
+      "pay_frequency": "Quarterly",
+      "day_count": "ACT/360",
+      "days_before_accrual": 1,
+      "reset_type": "In Advance",
+      "fixing_calendar": "EN",
+      "amortization": [
+        {
+          "accrual_start": "2026-04-30",
+          "accrual_end": "2026-07-31",
+          "pay_date": "2026-07-31",
+          "reset_date": "2026-01-30",
+          "amort_rate": 0.0,
+          "amort_amount": 0.0,
+          "balance": 20000000,
+          "leverage": 1.0,
+          "spread": 10.0
+        },
+        {
+          "accrual_start": "2026-07-31",
+          "accrual_end": "2026-10-30",
+          "pay_date": "2026-10-30",
+          "reset_date": "2026-04-29",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 17500000,
+          "leverage": 1.0,
+          "spread": 10.0
+        },
+        {
+          "accrual_start": "2026-10-30",
+          "accrual_end": "2027-01-29",
+          "pay_date": "2027-01-29",
+          "reset_date": "2026-07-28",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 15000000,
+          "leverage": 1.0,
+          "spread": 10.0
+        },
+        {
+          "accrual_start": "2027-01-29",
+          "accrual_end": "2027-04-30",
+          "pay_date": "2027-04-30",
+          "reset_date": "2026-10-29",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 12500000,
+          "leverage": 1.0,
+          "spread": 10.0
+        },
+        {
+          "accrual_start": "2027-04-30",
+          "accrual_end": "2027-07-30",
+          "pay_date": "2027-07-30",
+          "reset_date": "2027-01-28",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 10000000,
+          "leverage": 1.0,
+          "spread": 10.0
+        },
+        {
+          "accrual_start": "2027-07-30",
+          "accrual_end": "2027-10-29",
+          "pay_date": "2027-10-29",
+          "reset_date": "2027-04-28",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 7500000,
+          "leverage": 1.0,
+          "spread": 10.0
+        },
+        {
+          "accrual_start": "2027-10-29",
+          "accrual_end": "2028-01-31",
+          "pay_date": "2028-01-31",
+          "reset_date": "2027-07-28",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 5000000,
+          "leverage": 1.0,
+          "spread": 10.0
+        },
+        {
+          "accrual_start": "2028-01-31",
+          "accrual_end": "2028-02-29",
+          "pay_date": "2028-02-29",
+          "reset_date": "2027-08-27",
+          "amort_rate": 12.5,
+          "amort_amount": 2500000,
+          "balance": 2500000,
+          "leverage": 1.0,
+          "spread": 10.0
+        }
+      ],
+      "contract_detail": {
+        "first_payment": "2026-07-31",
+        "next_last_payment": "2028-01-31",
+        "bus_day_adjustment": "Mod Foll",
+        "reset_bus_day_adjustment": "No Adjustment",
+        "adjust": "Acc & Pay Dates",
+        "roll_convention": "Forward",
+        "calculation_calendar": "SZ",
+        "fixing_calendar": "EN",
+        "pay_delay": 0,
+        "payment_type": "BD"
+      }
+    },
+    "additional_detail": {
+      "principal_exchange": "Never",
+      "min_stub_period": 7,
+      "stub_threshold_adjustment": true,
+      "credit_provisions": {
+        "unwind_type": "None"
+      },
+      "ibor_fallback": {
+        "opt_in": true
+      },
+      "fee_schedule": [
+        {
+          "fee_date": "2026-03-31",
+          "payoff_side": "Receive",
+          "amount": 0.0
+        }
+      ]
+    },
+    "market_curve_references": {
+      "leg_1": {
+        "discount_curve": "CHF OIS SARON"
+      },
+      "leg_2": {
+        "discount_curve": "CHF OIS SARON",
+        "forward_curve": "CHF OIS SARON"
+      }
+    }
+  }
+}

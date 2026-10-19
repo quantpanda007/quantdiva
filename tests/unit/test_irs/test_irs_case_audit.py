@@ -32,26 +32,18 @@ MODULE = "scripts.irs_case_audit"
 MARKET_DATA = ROOT / "market_data" / "2026-03-31"
 WATCHED = [ROOT / "tests" / "fixtures" / "bloomberg_irs", ROOT / "examples" / "irs", MARKET_DATA]
 
-# Observed QuantLib 1.43 engine result for TC4 (partially audited), kept only as a
+# Observed QuantLib 1.43 result for TC4 (priced since 14-Oct-2026: settled cashflows and the
+# 31-Mar-2026 SOFR fixing from market data), kept only as a
 # regression pin so that an engine change is noticed. NOT a Bloomberg
 # reconciliation target: TC4 is not reconciled to Bloomberg.
-TC4_QL143_ENGINE_OBSERVATION = {"npv": -4648.43988008, "fixed_leg_npv": -22362.4881479,
-                                "floating_leg_npv": 17714.0482678}
+TC4_QL143_ENGINE_OBSERVATION = {"npv": -4647.84670958, "fixed_leg_npv": -22362.4881479,
+                                "floating_leg_npv": 17714.6414383}
 
-EXPECTED_BLOCKERS = {
-    "TC2": {"NO_CURVE_ASSIGNMENT", "UNSUPPORTED_BENCHMARK", "UNSUPPORTED_FLOATING_LEG",
-            "UNSUPPORTED_CALENDAR"},
-    "TC5": {"NO_CURVE_ASSIGNMENT", "UNSUPPORTED_BENCHMARK", "UNSUPPORTED_FLOATING_LEG",
-            "UNSUPPORTED_CALENDAR"},
-    "TC6": {"NO_CURVE_ASSIGNMENT", "UNSUPPORTED_BENCHMARK", "UNSUPPORTED_CALENDAR"},
-    "TC7": {"NO_CURVE_ASSIGNMENT", "UNSUPPORTED_BENCHMARK", "UNSUPPORTED_FLOATING_LEG",
-            "UNSUPPORTED_CALENDAR"},
-    "TC8": {"NO_CURVE_ASSIGNMENT", "UNSUPPORTED_BENCHMARK", "UNSUPPORTED_FLOATING_LEG",
-            "UNSUPPORTED_CALENDAR", "NEEDS_FIXINGS"},
-    "TC9": {"NO_CURVE_ASSIGNMENT", "UNSUPPORTED_BENCHMARK", "UNSUPPORTED_FLOATING_LEG",
-            "UNSUPPORTED_CALENDAR"},
-    "TC10": {"NO_CURVE_ASSIGNMENT", "UNSUPPORTED_BENCHMARK", "UNSUPPORTED_CALENDAR"},
-}
+# 14-Oct-2026 (later): no case is blocked. TC2 is priced with Method A (contractual accrual
+# observation dates, no shift; PROVISIONAL operational default, OI-17). Under Method B
+# (reset-date fallback, preserved) it would need SARON fixings 29-Jan -> 30-Mar-2026 (R3);
+# that path is tested in test_irs_inr_jpy.py and test_irs_observation_methods.py.
+ALL_PRICED = ["TC1", "TC2", "TC3", "TC4", "TC5", "TC6", "TC7", "TC8", "TC9", "TC10"]
 
 
 def _digest() -> str:
@@ -94,26 +86,32 @@ def cases(result):
 def test_all_ten_cases_are_classified(result):
     assert [c["case_id"] for c in result["cases"]] == [f"TC{i}" for i in range(1, 11)]
     assert result["summary"] == {
-        "priced": ["TC1", "TC3"],
-        "partially_audited": ["TC4"],
-        "blocked": ["TC2", "TC5", "TC6", "TC7", "TC8", "TC9", "TC10"],
+        "priced": ALL_PRICED,
+        "partially_audited": [],
+        "blocked": [],
         "error": [],
     }
     assert all(c["error"] is None for c in result["cases"])
 
 
-@pytest.mark.parametrize("case_id", sorted(EXPECTED_BLOCKERS))
-def test_blocked_cases_report_exact_blockers_and_are_not_priced(cases, case_id):
-    case = cases[case_id]
-    codes = {b["code"] for b in case["blockers"]}
-    market_code = ("MARKET_DATA_NOT_CURVE_READY"
-                   if (MARKET_DATA / case["currency"] / "market_data.json").exists()
-                   else "NO_MARKET_DATA")
-    assert codes == EXPECTED_BLOCKERS[case_id] | {market_code}
-    assert case["status"] == "blocked"
-    for key in ("trade_input", "pricing", "differences", "cashflows"):
-        assert case[key] is None
-    assert all(b["detail"] for b in case["blockers"])
+def test_tc2_is_priced_with_the_configured_method_a(cases):
+    """TC2 runs through price_irs with Method A (provisional default, OI-17); the method is
+    recorded in its derived inputs. Not a Bloomberg reconciliation (+5.537, TC2-F3)."""
+    case = cases["TC2"]
+    assert case["status"] == "priced" and case["blockers"] == []
+    assert case["pricing"]["path"] == "price_irs"
+    assert case["trade_input"] == "examples/irs/tc2_trade.json"
+    assert case["pricing"]["npv"] == pytest.approx(-153.37323685, abs=1e-6)
+    windows = [r for r in case["derived_inputs"]["rows"] if r["item"] == "observation_window"]
+    assert len(windows) == 8
+    assert {r["detail"]["observation_method"] for r in windows} == {"contractual_accrual"}
+    first = windows[0]
+    assert first["value"] == "2026-04-30 -> 2026-07-31"
+    assert first["detail"]["contractual_start"] == "2026-04-30"
+    assert first["detail"]["ibor_period_end"] is None
+    assert "PROVISIONAL" in first["basis"]
+    assert "no shift" in first["inputs"] and "not used" in first["inputs"]
+    assert "no observation shift" in first["method"] or "contractual_accrual" in first["method"]
 
 
 @pytest.mark.parametrize("case_id", ["TC1", "TC3", "TC4"])
@@ -153,33 +151,24 @@ def test_priced_cashflows_reconcile_and_tag_open_items(cases, case_id, rows):
 # --- partially audited: TC4 ---------------------------------------------------------------
 
 
-def test_tc4_reports_engine_result_and_extraction_limitation_separately(cases):
+def test_tc4_is_priced_with_settled_cashflows_and_market_fixing(cases):
     case = cases["TC4"]
-    assert case["status"] == "partially_audited"
-    assert case["cashflows"] is None  # no cashflow table is produced or rebuilt
-    (limitation,) = case["limitations"]
-    assert limitation["code"] == "CASHFLOW_EXTRACTION_REFUSED"
-    assert "pays on 2026-03-31, on or before the valuation date" in limitation["detail"]
-    assert "production engine" in case["pricing"]["path"]
-    assert (case["pricing"]["engine"], case["pricing"]["model"]) == ("discounting", "analytical")
+    assert case["status"] == "priced" and case["pricing"]["path"] == "price_irs"
+    assert case["limitations"] == [] and case["hypotheses"] == []
+    assert {(s["leg"], s["period"]) for s in case["settled"]} == {("fixed", 1), ("floating", 1)}
+    assert len(case["cashflows"]) == 8
     for metric, value in TC4_QL143_ENGINE_OBSERVATION.items():
         assert case["pricing"][metric] == pytest.approx(value, abs=1e-6)
-    legs = case["pricing"]["fixed_leg_npv"] + case["pricing"]["floating_leg_npv"]
-    assert legs == pytest.approx(case["pricing"]["npv"], abs=1e-6)
+    assert case["differences"]["npv"] == pytest.approx(0.0033, abs=0.0005)
     assert case["features"]["payment_on_valuation_date"] is True
 
 
-def test_tc4_latest_index_is_reported_as_a_hypothesis_only(cases):
-    case = cases["TC4"]
-    (h,) = case["hypotheses"]
-    assert h["status"] == "tested" and h["label"].startswith("hypothesis")
-    assert h["latest_index_pct"] == 3.68 and h["period"] == 2
-    assert h["residual_bp_forecast"] == pytest.approx(-0.0319, abs=5e-4)
-    assert abs(h["residual_bp_with_latest_index"]) < 0.001
-    assert abs(h["residual_payment_with_latest_index"]) < 0.01
-    assert h["fixings_removed"] is True
-    # The hypothesis does not feed the reported price.
-    assert case["pricing"]["npv"] == pytest.approx(TC4_QL143_ENGINE_OBSERVATION["npv"], abs=1e-6)
+def test_tc4_valuation_date_fixing_comes_from_market_data(cases):
+    rows = cases["TC4"]["derived_inputs"]["rows"]
+    row = next(r for r in rows if r["item"] == "compounded_index_rate"
+               and r["payment_date"] == "2026-06-30")
+    assert row["detail"]["fixings_from_market_data"] == ["2026-03-31"]
+    assert "sofrrate.com" in row["inputs"]
 
 
 # --- observations and evidence -----------------------------------------------------------
@@ -187,7 +176,8 @@ def test_tc4_latest_index_is_reported_as_a_hypothesis_only(cases):
 
 def test_data_quality_observations(cases):
     assert any("not on the payment scale" in o for o in cases["TC1"]["observations"])
-    assert any("differs from fixed + floating" in o for o in cases["TC7"]["observations"])
+    # TC7's re-exported cashflow table (14-Oct-2026) agrees with its trade NPV.
+    assert not any("differs from fixed + floating" in o for o in cases["TC7"]["observations"])
     for case_id in ("TC4", "TC10"):
         assert any("latest_index" in o and "unconfirmed" in o
                    for o in cases[case_id]["observations"])
@@ -232,10 +222,8 @@ def test_audit_has_no_side_effects(run):
 
 def test_summary_text(module, result):
     text = module.format_summary(result)
-    for case_id in result["summary"]["blocked"]:
-        assert f"{case_id} (" in text
-    assert "HYPOTHESIS (Bloomberg applies latest_index" in text
-    assert "limitation CASHFLOW_EXTRACTION_REFUSED" in text
+    assert result["summary"]["blocked"] == []
+    assert "TC2" in text and "MISSING_FIXINGS" not in text
 
 
 # --- inputs and independence from test modules ------------------------------------------
@@ -313,8 +301,8 @@ def test_unexpected_case_failure_is_recorded_as_error(module, monkeypatch):
                             "message": "injected pricing failure"}
     assert tc3["pricing"] is None and tc3["cashflows"] is None
     assert result["summary"]["error"] == ["TC3"]
-    assert result["summary"]["priced"] == ["TC1"]
-    assert result["summary"]["partially_audited"] == ["TC4"]
+    assert result["summary"]["priced"] == [c for c in ALL_PRICED if c != "TC3"]
+    assert result["summary"]["partially_audited"] == []
     assert by_id["TC1"]["error"] is None and by_id["TC4"]["error"] is None
     assert "ERROR during pricing with price_irs: RuntimeError: injected pricing failure" \
         in module.format_summary(result)
@@ -457,9 +445,9 @@ def test_cli_writes_identical_json_on_repeated_runs(module, result, tmp_path):
         run = subprocess.run([sys.executable, "-m", MODULE, "--json", str(output)], cwd=ROOT,
                              capture_output=True, text=True, timeout=300)
         assert run.returncode == 0, run.stderr
-        assert "Priced: TC1, TC3 | partially audited: TC4" in run.stdout
+        assert (f"Priced: {', '.join(ALL_PRICED)} | partially audited: -" in run.stdout)
         assert "| error: -" in run.stdout
         outputs.append(output.read_bytes())
     assert outputs[0] == outputs[1]
     assert outputs[0] == module.to_json(result).encode("utf-8")  # same as in-process
-    assert json.loads(outputs[0])["summary"]["priced"] == ["TC1", "TC3"]
+    assert json.loads(outputs[0])["summary"]["priced"] == ALL_PRICED

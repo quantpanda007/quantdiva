@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "valuation_date": "2026-03-31",
+  "provenance": "INR MIBOR OIS curve bootstrapped in QuantLib from the OIS par rates (Market Rate) in market_data/2026-03-31/INR/market_data.json by scripts/build_ois_curve_snapshots.py: T+0, IN-MIBOR, single payment up to 1Y, semiannual above, ACT/365F, linear zero; reproduces Bloomberg's TC5/TC8/TC9 payment-date DFs within 4.3e-7. The supplied Discount Factor column is not used (it does not reproduce Bloomberg's trade DFs). Bloomberg-derived: keep local (OI-6).",
+  "curves": {
+    "INR-MIBOR-OIS": {
+      "currency": "INR",
+      "benchmark": "MIBOR",
+      "reference_date": "2026-03-31",
+      "conventions": {
+        "calendar": "IN-MIBOR",
+        "spot_lag_days": 0,
+        "business_day_convention": "modified_following",
+        "end_of_month": false,
+        "day_count": "ACT/365F",
+        "compounding": "continuous",
+        "interpolation": "linear_zero",
+        "front_extrapolation": "flat_first_zero",
+        "allow_extrapolation": false,
+        "discount_factor_check_tolerance": 1e-06
+      },
+      "observations": [
+        {
+          "tenor": "1M",
+          "zero_rate": 0.055663955183256626
+        },
+        {
+          "tenor": "2M",
+          "zero_rate": 0.055929025745888004
+        },
+        {
+          "tenor": "3M",
+          "zero_rate": 0.05677163253795586
+        },
+        {
+          "tenor": "6M",
+          "zero_rate": 0.057431751950251846
+        },
+        {
+          "tenor": "9M",
+          "zero_rate": 0.0592221271136007
+        },
+        {
+          "tenor": "1Y",
+          "zero_rate": 0.060597588210805416
+        },
+        {
+          "tenor": "2Y",
+          "zero_rate": 0.0634449252628471
+        },
+        {
+          "tenor": "3Y",
+          "zero_rate": 0.0646508036605777
+        },
+        {
+          "tenor": "4Y",
+          "zero_rate": 0.06595587106370951
+        },
+        {
+          "tenor": "5Y",
+          "zero_rate": 0.06670909747360237
+        }
+      ]
+    }
+  },
+  "assignments": {
+    "INR": {
+      "discount": "INR-MIBOR-OIS",
+      "forecast": "INR-MIBOR-OIS"
+    }
+  }
+}

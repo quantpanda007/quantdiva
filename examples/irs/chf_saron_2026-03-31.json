@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "valuation_date": "2026-03-31",
+  "provenance": "Bloomberg curve 234 (CHF OIS SARON, Mid, Piecewise Linear (Cont)), 31-Mar-2026. Zero rates derived from the discount factors in market_data/2026-03-31/CHF/market_data.json by scripts/build_chf_curve_snapshot.py (pillar = spot + tenor; zero = -ln(DF)/t, ACT/365F continuous). Bloomberg-derived: keep local (OI-6).",
+  "curves": {
+    "CHF-SARON-234": {
+      "currency": "CHF",
+      "benchmark": "SARON",
+      "reference_date": "2026-03-31",
+      "conventions": {
+        "calendar": "CH-SARON",
+        "spot_lag_days": 2,
+        "business_day_convention": "modified_following",
+        "end_of_month": false,
+        "day_count": "ACT/365F",
+        "compounding": "continuous",
+        "interpolation": "linear_zero",
+        "front_extrapolation": "flat_first_zero",
+        "allow_extrapolation": false,
+        "discount_factor_check_tolerance": 1e-06
+      },
+      "observations": [
+        {
+          "tenor": "1W",
+          "zero_rate": -0.000567773803369,
+          "discount_factor": 1.000014
+        },
+        {
+          "tenor": "2W",
+          "zero_rate": -0.000570305371211,
+          "discount_factor": 1.000025
+        },
+        {
+          "tenor": "1M",
+          "zero_rate": -0.000558220780503,
+          "discount_factor": 1.000052
+        },
+        {
+          "tenor": "2M",
+          "zero_rate": -0.000614094437696,
+          "discount_factor": 1.000106
+        },
+        {
+          "tenor": "3M",
+          "zero_rate": -0.000541575535373,
+          "discount_factor": 1.000138
+        },
+        {
+          "tenor": "4M",
+          "zero_rate": -0.000429208453951,
+          "discount_factor": 1.000147
+        },
+        {
+          "tenor": "5M",
+          "zero_rate": -0.000369680658247,
+          "discount_factor": 1.000157
+        },
+        {
+          "tenor": "6M",
+          "zero_rate": -0.000280142272532,
+          "discount_factor": 1.000142
+        },
+        {
+          "tenor": "7M",
+          "zero_rate": -6.75912407769e-05,
+          "discount_factor": 1.00004
+        },
+        {
+          "tenor": "8M",
+          "zero_rate": 8.90270610824e-05,
+          "discount_factor": 0.99994
+        },
+        {
+          "tenor": "9M",
+          "zero_rate": 0.000310090510618,
+          "discount_factor": 0.999763
+        },
+        {
+          "tenor": "10M",
+          "zero_rate": 0.000482419607622,
+          "discount_factor": 0.999593
+        },
+        {
+          "tenor": "11M",
+          "zero_rate": 0.000623720691635,
+          "discount_factor": 0.999426
+        },
+        {
+          "tenor": "12M",
+          "zero_rate": 0.000772070719364,
+          "discount_factor": 0.999224
+        },
+        {
+          "tenor": "18M",
+          "zero_rate": 0.00148016994014,
+          "discount_factor": 0.997764
+        },
+        {
+          "tenor": "2Y",
+          "zero_rate": 0.00156988688768,
+          "discount_factor": 0.996848
+        },
+        {
+          "tenor": "3Y",
+          "zero_rate": 0.00206288100724,
+          "discount_factor": 0.993808
+        },
+        {
+          "tenor": "4Y",
+          "zero_rate": 0.00257876000425,
+          "discount_factor": 0.989717
+        },
+        {
+          "tenor": "5Y",
+          "zero_rate": 0.00314105407863,
+          "discount_factor": 0.984392
+        },
+        {
+          "tenor": "6Y",
+          "zero_rate": 0.00366104212551,
+          "discount_factor": 0.978234
+        },
+        {
+          "tenor": "7Y",
+          "zero_rate": 0.00415698926208,
+          "discount_factor": 0.971254
+        },
+        {
+          "tenor": "8Y",
+          "zero_rate": 0.00456675012973,
+          "discount_factor": 0.964065
+        },
+        {
+          "tenor": "9Y",
+          "zero_rate": 0.00506608666137,
+          "discount_factor": 0.955376
+        },
+        {
+          "tenor": "10Y",
+          "zero_rate": 0.00556743155856,
+          "discount_factor": 0.945775
+        }
+      ]
+    }
+  },
+  "assignments": {
+    "CHF": {
+      "discount": "CHF-SARON-234",
+      "forecast": "CHF-SARON-234"
+    }
+  }
+}

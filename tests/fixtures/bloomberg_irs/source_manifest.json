@@ -1,0 +1,76 @@
+{
+  "archive_name": "optima_irs_test_cases_complete.zip",
+  "cases": {
+    "TC1": {
+      "archive_member": "optima_irs_test_cases/TC1.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC1.json",
+      "sha256": "30d3d72f9a8d7630067ddf092d75c6da5622a92638d254399a35b81cdc7aee23",
+      "bytes": 6369,
+      "trade_id": "SLLSL9RR"
+    },
+    "TC2": {
+      "archive_member": "optima_irs_test_cases/TC2.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC2.json",
+      "sha256": "2f9fb873e5a211d0956223ed26da34deeaa63947ca279ab51920e0cd805da50a",
+      "bytes": 15434,
+      "trade_id": "SLLSL9SL"
+    },
+    "TC3": {
+      "archive_member": "optima_irs_test_cases/TC3.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC3.json",
+      "sha256": "3cac06ce957f1028dfc08af842edc5874f9b9794944baedfbe63b8212e0cdd60",
+      "bytes": 9358,
+      "trade_id": "SLLSL90"
+    },
+    "TC4": {
+      "archive_member": "optima_irs_test_cases/TC4.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC4.json",
+      "sha256": "4cce78b1bacc50d1f979035ffd8cc162f4f3d8228cd9fa9e16092302e543683f",
+      "bytes": 9902,
+      "trade_id": "SLLSL9RX"
+    },
+    "TC5": {
+      "archive_member": "optima_irs_test_cases/TC5.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC5.json",
+      "sha256": "7ab2e02887cc98a9aab4d6c323b870a2d96fa7c10cfa319799640aaec8bb2d96",
+      "bytes": 6500,
+      "trade_id": "SLLSL9S9"
+    },
+    "TC6": {
+      "archive_member": "optima_irs_test_cases/TC6.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC6.json",
+      "sha256": "37344758a8571909b22afc308ceb67a49380c0c803365fe84cdfdcc9587dea39",
+      "bytes": 8279,
+      "trade_id": "SLLSL9SC"
+    },
+    "TC7": {
+      "archive_member": "optima_irs_test_cases/TC7.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC7.json",
+      "sha256": "3af744c5e9faa84ead7e932b06cf9f648d3511d4b37f5e8ab69c80c31b9f0925",
+      "bytes": 7417,
+      "trade_id": "SLLSL9SI",
+      "replacement": "2026-10-14: replaced with the re-exported TC7 (SWPM curve 234, 31-Mar-2026 valuation; file 1791960122991_TC7.json). One correction: fixed_leg.cashflows[0].pv -519.18 -> -519.0 (payment -520.00 x DF 0.998086, as displayed). archive_member refers to the original export."
+    },
+    "TC8": {
+      "archive_member": "optima_irs_test_cases/TC8.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC8.json",
+      "sha256": "2c55ebeaf2e07fb35ae942122d3c1df0b99439316730248b42a9f63f98e9ddd1",
+      "bytes": 8286,
+      "trade_id": "SLLSL9S6"
+    },
+    "TC9": {
+      "archive_member": "optima_irs_test_cases/TC9.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC9.json",
+      "sha256": "eac835149885fb3cbd068abd41f38434f7153768a0bf4226b0d55dfa6cde9c40",
+      "bytes": 17075,
+      "trade_id": "SLLSL9S3"
+    },
+    "TC10": {
+      "archive_member": "optima_irs_test_cases/TC10.json",
+      "fixture_path": "tests/fixtures/bloomberg_irs/source/TC10.json",
+      "sha256": "f01a40a5843b75c341b7c8d683ef62f8b176c2d1265dbf30ea96ec50ed5fcc47",
+      "bytes": 4682,
+      "trade_id": "SLLSL9SF"
+    }
+  }
+}

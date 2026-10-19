@@ -379,6 +379,7 @@ document.addEventListener('click', async (e) => {
   if (e.target.id === 'bulk-pdf-btn') {
     if (!_lastBulkData) return;
     const btn = e.target;
+    if (btn.disabled) return;
     btn.textContent = '⏳ Generating PDF...';
     btn.disabled = true;
     try {
@@ -397,9 +398,18 @@ document.addEventListener('click', async (e) => {
       document.body.appendChild(a); a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
+      // Success state
+      btn.textContent = '✓ PDF Downloaded';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = 'var(--green)';
+      setTimeout(() => {
+        btn.textContent = '📄 Download PDF Report';
+        btn.style.color = 'var(--purple)';
+        btn.style.borderColor = 'var(--purple)';
+        btn.disabled = false;
+      }, 3000);
     } catch (err) {
       alert('PDF generation failed: ' + err.message);
-    } finally {
       btn.textContent = '📄 Download PDF Report';
       btn.disabled = false;
     }

@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "case_id": "TC10",
+  "trade_id": "SLLSL9SF",
+  "currency": "JPY",
+  "valuation_date": "2026-03-31",
+  "provenance": {
+    "kind": "optima_regression_baseline",
+    "independent": false,
+    "source": "Optima production pricing (same implementation under test)",
+    "statement": "Optima regression baseline: captured from Optima's own production pricing (price_irs_engine -> PricingService -> ql.DiscountingSwapEngine) at the validation_phase1 checkpoint. NOT independent expected results and NOT Bloomberg values. A match shows the implementation still reproduces these outputs; it does not show they are correct. Bloomberg comparison: scripts/irs_reconciliation_report.py.",
+    "checkpoint": "validation_phase1",
+    "captured_at": "2026-10-15T19:10:12+05:30",
+    "captured_by": "scripts/irs_expected_output_suite.py capture",
+    "environment": {
+      "python": "3.11.17",
+      "quantlib": "1.43",
+      "platform": "Linux-6.18.44-fc-v114-x86_64-with-glibc2.39"
+    },
+    "observation_method": null,
+    "inputs": {
+      "trade_file": {
+        "path": "examples/irs/tc10_trade.json",
+        "sha256": "2a9b41412d0f3ad4dfb1a930a4b3d1263ebaf09019dcc143b133d7cf547f256a"
+      },
+      "market_files": [
+        {
+          "path": "examples/irs/jpy_tona_2026-03-31.json",
+          "sha256": "387664cdaff12a5c45d458f837de84895e2dabd8b7fb1c5c978a9a95679001ec"
+        },
+        {
+          "path": "examples/irs/fixings_2026-03-31.json",
+          "sha256": "8199b8abab5041120545d6b96e6f3e68bcefee47623d42d8b73e14fa24d16d59"
+        }
+      ]
+    },
+    "recapture_reason": null
+  },
+  "expected": {
+    "npv": 256977.8740237035,
+    "fixed_leg_npv": -605004.0945452078,
+    "floating_leg_npv": 861981.9685689113,
+    "cashflows": [
+      {
+        "leg": "fixed",
+        "side": "pay",
+        "period": 1,
+        "accrual_start": "2026-03-31",
+        "accrual_end": "2027-03-31",
+        "payment_date": "2027-03-31",
+        "notional": 54400000.0,
+        "day_count_fraction": 1.0,
+        "rate": 0.01,
+        "amount": -544000.0000000005,
+        "discount_factor": 0.9892624951751092,
+        "present_value": -538158.7973752599
+      },
+      {
+        "leg": "fixed",
+        "side": "pay",
+        "period": 2,
+        "accrual_start": "2027-03-31",
+        "accrual_end": "2027-06-30",
+        "payment_date": "2027-06-30",
+        "notional": 27200000.0,
+        "day_count_fraction": 0.2493150684931507,
+        "rate": 0.01,
+        "amount": -67813.6986301368,
+        "discount_factor": 0.9857196778858693,
+        "present_value": -66845.29716994787
+      },
+      {
+        "leg": "floating",
+        "side": "receive",
+        "period": 1,
+        "accrual_start": "2026-03-31",
+        "accrual_end": "2027-03-31",
+        "payment_date": "2027-03-31",
+        "notional": 54400000.0,
+        "day_count_fraction": 1.0,
+        "rate": 0.01385397307982161,
+        "amount": 753656.1355422955,
+        "discount_factor": 0.9892624951751092,
+        "present_value": 745563.7491506016
+      },
+      {
+        "leg": "floating",
+        "side": "receive",
+        "period": 2,
+        "accrual_start": "2027-03-31",
+        "accrual_end": "2027-06-30",
+        "payment_date": "2027-06-30",
+        "notional": 27200000.0,
+        "day_count_fraction": 0.2493150684931507,
+        "rate": 0.017416067299742436,
+        "amount": 118104.79391869174,
+        "discount_factor": 0.9857196778858693,
+        "present_value": 116418.2194183098
+      }
+    ],
+    "settled": []
+  }
+}

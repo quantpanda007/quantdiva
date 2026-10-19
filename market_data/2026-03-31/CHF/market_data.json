@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "market_data_id": "2026-03-31-CHF",
+  "reference_date": "2026-03-31",
+  "currency": "CHF",
+  "benchmark": null,
+  "source": {
+    "filename": null,
+    "sheet": null,
+    "columns": ["Date", "Market Rate", "Discount Factor"]
+  },
+  "observations": [
+    {"date": "2026-04-07", "market_rate": -0.0562, "discount_factor": 1.000014},
+    {"date": "2026-04-14", "market_rate": -0.0562, "discount_factor": 1.000025},
+    {"date": "2026-04-30", "market_rate": -0.055, "discount_factor": 1.000052},
+    {"date": "2026-05-30", "market_rate": -0.06075, "discount_factor": 1.000106},
+    {"date": "2026-06-29", "market_rate": -0.05325, "discount_factor": 1.000138},
+    {"date": "2026-07-29", "market_rate": -0.04225, "discount_factor": 1.000147},
+    {"date": "2026-08-28", "market_rate": -0.03625, "discount_factor": 1.000157},
+    {"date": "2026-09-27", "market_rate": -0.02725, "discount_factor": 1.000142},
+    {"date": "2026-10-27", "market_rate": -0.00625, "discount_factor": 1.00004},
+    {"date": "2026-11-26", "market_rate": 0.00925, "discount_factor": 0.99994},
+    {"date": "2026-12-26", "market_rate": 0.03125, "discount_factor": 0.999763},
+    {"date": "2027-01-25", "market_rate": 0.04825, "discount_factor": 0.999593},
+    {"date": "2027-02-24", "market_rate": 0.06225, "discount_factor": 0.999426},
+    {"date": "2027-03-26", "market_rate": 0.07695, "discount_factor": 0.999224},
+    {"date": "2027-09-22", "market_rate": 0.14675, "discount_factor": 0.997764},
+    {"date": "2028-03-30", "market_rate": 0.1555, "discount_factor": 0.996848},
+    {"date": "2029-03-30", "market_rate": 0.204, "discount_factor": 0.993808},
+    {"date": "2030-03-30", "market_rate": 0.25475, "discount_factor": 0.989717},
+    {"date": "2031-03-30", "market_rate": 0.31, "discount_factor": 0.984392},
+    {"date": "2032-03-29", "market_rate": 0.361, "discount_factor": 0.978234},
+    {"date": "2033-03-29", "market_rate": 0.4095, "discount_factor": 0.971254},
+    {"date": "2034-03-29", "market_rate": 0.4495, "discount_factor": 0.964065},
+    {"date": "2035-03-29", "market_rate": 0.498, "discount_factor": 0.955376},
+    {"date": "2036-03-28", "market_rate": 0.5465, "discount_factor": 0.945775}
+  ]
+}

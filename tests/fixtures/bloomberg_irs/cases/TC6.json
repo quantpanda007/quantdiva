@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "case_id": "TC6",
+  "source": {
+    "trade_id": "SLLSL9SC",
+    "bloomberg_source_json": "tests/fixtures/bloomberg_irs/source/TC6.json"
+  },
+  "input_sections": {
+    "trade": {
+      "product": "Swap",
+      "swap_id": "SLLSL9SC",
+      "counterparty": "SWAP CNTRPARTY",
+      "ticker": "SWAP",
+      "currency": "JPY",
+      "effective_date": "2026-07-31",
+      "maturity_date": "2028-01-31",
+      "valuation_date": "2026-03-31",
+      "curve_date": "2026-03-31",
+      "legs": {
+        "fixed": {
+          "leg_id": "SLLSL9SD",
+          "pay_receive": "Pay",
+          "notional": 7300000,
+          "currency": "JPY",
+          "effective_date": "2026-07-31",
+          "maturity_date": "2028-01-31",
+          "coupon": 1.0,
+          "pay_frequency": "SemiAnnual",
+          "day_count": "ACT/365",
+          "calc_basis": "Money Mkt",
+          "first_payment": "2027-01-31",
+          "next_last_payment": "2027-07-31",
+          "business_day_adjustment": "Mod Foll",
+          "roll_convention": "Backward (EOM)",
+          "calculation_calendar": "JN",
+          "payment_type": "Coupon",
+          "principal_exchange": "Never",
+          "amortization_schedule": [
+            {
+              "accrual_start": "2026-07-31",
+              "accrual_end": "2027-01-29",
+              "pay_date": "2027-01-29",
+              "amort_rate_percent": 0.0,
+              "amort_amount": 0.0,
+              "balance": 7300000.0,
+              "coupon": 1.0
+            },
+            {
+              "accrual_start": "2027-01-29",
+              "accrual_end": "2027-07-30",
+              "pay_date": "2027-07-30",
+              "amort_rate_percent": 33.333333,
+              "amort_amount": 2433333.33,
+              "balance": 4866666.67,
+              "coupon": 1.0
+            },
+            {
+              "accrual_start": "2027-07-30",
+              "accrual_end": "2028-01-31",
+              "pay_date": "2028-01-31",
+              "amort_rate_percent": 33.333333,
+              "amort_amount": 2433333.33,
+              "balance": 2433333.34,
+              "coupon": 1.0
+            }
+          ]
+        },
+        "floating": {
+          "leg_id": "SLLSL9SE",
+          "pay_receive": "Receive",
+          "notional": 7300000,
+          "currency": "JPY",
+          "effective_date": "2026-07-31",
+          "maturity_date": "2028-01-31",
+          "index": "MUTKCALM",
+          "index_tenor": "1D",
+          "spread_bp": 30.0,
+          "leverage": 1.0,
+          "reset_frequency": "Daily",
+          "pay_frequency": "SemiAnnual",
+          "day_count": "ACT/365",
+          "reset_type": "In Arrears",
+          "compounding": "ExcludeSprd",
+          "days_before_accrual": 0,
+          "days_before_type": "Lookback",
+          "rate_cutoff_days": 1,
+          "first_payment": "2027-01-31",
+          "next_last_payment": "2027-07-31",
+          "business_day_adjustment": "Mod Foll",
+          "roll_convention": "Backward (EOM)",
+          "calculation_calendar": "JN",
+          "fixing_calendar": "JN",
+          "payment_delay": 0,
+          "principal_exchange": "Never",
+          "amortization_schedule": [
+            {
+              "accrual_start": "2026-07-31",
+              "accrual_end": "2027-01-29",
+              "pay_date": "2027-01-29",
+              "reset_date": "2027-01-28",
+              "amort_rate_percent": 0.0,
+              "amort_amount": 0.0,
+              "balance": 7300000.0,
+              "leverage": 1.0,
+              "spread_bp": 30.0
+            },
+            {
+              "accrual_start": "2027-01-29",
+              "accrual_end": "2027-07-30",
+              "pay_date": "2027-07-30",
+              "reset_date": "2027-07-29",
+              "amort_rate_percent": 33.333333,
+              "amort_amount": 2433333.33,
+              "balance": 4866666.67,
+              "leverage": 1.0,
+              "spread_bp": 30.0
+            },
+            {
+              "accrual_start": "2027-07-30",
+              "accrual_end": "2028-01-31",
+              "pay_date": "2028-01-31",
+              "reset_date": "2028-01-28",
+              "amort_rate_percent": 33.333333,
+              "amort_amount": 2433333.33,
+              "balance": 2433333.34,
+              "leverage": 1.0,
+              "spread_bp": 30.0
+            }
+          ]
+        }
+      },
+      "additional_detail": {
+        "principal_exchange": "Never",
+        "min_stub_period": 7,
+        "stub_threshold_adjustment": true,
+        "credit_provisions": {
+          "unwind_type": "None"
+        },
+        "iborr_fallback": {},
+        "fee_schedule": [
+          {
+            "fee_date": "2026-03-31",
+            "payoff_side": "Receive",
+            "amount": 0.0
+          }
+        ]
+      }
+    }
+  }
+}

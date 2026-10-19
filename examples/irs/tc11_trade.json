@@ -1,0 +1,546 @@
+{
+  "trade": {
+    "product": "Swap",
+    "swap_id": "SLLSL9TR",
+    "counterparty": "SWAP CNTRPARTY",
+    "ticker": "SWAP",
+    "currency": "USD",
+    "effective_date": "2026-01-01",
+    "maturity_date": "2027-09-30",
+    "valuation_date": "2026-03-31",
+    "curve_date": "2026-03-31",
+    "legs": {
+      "fixed": {
+        "leg_id": "SLLSL9TS",
+        "pay_receive": "Pay",
+        "notional": 510000000,
+        "currency": "USD",
+        "effective_date": "2026-01-01",
+        "maturity_date": "2027-09-30",
+        "coupon": 4.0,
+        "pay_frequency": "SemiAnnual",
+        "day_count": "ACT/360",
+        "calc_basis": "Money Mkt",
+        "first_payment": "2026-03-30",
+        "next_last_payment": "2027-03-30",
+        "business_day_adjustment": "Mod Foll",
+        "adjustment": "Acc & Pay Dates",
+        "roll_convention": "Forward",
+        "calculation_calendar": "FD",
+        "payment_delay": 0,
+        "payment_type": "Coupon",
+        "principal_exchange": "Never",
+        "amortization_schedule": [
+          {
+            "accrual_start": "2026-01-01",
+            "accrual_end": "2026-03-30",
+            "pay_date": "2026-03-30",
+            "amort_rate_percent": 0.0,
+            "amort_amount": 0.0,
+            "balance": 510000000,
+            "coupon": 4.0
+          },
+          {
+            "accrual_start": "2026-03-30",
+            "accrual_end": "2026-09-30",
+            "pay_date": "2026-09-30",
+            "amort_rate_percent": 25.0,
+            "amort_amount": 127500000,
+            "balance": 382500000,
+            "coupon": 4.0
+          },
+          {
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2027-03-30",
+            "pay_date": "2027-03-30",
+            "amort_rate_percent": 25.0,
+            "amort_amount": 127500000,
+            "balance": 255000000,
+            "coupon": 4.0
+          },
+          {
+            "accrual_start": "2027-03-30",
+            "accrual_end": "2027-09-30",
+            "pay_date": "2027-09-30",
+            "amort_rate_percent": 25.0,
+            "amort_amount": 127500000,
+            "balance": 127500000,
+            "coupon": 4.0
+          }
+        ],
+        "npv": -15054.91,
+        "accrued": -42.5,
+        "premium": -3.92,
+        "dv01": -1.22
+      },
+      "floating": {
+        "leg_id": "SLLSL9TT",
+        "pay_receive": "Receive",
+        "notional": 510000000,
+        "currency": "USD",
+        "effective_date": "2026-01-01",
+        "maturity_date": "2027-09-30",
+        "index": "SOFRRATE",
+        "index_tenor": "1D",
+        "spread_bp": 20.0,
+        "leverage": 1.0,
+        "latest_index": 3.68,
+        "reset_frequency": "Daily",
+        "pay_frequency": "SemiAnnual",
+        "day_count": "ACT/360",
+        "reset_type": "In Arrears",
+        "compounding": "ExcludeSprd",
+        "days_before_accrual": 0,
+        "days_before_type": "Lookback",
+        "rate_cutoff_days": 1,
+        "first_payment": "2026-03-30",
+        "next_last_payment": "2027-03-30",
+        "business_day_adjustment": "Mod Foll",
+        "adjustment": "Acc & Pay Dates",
+        "roll_convention": "Forward",
+        "calculation_calendar": "FD",
+        "fixing_calendar": "GT",
+        "payment_delay": 0,
+        "principal_exchange": "Never",
+        "amortization_schedule": [
+          {
+            "accrual_start": "2026-01-01",
+            "accrual_end": "2026-03-30",
+            "pay_date": "2026-03-30",
+            "reset_date": "2026-03-27",
+            "amort_rate_percent": 0.0,
+            "amort_amount": 0.0,
+            "balance": 510000000,
+            "leverage": 1.0,
+            "spread_bp": 20.0
+          },
+          {
+            "accrual_start": "2026-03-30",
+            "accrual_end": "2026-09-30",
+            "pay_date": "2026-09-30",
+            "reset_date": "2026-09-29",
+            "amort_rate_percent": 25.0,
+            "amort_amount": 127500000,
+            "balance": 382500000,
+            "leverage": 1.0,
+            "spread_bp": 20.0
+          },
+          {
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2027-03-30",
+            "pay_date": "2027-03-30",
+            "reset_date": "2027-03-29",
+            "amort_rate_percent": 25.0,
+            "amort_amount": 127500000,
+            "balance": 255000000,
+            "leverage": 1.0,
+            "spread_bp": 20.0
+          },
+          {
+            "accrual_start": "2027-03-30",
+            "accrual_end": "2027-09-30",
+            "pay_date": "2027-09-30",
+            "reset_date": "2027-09-29",
+            "amort_rate_percent": 25.0,
+            "amort_amount": 127500000,
+            "balance": 127500000,
+            "leverage": 1.0,
+            "spread_bp": 20.0
+          }
+        ],
+        "npv": 14513.17,
+        "accrued": 40.69,
+        "premium": 3.78,
+        "dv01": -35.81
+      }
+    },
+    "additional_detail": {
+      "principal_exchange": null,
+      "min_stub_period": null,
+      "stub_threshold_adjustment": null,
+      "credit_provisions": {
+        "unwind_type": null
+      },
+      "ibor_fallback": {
+        "opt_in": null
+      },
+      "fee_schedule": []
+    },
+    "valuation_results": {
+      "par_coupon": 3.856138,
+      "premium": -0.14116,
+      "principal": -539.93,
+      "bp_value": -14.16301,
+      "accrued": -1.81,
+      "npv": -541.73,
+      "pv01": -37.64,
+      "dv01": -37.03,
+      "gamma_1bp": -0.01
+    },
+    "cashflows": {
+      "currency": "USD",
+      "accrued": null,
+      "net_npv": null,
+      "net_cashflows": [],
+      "fixed_leg": {
+        "npv": -15054.91,
+        "accrued": -42.5,
+        "cashflows": [
+          {
+            "pay_date": "2026-03-30",
+            "accrual_start": "2026-01-01",
+            "accrual_end": "2026-03-30",
+            "days": 88,
+            "notional": -510000000,
+            "principal": 0.0,
+            "equiv_coupon": 4.0,
+            "payment": -4986.67,
+            "discount": null,
+            "zero_rate": null,
+            "pv": null
+          },
+          {
+            "pay_date": "2026-09-30",
+            "accrual_start": "2026-03-30",
+            "accrual_end": "2026-09-30",
+            "days": 184,
+            "notional": -382500000,
+            "principal": 0.0,
+            "equiv_coupon": 4.0,
+            "payment": -7820.0,
+            "discount": 0.980365,
+            "zero_rate": 3.955312,
+            "pv": -7666.45
+          },
+          {
+            "pay_date": "2027-03-30",
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2027-03-30",
+            "days": 181,
+            "notional": -255000000,
+            "principal": 0.0,
+            "equiv_coupon": 4.0,
+            "payment": -5128.33,
+            "discount": 0.961379,
+            "zero_rate": 3.949525,
+            "pv": -4930.27
+          },
+          {
+            "pay_date": "2027-09-30",
+            "accrual_start": "2027-03-30",
+            "accrual_end": "2027-09-30",
+            "days": 184,
+            "notional": -127500000,
+            "principal": 0.0,
+            "equiv_coupon": 4.0,
+            "payment": -2606.67,
+            "discount": 0.943038,
+            "zero_rate": 3.906313,
+            "pv": -2458.19
+          }
+        ]
+      },
+      "floating_leg": {
+        "npv": 14513.17,
+        "accrued": 40.69,
+        "cashflows": [
+          {
+            "pay_date": "2026-03-30",
+            "accrual_start": "2026-01-01",
+            "accrual_end": "2026-03-30",
+            "days": 88,
+            "notional": 510000000,
+            "principal": 0.0,
+            "effective_reset_date": "2026-03-27",
+            "equiv_coupon": 3.87639,
+            "payment": 4832.57,
+            "discount": null,
+            "zero_rate": null,
+            "pv": null
+          },
+          {
+            "pay_date": "2026-09-30",
+            "accrual_start": "2026-03-30",
+            "accrual_end": "2026-09-30",
+            "days": 184,
+            "notional": 382500000,
+            "principal": 0.0,
+            "effective_reset_date": "2026-09-29",
+            "equiv_coupon": 3.88346,
+            "payment": 7592.16,
+            "discount": 0.980365,
+            "zero_rate": 3.955312,
+            "pv": 7443.08
+          },
+          {
+            "pay_date": "2027-03-30",
+            "accrual_start": "2026-09-30",
+            "accrual_end": "2027-03-30",
+            "days": 181,
+            "notional": 255000000,
+            "principal": 0.0,
+            "effective_reset_date": "2027-03-29",
+            "equiv_coupon": 3.851,
+            "payment": 4937.31,
+            "discount": 0.961379,
+            "zero_rate": 3.949525,
+            "pv": 4746.62
+          },
+          {
+            "pay_date": "2027-09-30",
+            "accrual_start": "2027-03-30",
+            "accrual_end": "2027-09-30",
+            "days": 184,
+            "notional": 127500000,
+            "principal": 0.0,
+            "effective_reset_date": "2027-09-29",
+            "equiv_coupon": 3.78079,
+            "payment": 2463.81,
+            "discount": 0.943038,
+            "zero_rate": 3.906313,
+            "pv": 2323.47
+          }
+        ]
+      }
+    },
+    "market_data": {
+      "curve_number": 490,
+      "curve_name": "USD SOFR (vs. FIXED RATE)",
+      "curve_side": "Mid",
+      "interpolation": "Piecewise Linear (Cont)",
+      "curve_date": "2026-03-31",
+      "dv01_calc_type": "Shifting",
+      "points": [
+        {
+          "term": "1 WK",
+          "market_rate": 3.6524,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6524,
+          "zero_rate": 3.70182,
+          "discount_factor": 0.999088
+        },
+        {
+          "term": "2 WK",
+          "market_rate": 3.6537,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6537,
+          "zero_rate": 3.70182,
+          "discount_factor": 0.998379
+        },
+        {
+          "term": "3 WK",
+          "market_rate": 3.65405,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.65405,
+          "zero_rate": 3.70094,
+          "discount_factor": 0.997671
+        },
+        {
+          "term": "1 MO",
+          "market_rate": 3.66085,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.66085,
+          "zero_rate": 3.70544,
+          "discount_factor": 0.996554
+        },
+        {
+          "term": "2 MO",
+          "market_rate": 3.6705,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6705,
+          "zero_rate": 3.7097,
+          "discount_factor": 0.993617
+        },
+        {
+          "term": "3 MO",
+          "market_rate": 3.6768,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6768,
+          "zero_rate": 3.71046,
+          "discount_factor": 0.990591
+        },
+        {
+          "term": "4 MO",
+          "market_rate": 3.67945,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.67945,
+          "zero_rate": 3.70721,
+          "discount_factor": 0.987384
+        },
+        {
+          "term": "5 MO",
+          "market_rate": 3.6803,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6803,
+          "zero_rate": 3.70252,
+          "discount_factor": 0.9844
+        },
+        {
+          "term": "6 MO",
+          "market_rate": 3.683,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.683,
+          "zero_rate": 3.69965,
+          "discount_factor": 0.981423
+        },
+        {
+          "term": "7 MO",
+          "market_rate": 3.6875,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6875,
+          "zero_rate": 3.69836,
+          "discount_factor": 0.978352
+        },
+        {
+          "term": "8 MO",
+          "market_rate": 3.69125,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.69125,
+          "zero_rate": 3.69651,
+          "discount_factor": 0.975394
+        },
+        {
+          "term": "9 MO",
+          "market_rate": 3.6949,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6949,
+          "zero_rate": 3.69401,
+          "discount_factor": 0.972159
+        },
+        {
+          "term": "10 MO",
+          "market_rate": 3.6975,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6975,
+          "zero_rate": 3.69122,
+          "discount_factor": 0.969332
+        },
+        {
+          "term": "11 MO",
+          "market_rate": 3.6985,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6985,
+          "zero_rate": 3.68706,
+          "discount_factor": 0.966628
+        },
+        {
+          "term": "12 MO",
+          "market_rate": 3.70095,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.70095,
+          "zero_rate": 3.68376,
+          "discount_factor": 0.963638
+        },
+        {
+          "term": "18 MO",
+          "market_rate": 3.66,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.66,
+          "zero_rate": 3.65444,
+          "discount_factor": 0.946232
+        },
+        {
+          "term": "2 YR",
+          "market_rate": 3.62105,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.62105,
+          "zero_rate": 3.60422,
+          "discount_factor": 0.930085
+        },
+        {
+          "term": "3 YR",
+          "market_rate": 3.57805,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.57805,
+          "zero_rate": 3.56121,
+          "discount_factor": 0.89841
+        },
+        {
+          "term": "4 YR",
+          "market_rate": 3.58525,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.58525,
+          "zero_rate": 3.5692,
+          "discount_factor": 0.866701
+        },
+        {
+          "term": "5 YR",
+          "market_rate": 3.62155,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.62155,
+          "zero_rate": 3.60763,
+          "discount_factor": 0.834704
+        },
+        {
+          "term": "6 YR",
+          "market_rate": 3.6704,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.6704,
+          "zero_rate": 3.65975,
+          "discount_factor": 0.80253
+        },
+        {
+          "term": "7 YR",
+          "market_rate": 3.72194,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.72194,
+          "zero_rate": 3.71534,
+          "discount_factor": 0.770524
+        },
+        {
+          "term": "8 YR",
+          "market_rate": 3.7712,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.7712,
+          "zero_rate": 3.7692,
+          "discount_factor": 0.739299
+        },
+        {
+          "term": "9 YR",
+          "market_rate": 3.81919,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.81919,
+          "zero_rate": 3.8224,
+          "discount_factor": 0.708621
+        },
+        {
+          "term": "10 YR",
+          "market_rate": 3.8664,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.8664,
+          "zero_rate": 3.87552,
+          "discount_factor": 0.678356
+        },
+        {
+          "term": "12 YR",
+          "market_rate": 3.95965,
+          "shift_bp": 0.0,
+          "shifted_rate": 3.95965,
+          "zero_rate": 3.98339,
+          "discount_factor": 0.61968
+        },
+        {
+          "term": "15 YR",
+          "market_rate": 4.07375,
+          "shift_bp": 0.0,
+          "shifted_rate": 4.07375,
+          "zero_rate": 4.12027,
+          "discount_factor": 0.538635
+        },
+        {
+          "term": "20 YR",
+          "market_rate": 4.16425,
+          "shift_bp": 0.0,
+          "shifted_rate": 4.16425,
+          "zero_rate": 4.229,
+          "discount_factor": 0.428866
+        }
+      ]
+    },
+    "validation_notes": [
+      "Only clearly visible curve rows through 20Y are included; the screenshot continues below the visible area.",
+      "The first cashflow row has no visible discount factor, zero rate, or PV in the screenshots; those fields are null.",
+      "The main screen NPV is -541.73, while displayed leg NPVs are -15054.91 and 14513.17. Values are transcribed as displayed and should be reconciled before use as a benchmark."
+    ]
+  }
+}

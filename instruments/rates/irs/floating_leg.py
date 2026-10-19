@@ -40,23 +40,33 @@ def _to_python_date(value: ql.Date) -> date:
     return date(value.year(), value.month(), value.dayOfMonth())
 
 
+_OVERNIGHT_BENCHMARKS = {
+    ("SOFRRATE", "1D", "USD", Frequency.DAILY): ql.Sofr,
+    ("MUTKCALM", "1D", "JPY", Frequency.DAILY): ql.Tonar,
+}
+
+
 def build_floating_index(
     terms: IRSLegTerms,
     currency: str,
     forwarding_curve: Optional[ql.YieldTermStructureHandle] = None,
 ) -> ql.OvernightIndex:
-    """Map only the confirmed USD SOFRRATE 1D daily-reset combination."""
+    """Map only the supported daily-reset overnight benchmarks.
+
+    USD SOFRRATE 1D -> ql.Sofr (confirmed on TC1/TC3). JPY MUTKCALM 1D (Bloomberg's
+    TONA ticker) -> ql.Tonar: the JPY OIS bootstrap on ql.Japan reproduces Bloomberg's
+    TC6/TC10 discount factors (OI-16); the mapping is not SME-confirmed."""
     if terms.kind is not IRSLegKind.FLOATING:
         raise ValueError("build_floating_index requires floating leg terms")
 
     mapping = (terms.benchmark, terms.benchmark_tenor, currency, terms.reset_frequency)
-    supported = ("SOFRRATE", "1D", "USD", Frequency.DAILY)
-    if mapping != supported:
+    factory = _OVERNIGHT_BENCHMARKS.get(mapping)
+    if factory is None:
         raise UnsupportedBenchmarkMapping(
             "unsupported floating benchmark mapping "
-            f"{mapping!r}; only ('SOFRRATE', '1D', 'USD', Frequency.DAILY) is confirmed"
+            f"{mapping!r}; supported: {sorted(_OVERNIGHT_BENCHMARKS, key=str)}"
         )
-    return ql.Sofr(forwarding_curve) if forwarding_curve is not None else ql.Sofr()
+    return factory(forwarding_curve) if forwarding_curve is not None else factory()
 
 
 @dataclass(frozen=True)

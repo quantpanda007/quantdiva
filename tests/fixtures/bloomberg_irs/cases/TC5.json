@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "case_id": "TC5",
+  "source": {
+    "trade_id": "SLLSL9S9",
+    "bloomberg_source_json": "tests/fixtures/bloomberg_irs/source/TC5.json"
+  },
+  "input_sections": {
+    "trade": {
+      "product": "Swap",
+      "swap_id": "SLLSL9S9",
+      "counterparty": "SWAP CNTRPARTY",
+      "ticker": "SLLSL9S9",
+      "valuation_date": "2026-03-31",
+      "curve_date": "2026-03-31",
+      "currency": "INR",
+      "notional": 7500000,
+      "effective_date": "2026-06-30",
+      "maturity_date": "2027-09-30"
+    },
+    "leg_1": {
+      "leg_id": "SLLSL9SA",
+      "type": "Fixed",
+      "pay_receive": "Pay",
+      "notional": 7500000,
+      "currency": "INR",
+      "effective_date": "2026-06-30",
+      "maturity_date": "2027-09-30",
+      "coupon": 9.0,
+      "coupon_unit": "%",
+      "pay_frequency": "Annual",
+      "day_count": "ACT/365",
+      "calculation_basis": "Money Mkt",
+      "amortization": [
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2027-06-30",
+          "pay_date": "2027-06-30",
+          "amort_rate": 0.0,
+          "amort_amount": 0.0,
+          "balance": 7500000,
+          "coupon": 9.0
+        },
+        {
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "pay_date": "2027-09-30",
+          "amort_rate": 50.0,
+          "amort_amount": 3750000,
+          "balance": 3750000,
+          "coupon": 9.0
+        }
+      ],
+      "contract_detail": {
+        "first_payment": "2027-06-30",
+        "next_last_payment": "2027-06-30",
+        "bus_day_adjustment": "Mod Foll",
+        "adjust": "Acc & Pay Dates",
+        "roll_convention": "Forward (EOM)",
+        "calculation_calendar": "RB",
+        "pay_delay": 0,
+        "payment_type": "Coupon"
+      }
+    },
+    "leg_2": {
+      "leg_id": "SLLSL9SB",
+      "type": "Floating",
+      "pay_receive": "Receive",
+      "notional": 7500000,
+      "currency": "INR",
+      "effective_date": "2026-06-30",
+      "maturity_date": "2027-09-30",
+      "index": "IRSWOF",
+      "index_tenor": "6M",
+      "spread": 100.0,
+      "spread_unit": "bp",
+      "leverage": 1.0,
+      "latest_index": 6.1301,
+      "reset_frequency": "SemiAnnual",
+      "pay_frequency": "Annual",
+      "day_count": "ACT/365",
+      "days_before_accrual": 1,
+      "reset_type": "In Advance",
+      "compounding": "Flat",
+      "amortization": [
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2027-06-30",
+          "pay_date": "2027-06-30",
+          "reset_date": "2026-06-29",
+          "amort_rate": 0.0,
+          "amort_amount": 0.0,
+          "balance": 7500000,
+          "leverage": 1.0,
+          "spread": 100.0
+        },
+        {
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "pay_date": "2027-09-30",
+          "reset_date": "2027-06-29",
+          "amort_rate": 50.0,
+          "amort_amount": 3750000,
+          "balance": 3750000,
+          "leverage": 1.0,
+          "spread": 100.0
+        }
+      ],
+      "contract_detail": {
+        "first_payment": "2027-06-30",
+        "next_last_payment": "2027-06-30",
+        "bus_day_adjustment": "Mod Foll",
+        "reset_bus_day_adjustment": "No Adjustment",
+        "adjust": "Acc & Pay Dates",
+        "roll_convention": "Forward (EOM)",
+        "calculation_calendar": "RB",
+        "fixing_calendar": "RB",
+        "pay_delay": 0,
+        "payment_type": "Coupon"
+      }
+    },
+    "additional_detail": {
+      "principal_exchange": "Never",
+      "min_stub_period": 7,
+      "stub_threshold_adjustment": true,
+      "credit_provisions": {
+        "unwind_type": "None"
+      },
+      "ibor_fallback": {},
+      "fee_schedule": [
+        {
+          "fee_date": "2026-03-31",
+          "payoff_side": "Receive",
+          "amount": 0.0
+        }
+      ]
+    },
+    "market_curve_references": {
+      "leg_1": {
+        "discount_curve": "INR OIS"
+      },
+      "leg_2": {
+        "discount_curve": "INR OIS",
+        "forward_curve": "INR OIS"
+      }
+    }
+  }
+}

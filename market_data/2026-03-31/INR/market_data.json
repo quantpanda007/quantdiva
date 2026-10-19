@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "market_data_id": "2026-03-31-INR",
+  "reference_date": "2026-03-31",
+  "currency": "INR",
+  "benchmark": null,
+  "source": {
+    "filename": null,
+    "sheet": null,
+    "columns": ["Date", "Market Rate", "Discount Factor"]
+  },
+  "observations": [
+    {"date": "2026-04-30", "market_rate": 5.58, "discount_factor": 0.994828},
+    {"date": "2026-05-30", "market_rate": 5.62, "discount_factor": 0.990393},
+    {"date": "2026-06-29", "market_rate": 5.72, "discount_factor": 0.985639},
+    {"date": "2026-09-27", "market_rate": 5.83, "discount_factor": 0.970852},
+    {"date": "2026-12-26", "market_rate": 6.06, "discount_factor": 0.955741},
+    {"date": "2027-03-31", "market_rate": 6.25, "discount_factor": 0.940889},
+    {"date": "2028-03-30", "market_rate": 6.4355, "discount_factor": 0.880218},
+    {"date": "2029-03-30", "market_rate": 6.555, "discount_factor": 0.82326},
+    {"date": "2030-03-30", "market_rate": 6.68, "discount_factor": 0.767693},
+    {"date": "2031-03-30", "market_rate": 6.752, "discount_factor": 0.715987}
+  ]
+}

@@ -21,6 +21,7 @@ from api.v1.helpers import (
     build_instrument_from_request,
     build_instruments_from_request,
     build_market_env_from_request,
+    ensure_flat_market_env_supported,
 )
 from services.pricers.pricing_service import PricingService
 from services.comparison.engine_comparator import EngineComparator
@@ -47,6 +48,7 @@ def price_single(req: PricingRequest):
     """Price a single instrument of any type."""
     t0 = time.perf_counter()
     try:
+        ensure_flat_market_env_supported(req.instrument.type)
         instrument = build_instrument_from_request(req.instrument)
         underlying = _resolve_underlying(instrument, req.market_data)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)
@@ -93,6 +95,7 @@ def price_batch(req: BatchPricingRequest):
 
     for inst_req in req.instruments:
         try:
+            ensure_flat_market_env_supported(inst_req.type)
             instrument = build_instrument_from_request(inst_req)
             underlying = _resolve_underlying(instrument, req.market_data)
             market_env = build_market_env_from_request(req.market_data, underlying=underlying)
@@ -127,6 +130,7 @@ def price_batch(req: BatchPricingRequest):
 def compare_engines(req: CompareRequest):
     """Compare pricing across multiple engines for the same instrument."""
     try:
+        ensure_flat_market_env_supported(req.instrument.type)
         instrument = build_instrument_from_request(req.instrument)
         underlying = _resolve_underlying(instrument, req.market_data)
         market_env = build_market_env_from_request(req.market_data, underlying=underlying)

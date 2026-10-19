@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "instrument_type": "ois",
+  "params": {
+    "trade_id": "SLLSL9S6",
+    "currency": "INR",
+    "valuation_date": "2026-03-31",
+    "effective_date": "2026-02-28",
+    "maturity_date": "2027-03-31",
+    "fixed_leg_side": "pay",
+    "fixed_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "semiannual",
+      "fixed_rate": 0.1,
+      "accrual_date_adjustment": {
+        "calendar": "RB",
+        "business_day_convention": "modified_following"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-02-28",
+          "accrual_end": "2026-08-31",
+          "payment_date": "2026-08-31",
+          "notional": 4500000
+        },
+        {
+          "accrual_start": "2026-08-31",
+          "accrual_end": "2027-02-26",
+          "payment_date": "2027-02-26",
+          "notional": 3000000
+        },
+        {
+          "accrual_start": "2027-02-26",
+          "accrual_end": "2027-03-31",
+          "payment_date": "2027-03-31",
+          "notional": 1500000
+        }
+      ]
+    },
+    "floating_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "semiannual",
+      "benchmark": "IRSWOF",
+      "benchmark_tenor": "6M",
+      "spread": 0.005,
+      "leverage": 1.0,
+      "reset_frequency": "semiannual",
+      "accrual_date_adjustment": {
+        "calendar": "RB",
+        "business_day_convention": "modified_following"
+      },
+      "term_rate": {
+        "compounding": "none",
+        "fixing_calendar": "RB",
+        "fixing_days": 1
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-02-28",
+          "accrual_end": "2026-08-31",
+          "payment_date": "2026-08-31",
+          "notional": 4500000,
+          "resets": [
+            {
+              "reset_date": "2026-02-27",
+              "start": "2026-02-28",
+              "end": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2026-08-31",
+          "accrual_end": "2027-02-26",
+          "payment_date": "2027-02-26",
+          "notional": 3000000,
+          "resets": [
+            {
+              "reset_date": "2026-08-28",
+              "start": "2026-08-31",
+              "end": "2027-02-26"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2027-02-26",
+          "accrual_end": "2027-03-31",
+          "payment_date": "2027-03-31",
+          "notional": 1500000,
+          "resets": [
+            {
+              "reset_date": "2027-02-25",
+              "start": "2027-02-26",
+              "end": "2027-03-31"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

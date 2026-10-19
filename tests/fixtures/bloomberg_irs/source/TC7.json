@@ -1,0 +1,238 @@
+{
+  "trade": {
+    "product": "Swap",
+    "swap_id": "SLLSL9SI",
+    "counterparty": "SWAP CNTRPARTY",
+    "currency": "CHF",
+    "effective_date": "2026-08-31",
+    "maturity_date": "2028-07-31",
+    "valuation_date": "2026-03-31",
+    "curve_date": "2026-03-31",
+    "legs": {
+      "fixed": {
+        "leg_id": "SLLSL9SJ",
+        "pay_receive": "Pay",
+        "notional": 52000,
+        "currency": "CHF",
+        "effective_date": "2026-08-31",
+        "maturity_date": "2028-07-31",
+        "coupon": 1.0,
+        "pay_frequency": "Annual",
+        "day_count": "30/360",
+        "calc_basis": "Money Mkt",
+        "first_payment": "2027-08-31",
+        "next_last_payment": "2027-08-31",
+        "business_day_adjustment": "Mod Foll",
+        "roll_convention": "Backward",
+        "calculation_calendar": "SZ",
+        "payment_delay": 0,
+        "payment_type": "Coupon",
+        "principal_exchange": "Never",
+        "amortization_schedule": [
+          {
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-08-31",
+            "pay_date": "2027-08-31",
+            "amort_rate_percent": 0.0,
+            "amort_amount": 0.0,
+            "balance": 52000.0,
+            "coupon": 1.0
+          },
+          {
+            "accrual_start": "2027-08-31",
+            "accrual_end": "2028-07-31",
+            "pay_date": "2028-07-31",
+            "amort_rate_percent": 50.0,
+            "amort_amount": 26000.0,
+            "balance": 26000.0,
+            "coupon": 1.0
+          }
+        ],
+        "npv": -593.58,
+        "accrued": 0.0,
+        "premium": -1.14,
+        "dv01": -7.78
+      },
+      "floating": {
+        "leg_id": "SLLSL9SK",
+        "pay_receive": "Receive",
+        "notional": 52000,
+        "currency": "CHF",
+        "effective_date": "2026-08-31",
+        "maturity_date": "2028-07-31",
+        "index": "SF0006M",
+        "index_tenor": "6M",
+        "spread_bp": 20.0,
+        "leverage": 1.0,
+        "latest_index": 0.21366,
+        "reset_frequency": "SemiAnnual",
+        "pay_frequency": "Annual",
+        "day_count": "ACT/360",
+        "reset_type": "In Advance",
+        "compounding": "Flat",
+        "days_before_accrual": 1,
+        "first_payment": "2027-08-31",
+        "next_last_payment": "2027-08-31",
+        "business_day_adjustment": "Mod Foll",
+        "roll_convention": "Backward",
+        "calculation_calendar": "SZ",
+        "fixing_calendar": "EN",
+        "payment_delay": 0,
+        "principal_exchange": "Never",
+        "amortization_schedule": [
+          {
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-08-31",
+            "pay_date": "2027-08-31",
+            "reset_date": "2026-08-28",
+            "amort_rate_percent": 0.0,
+            "amort_amount": 0.0,
+            "balance": 52000.0,
+            "leverage": 1.0,
+            "spread_bp": 20.0
+          },
+          {
+            "accrual_start": "2027-08-31",
+            "accrual_end": "2028-07-31",
+            "pay_date": "2028-07-31",
+            "reset_date": "2027-08-27",
+            "amort_rate_percent": 50.0,
+            "amort_amount": 26000.0,
+            "balance": 26000.0,
+            "leverage": 1.0,
+            "spread_bp": 20.0
+          }
+        ],
+        "npv": 205.51,
+        "accrued": 0.0,
+        "premium": 0.4,
+        "dv01": 0.03
+      }
+    },
+    "additional_detail": {
+      "principal_exchange": "Never",
+      "min_stub_period": 7,
+      "stub_threshold_adjustment": true,
+      "credit_provisions": {
+        "unwind_type": "None"
+      },
+      "ibor_fallback": {
+        "opt_in": true
+      },
+      "fee_schedule": [
+        {
+          "fee_date": "2026-09-23",
+          "payoff_side": "Receive",
+          "amount": 0.0
+        }
+      ]
+    },
+    "valuation_results": {
+      "par_coupon": 0.486944,
+      "premium": -0.74628,
+      "principal": -388.06,
+      "bp_value": -74.6276,
+      "accrued": 0.0,
+      "npv": -388.06,
+      "pv01": -7.56,
+      "dv01": -7.75,
+      "gamma_1bp": 0.0
+    },
+    "cashflows": {
+      "currency": "CHF",
+      "accrued": 0.0,
+      "net_npv": -388.06,
+      "net_cashflows": [
+        {
+          "pay_date": "2027-08-31",
+          "payments_receive": 251.29,
+          "payments_pay": -520.0,
+          "net_payment": -268.71,
+          "discount": 0.998086,
+          "zero_rate": 0.134993,
+          "pv": -268.19
+        },
+        {
+          "pay_date": "2028-07-31",
+          "payments_receive": 117.98,
+          "payments_pay": -238.33,
+          "net_payment": -120.35,
+          "discount": 0.995966,
+          "zero_rate": 0.172959,
+          "pv": -119.87
+        }
+      ],
+      "fixed_leg": {
+        "npv": -756.38,
+        "accrued": 0.0,
+        "cashflows": [
+          {
+            "pay_date": "2027-08-31",
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-08-31",
+            "days": 360,
+            "notional": -52000.0,
+            "principal": 0.0,
+            "equiv_coupon": 1.0,
+            "payment": -520.0,
+            "discount": 0.998086,
+            "zero_rate": 0.134993,
+            "pv": -519.0
+          },
+          {
+            "pay_date": "2028-07-31",
+            "accrual_start": "2027-08-31",
+            "accrual_end": "2028-07-31",
+            "days": 330,
+            "notional": -26000.0,
+            "principal": 0.0,
+            "equiv_coupon": 1.0,
+            "payment": -238.33,
+            "discount": 0.995966,
+            "zero_rate": 0.172959,
+            "pv": -237.37
+          }
+        ]
+      },
+      "floating_leg": {
+        "npv": 368.31,
+        "accrued": 0.0,
+        "cashflows": [
+          {
+            "pay_date": "2027-08-31",
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-08-31",
+            "days": 365,
+            "notional": 52000.0,
+            "principal": 0.0,
+            "effective_reset_date": "2027-08-24",
+            "equiv_coupon": 0.4766,
+            "payment": 251.29,
+            "discount": 0.998086,
+            "zero_rate": 0.134993,
+            "pv": 250.81
+          },
+          {
+            "pay_date": "2028-07-31",
+            "accrual_start": "2027-08-31",
+            "accrual_end": "2028-07-31",
+            "days": 335,
+            "notional": 26000.0,
+            "principal": 0.0,
+            "effective_reset_date": "2028-02-25",
+            "equiv_coupon": 0.4876,
+            "payment": 117.98,
+            "discount": 0.995966,
+            "zero_rate": 0.172959,
+            "pv": 117.5
+          }
+        ]
+      }
+    },
+    "validation_notes": [
+      "The main trade screenshot shows fixed-leg NPV -593.58, while the fixed-leg cashflow screenshot shows NPV -756.38. These values are preserved as displayed and require manual reconciliation.",
+      "The main trade screenshot shows floating-leg NPV 205.51, while the floating-leg cashflow screenshot shows NPV 368.31. These values are preserved as displayed and require manual reconciliation.",
+      "The main trade screenshot shows leg-level premium and DV01 values; the cashflow screenshots show a net NPV of -388.06 and leg cashflow NPVs that sum to that amount."
+    ]
+  }
+}

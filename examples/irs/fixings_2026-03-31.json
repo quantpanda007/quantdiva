@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "valuation_date": "2026-03-31",
+  "provenance": "Index fixings on or before the 31-Mar-2026 valuation date. Each series states its source. Used only for resets/observations on or before the valuation date; never inferred.",
+  "fixings": {
+    "SOFR": {
+      "provenance": "SOFR for 31-Mar-2026 = 3.68% (published by the New York Fed on 01-Apr-2026), retrieved 14-Oct-2026 from https://www.sofrrate.com/sofr-rate/2026-03 (daily table) and consistent with https://www.global-rates.com/en/interest-rates/sofr/historical/2026/ (March 2026 last value 3.68%). Equals the TC4 source latest_index. To be confirmed against the NY Fed release.",
+      "values": {"2026-03-31": 0.0368}
+    },
+    "TONA": {
+      "provenance": "TONA for March 2026 last business day = 0.727% from https://www.global-rates.com/en/interest-rates/tonar/historical/2026/ (monthly table: March first 0.727, last 0.727; daily date not shown), retrieved 14-Oct-2026. Equals the TC10 source latest_index. To be confirmed against the Bank of Japan release for 31-Mar-2026.",
+      "values": {"2026-03-31": 0.00727}
+    },
+    "IRSWOF": {
+      "provenance": "IRSWOF 6M fixing of 27-Feb-2026 = 5.36%, from the TC8 Bloomberg trade record (source reset_date 2026-02-27, latest_index 5.36; cashflow reset_rate 5.36). Historical fixing taken from the trade record; not independently sourced.",
+      "values": {"2026-02-27": 0.0536}
+    }
+  }
+}

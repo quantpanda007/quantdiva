@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "instrument_type": "ois",
+  "params": {
+    "trade_id": "SLLSL9SI",
+    "currency": "CHF",
+    "valuation_date": "2026-03-31",
+    "effective_date": "2026-08-31",
+    "maturity_date": "2028-07-31",
+    "fixed_leg_side": "pay",
+    "fixed_leg": {
+      "day_count": "30/360",
+      "payment_frequency": "annual",
+      "fixed_rate": 0.01,
+      "accrual_date_adjustment": {
+        "calendar": "SZ",
+        "business_day_convention": "modified_following"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-08-31",
+          "accrual_end": "2027-08-31",
+          "payment_date": "2027-08-31",
+          "notional": 52000
+        },
+        {
+          "accrual_start": "2027-08-31",
+          "accrual_end": "2028-07-31",
+          "payment_date": "2028-07-31",
+          "notional": 26000
+        }
+      ]
+    },
+    "floating_leg": {
+      "day_count": "ACT/360",
+      "payment_frequency": "annual",
+      "benchmark": "SF0006M",
+      "benchmark_tenor": "6M",
+      "spread": 0.002,
+      "leverage": 1.0,
+      "reset_frequency": "semiannual",
+      "accrual_date_adjustment": {
+        "calendar": "SZ",
+        "business_day_convention": "modified_following"
+      },
+      "term_rate": {
+        "compounding": "flat",
+        "fixing_calendar": "EN",
+        "fixing_days": 1
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-08-31",
+          "accrual_end": "2027-08-31",
+          "payment_date": "2027-08-31",
+          "notional": 52000,
+          "resets": [
+            {
+              "reset_date": "2026-08-28",
+              "start": "2026-08-31",
+              "end": "2027-02-26"
+            },
+            {
+              "reset_date": "2027-02-25",
+              "start": "2027-02-26",
+              "end": "2027-08-31"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2027-08-31",
+          "accrual_end": "2028-07-31",
+          "payment_date": "2028-07-31",
+          "notional": 26000,
+          "resets": [
+            {
+              "reset_date": "2027-08-27",
+              "start": "2027-08-31",
+              "end": "2028-07-31"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

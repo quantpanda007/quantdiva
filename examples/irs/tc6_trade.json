@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "instrument_type": "ois",
+  "params": {
+    "trade_id": "SLLSL9SC",
+    "currency": "JPY",
+    "valuation_date": "2026-03-31",
+    "effective_date": "2026-07-31",
+    "maturity_date": "2028-01-31",
+    "fixed_leg_side": "pay",
+    "fixed_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "semiannual",
+      "fixed_rate": 0.01,
+      "accrual_date_adjustment": {
+        "calendar": "JN",
+        "business_day_convention": "modified_following"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-07-31",
+          "accrual_end": "2027-01-29",
+          "payment_date": "2027-01-29",
+          "notional": 7300000
+        },
+        {
+          "accrual_start": "2027-01-29",
+          "accrual_end": "2027-07-30",
+          "payment_date": "2027-07-30",
+          "notional": 4866666.67
+        },
+        {
+          "accrual_start": "2027-07-30",
+          "accrual_end": "2028-01-31",
+          "payment_date": "2028-01-31",
+          "notional": 2433333.34
+        }
+      ]
+    },
+    "floating_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "semiannual",
+      "benchmark": "MUTKCALM",
+      "benchmark_tenor": "1D",
+      "spread": 0.003,
+      "leverage": 1.0,
+      "reset_frequency": "daily",
+      "accrual_date_adjustment": {
+        "calendar": "JN",
+        "business_day_convention": "modified_following"
+      },
+      "observation": {
+        "lookback_days": 0,
+        "cutoff_days": 1,
+        "reset_timing": "In Arrears",
+        "compounding": "ExcludeSprd",
+        "lookback_type": "Lookback"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-07-31",
+          "accrual_end": "2027-01-29",
+          "payment_date": "2027-01-29",
+          "notional": 7300000
+        },
+        {
+          "accrual_start": "2027-01-29",
+          "accrual_end": "2027-07-30",
+          "payment_date": "2027-07-30",
+          "notional": 4866666.67
+        },
+        {
+          "accrual_start": "2027-07-30",
+          "accrual_end": "2028-01-31",
+          "payment_date": "2028-01-31",
+          "notional": 2433333.34
+        }
+      ]
+    }
+  }
+}

@@ -121,6 +121,35 @@ def build_instruments_from_request(reqs: List[InstrumentRequest]) -> List[BaseIn
 
 
 # ---------------------------------------------------------------------------
+# Guard: instrument types that must not be priced on flat test curves
+# ---------------------------------------------------------------------------
+
+# build_market_env_from_request only builds flat test curves. These instrument
+# types need a properly configured market environment (for "ois": the fresh IRS,
+# zero curves built with market.curves.irs_zero_curve.build_zero_curve), so the
+# generic market_data request must not be used to price them.
+CONFIGURED_MARKET_REQUIRED_TYPES = frozenset({"ois"})
+
+
+class ConfiguredMarketEnvironmentRequired(ValueError):
+    """Raised when a request would price an instrument on flat test curves."""
+
+
+def ensure_flat_market_env_supported(instrument_type: str) -> None:
+    """Reject instrument types that the flat test market environment cannot price."""
+    if instrument_type in CONFIGURED_MARKET_REQUIRED_TYPES:
+        raise ConfiguredMarketEnvironmentRequired(
+            f"Instrument type '{instrument_type}' requires a configured IRS market "
+            "environment (discount and forecast zero curves for the trade currency). "
+            "The generic market_data request only builds flat test curves, so this "
+            "request was rejected rather than priced on them. Price it with "
+            "PricingService and a MarketEnvironment from "
+            "market.curves.irs_market_environment.build_single_curve_irs_environment; "
+            "IRS market data is not yet supported on this endpoint (open item OI-5)."
+        )
+
+
+# ---------------------------------------------------------------------------
 # Market environment builder
 # ---------------------------------------------------------------------------
 

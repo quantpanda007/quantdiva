@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "instrument_type": "ois",
+  "params": {
+    "trade_id": "SLLSL9S3",
+    "currency": "INR",
+    "valuation_date": "2026-03-31",
+    "effective_date": "2026-06-30",
+    "maturity_date": "2028-05-31",
+    "fixed_leg_side": "pay",
+    "fixed_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "quarterly",
+      "fixed_rate": 0.1,
+      "accrual_date_adjustment": {
+        "calendar": "RB",
+        "business_day_convention": "modified_following"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2026-09-30",
+          "payment_date": "2026-09-30",
+          "notional": 1900000
+        },
+        {
+          "accrual_start": "2026-09-30",
+          "accrual_end": "2026-12-31",
+          "payment_date": "2026-12-31",
+          "notional": 1662500
+        },
+        {
+          "accrual_start": "2026-12-31",
+          "accrual_end": "2027-03-31",
+          "payment_date": "2027-03-31",
+          "notional": 1425000
+        },
+        {
+          "accrual_start": "2027-03-31",
+          "accrual_end": "2027-06-30",
+          "payment_date": "2027-06-30",
+          "notional": 1187500
+        },
+        {
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "payment_date": "2027-09-30",
+          "notional": 950000
+        },
+        {
+          "accrual_start": "2027-09-30",
+          "accrual_end": "2027-12-31",
+          "payment_date": "2027-12-31",
+          "notional": 712500
+        },
+        {
+          "accrual_start": "2027-12-31",
+          "accrual_end": "2028-03-31",
+          "payment_date": "2028-03-31",
+          "notional": 475000
+        },
+        {
+          "accrual_start": "2028-03-31",
+          "accrual_end": "2028-05-31",
+          "payment_date": "2028-05-31",
+          "notional": 237500
+        }
+      ]
+    },
+    "floating_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "quarterly",
+      "benchmark": "IRSWOF",
+      "benchmark_tenor": "6M",
+      "spread": 0.005,
+      "leverage": 1.0,
+      "reset_frequency": "semiannual",
+      "accrual_date_adjustment": {
+        "calendar": "RB",
+        "business_day_convention": "modified_following"
+      },
+      "term_rate": {
+        "compounding": "none",
+        "fixing_calendar": "RB",
+        "fixing_days": 1
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2026-09-30",
+          "payment_date": "2026-09-30",
+          "notional": 1900000,
+          "resets": [
+            {
+              "reset_date": "2026-06-29",
+              "start": "2026-06-30",
+              "end": "2026-09-30"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2026-09-30",
+          "accrual_end": "2026-12-31",
+          "payment_date": "2026-12-31",
+          "notional": 1662500,
+          "resets": [
+            {
+              "reset_date": "2026-09-29",
+              "start": "2026-09-30",
+              "end": "2026-12-31"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2026-12-31",
+          "accrual_end": "2027-03-31",
+          "payment_date": "2027-03-31",
+          "notional": 1425000,
+          "resets": [
+            {
+              "reset_date": "2026-09-29",
+              "start": "2026-12-31",
+              "end": "2027-03-31"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2027-03-31",
+          "accrual_end": "2027-06-30",
+          "payment_date": "2027-06-30",
+          "notional": 1187500,
+          "resets": [
+            {
+              "reset_date": "2027-03-30",
+              "start": "2027-03-31",
+              "end": "2027-06-30"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "payment_date": "2027-09-30",
+          "notional": 950000,
+          "resets": [
+            {
+              "reset_date": "2027-03-30",
+              "start": "2027-06-30",
+              "end": "2027-09-30"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2027-09-30",
+          "accrual_end": "2027-12-31",
+          "payment_date": "2027-12-31",
+          "notional": 712500,
+          "resets": [
+            {
+              "reset_date": "2027-09-29",
+              "start": "2027-09-30",
+              "end": "2027-12-31"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2027-12-31",
+          "accrual_end": "2028-03-31",
+          "payment_date": "2028-03-31",
+          "notional": 475000,
+          "resets": [
+            {
+              "reset_date": "2027-09-29",
+              "start": "2027-12-31",
+              "end": "2028-03-31"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2028-03-31",
+          "accrual_end": "2028-05-31",
+          "payment_date": "2028-05-31",
+          "notional": 237500,
+          "resets": [
+            {
+              "reset_date": "2028-03-30",
+              "start": "2028-03-31",
+              "end": "2028-05-31"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

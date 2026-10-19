@@ -45,7 +45,7 @@ Document (every key required unless stated; unknown keys are rejected)::
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Dict, Mapping, Tuple
 
@@ -77,6 +77,9 @@ class MissingCurveAssignment(InvalidMarketData):
 _CALENDARS = {
     "US-SOFR": lambda: ql.UnitedStates(ql.UnitedStates.SOFR),
     "US-FED": lambda: ql.UnitedStates(ql.UnitedStates.FederalReserve),
+    "CH-SARON": ql.Switzerland,
+    "IN-MIBOR": ql.India,
+    "JP-TONA": ql.Japan,
 }
 _DAY_COUNTS = {
     "ACT/365F": ql.Actual365Fixed,
@@ -92,6 +95,8 @@ _BUSINESS_DAY_CONVENTIONS = {
 }
 
 _TOP_KEYS = frozenset({"schema_version", "valuation_date", "provenance", "curves", "assignments"})
+_TOP_OPTIONAL_KEYS = frozenset({"fixings"})
+_FIXING_SERIES_KEYS = frozenset({"provenance", "values"})
 _CURVE_KEYS = frozenset({"currency", "benchmark", "reference_date", "conventions", "observations"})
 _CONVENTION_KEYS = frozenset(
     {
@@ -197,6 +202,9 @@ class MarketSnapshot:
     provenance: str
     curves: Mapping[str, CurveSpec]
     assignments: Mapping[str, CurveAssignment]
+    # Index name -> {fixing date: rate (decimal)}; and each series' provenance.
+    fixings: Mapping[str, Mapping[date, float]] = field(default_factory=dict)
+    fixing_provenance: Mapping[str, str] = field(default_factory=dict)
 
     def assignment(self, currency: str) -> CurveAssignment:
         try:
@@ -274,7 +282,7 @@ def _observations(value: Any, path: str) -> Tuple[ZeroCurveObservation, ...]:
 def parse_market_snapshot(document: Any) -> MarketSnapshot:
     """Validate a market-data document and return the typed snapshot."""
     top = _mapping(document, "market data")
-    _keys(top, _TOP_KEYS, "market data")
+    _keys(top, _TOP_KEYS, "market data", _TOP_OPTIONAL_KEYS)
     schema_version = top["schema_version"]
     # bool is an int subclass and 1.0 == 1, so check the type explicitly.
     if type(schema_version) is not int or schema_version != SCHEMA_VERSION:
@@ -351,11 +359,33 @@ def parse_market_snapshot(document: Any) -> MarketSnapshot:
             forecast_curve_id=ids["forecast"],
         )
 
+    fixings: Dict[str, Dict[date, float]] = {}
+    fixing_provenance: Dict[str, str] = {}
+    for name, raw in _mapping(top.get("fixings", {}), "fixings").items():
+        path = f"fixings.{name}"
+        row = _mapping(raw, path)
+        _keys(row, _FIXING_SERIES_KEYS, path)
+        fixing_provenance[name] = _string(row["provenance"], f"{path}.provenance")
+        series: Dict[date, float] = {}
+        for raw_date, value in _mapping(row["values"], f"{path}.values").items():
+            when = _date(raw_date, f"{path}.values key")
+            if when > valuation_date:
+                raise InvalidMarketData(
+                    f"{path}.values: fixing date {when.isoformat()} is after the valuation "
+                    f"date {valuation_date.isoformat()}"
+                )
+            series[when] = _number(value, f"{path}.values[{raw_date}]")
+        if not series:
+            raise InvalidMarketData(f"{path}.values: at least one fixing is required")
+        fixings[name] = series
+
     return MarketSnapshot(
         valuation_date=valuation_date,
         provenance=provenance,
         curves=curves,
         assignments=assignments,
+        fixings=fixings,
+        fixing_provenance=fixing_provenance,
     )
 
 
@@ -396,5 +426,6 @@ def resolve_market_environment(snapshot: MarketSnapshot) -> ResolvedMarket:
         forecast_curves={
             ccy: built[a.forecast_curve_id].handle for ccy, a in snapshot.assignments.items()
         },
+        fixings={name: dict(series) for name, series in snapshot.fixings.items()},
     )
     return ResolvedMarket(snapshot=snapshot, environment=environment, curves=built)

@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "case_id": "TC8",
+  "trade_id": "SLLSL9S6",
+  "source_json": "tests/fixtures/bloomberg_irs/source/TC8.json",
+  "source_oracle_sections": {
+    "leg_valuation_metrics": {
+      "fixed": {
+        "npv": -4670125.07,
+        "accrued": -38219.18,
+        "premium": -102.93,
+        "dv01": -337.6
+      },
+      "floating": {
+        "npv": 4530610.09,
+        "accrued": 22396.44,
+        "premium": 100.18,
+        "dv01": 185.81
+      }
+    },
+    "valuation_results": {
+      "par_coupon": 6.311263,
+      "premium": -2.74872,
+      "principal": -123692.24,
+      "bp_value": -310.03328,
+      "accrued": -15822.74,
+      "npv": -139514.98,
+      "pv01": -373.54,
+      "dv01": -151.78,
+      "gamma_1bp": -0.04
+    },
+    "cashflows": {
+      "currency": "INR",
+      "accrued": -15822.74,
+      "net_npv": -139514.98,
+      "net_cashflows": [
+        {
+          "pay_date": "2026-08-31",
+          "payments_receive": 132933.7,
+          "payments_pay": -226849.32,
+          "net_payment": -93915.62,
+          "discount": 0.976313,
+          "pv": -91691.02
+        },
+        {
+          "pay_date": "2027-02-26",
+          "payments_receive": 100848.85,
+          "payments_pay": -147123.29,
+          "net_payment": -46274.44,
+          "discount": 0.946844,
+          "pv": -43814.66
+        },
+        {
+          "pay_date": "2027-03-31",
+          "payments_receive": 9302.01,
+          "payments_pay": -13561.64,
+          "net_payment": -4259.63,
+          "discount": 0.941231,
+          "pv": -4009.3
+        }
+      ],
+      "fixed_leg": {
+        "npv": -373543.3,
+        "accrued": -38219.18,
+        "cashflows": [
+          {
+            "pay_date": "2026-08-31",
+            "accrual_start": "2026-02-28",
+            "accrual_end": "2026-08-31",
+            "days": 184,
+            "notional": -4500000.0,
+            "principal": 0.0,
+            "payment": -226849.32,
+            "discount": 0.976313,
+            "pv": -221475.9
+          },
+          {
+            "pay_date": "2027-02-26",
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-02-26",
+            "days": 179,
+            "notional": -3000000.0,
+            "principal": 0.0,
+            "payment": -147123.29,
+            "discount": 0.946844,
+            "pv": -139302.75
+          },
+          {
+            "pay_date": "2027-03-31",
+            "accrual_start": "2027-02-26",
+            "accrual_end": "2027-03-31",
+            "days": 33,
+            "notional": -1500000.0,
+            "principal": 0.0,
+            "payment": -13561.64,
+            "discount": 0.941231,
+            "pv": -12764.64
+          }
+        ]
+      },
+      "floating_leg": {
+        "npv": 234028.32,
+        "accrued": 22396.44,
+        "cashflows": [
+          {
+            "pay_date": "2026-08-31",
+            "accrual_start": "2026-02-28",
+            "accrual_end": "2026-08-31",
+            "days": 184,
+            "notional": 4500000.0,
+            "principal": 0.0,
+            "reset_date": "2026-02-27",
+            "reset_rate": 5.36,
+            "payment": 132933.7,
+            "discount": 0.976313,
+            "pv": 129784.88
+          },
+          {
+            "pay_date": "2027-02-26",
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-02-26",
+            "days": 179,
+            "notional": 3000000.0,
+            "principal": 0.0,
+            "reset_date": "2026-08-28",
+            "reset_rate": 6.35472,
+            "payment": 100848.85,
+            "discount": 0.946844,
+            "pv": 95488.09
+          },
+          {
+            "pay_date": "2027-03-31",
+            "accrual_start": "2027-02-26",
+            "accrual_end": "2027-03-31",
+            "days": 33,
+            "notional": 1500000.0,
+            "principal": 0.0,
+            "reset_date": "2027-02-25",
+            "reset_rate": 6.35906,
+            "payment": 9302.01,
+            "discount": 0.941231,
+            "pv": 8755.35
+          }
+        ]
+      }
+    }
+  }
+}

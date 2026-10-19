@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "valuation_date": "2026-03-31",
+  "provenance": "JPY TONA OIS curve bootstrapped in QuantLib from the OIS par rates (Market Rate) in market_data/2026-03-31/JPY/market_data.json by scripts/build_ois_curve_snapshots.py: T+2, JP-TONA, single payment up to 1Y, annual above, ACT/365F, linear zero; reproduces Bloomberg's TC6/TC10 payment-date DFs within 1.0e-6 (+390-day row read as 15M). The supplied Discount Factor column is not used (it does not reproduce Bloomberg's trade DFs). Bloomberg-derived: keep local (OI-6).",
+  "curves": {
+    "JPY-TONA-OIS": {
+      "currency": "JPY",
+      "benchmark": "TONA",
+      "reference_date": "2026-03-31",
+      "conventions": {
+        "calendar": "JP-TONA",
+        "spot_lag_days": 2,
+        "business_day_convention": "modified_following",
+        "end_of_month": false,
+        "day_count": "ACT/365F",
+        "compounding": "continuous",
+        "interpolation": "linear_zero",
+        "front_extrapolation": "flat_first_zero",
+        "allow_extrapolation": false,
+        "discount_factor_check_tolerance": 1e-06
+      },
+      "observations": [
+        {
+          "tenor": "1W",
+          "zero_rate": 0.007297789285631917
+        },
+        {
+          "tenor": "2W",
+          "zero_rate": 0.0072769606901847035
+        },
+        {
+          "tenor": "3W",
+          "zero_rate": 0.007281432972057414
+        },
+        {
+          "tenor": "1M",
+          "zero_rate": 0.007618856145868364
+        },
+        {
+          "tenor": "2M",
+          "zero_rate": 0.008199765453144523
+        },
+        {
+          "tenor": "3M",
+          "zero_rate": 0.008550781911433412
+        },
+        {
+          "tenor": "4M",
+          "zero_rate": 0.008798862094930249
+        },
+        {
+          "tenor": "5M",
+          "zero_rate": 0.00905965699193114
+        },
+        {
+          "tenor": "6M",
+          "zero_rate": 0.00927046252296476
+        },
+        {
+          "tenor": "7M",
+          "zero_rate": 0.009522460511595688
+        },
+        {
+          "tenor": "8M",
+          "zero_rate": 0.009779586607766467
+        },
+        {
+          "tenor": "9M",
+          "zero_rate": 0.010051530052913432
+        },
+        {
+          "tenor": "10M",
+          "zero_rate": 0.010308872862709598
+        },
+        {
+          "tenor": "11M",
+          "zero_rate": 0.01055910405340952
+        },
+        {
+          "tenor": "12M",
+          "zero_rate": 0.010811875685711814
+        },
+        {
+          "tenor": "15M",
+          "zero_rate": 0.011528676022510611
+        },
+        {
+          "tenor": "18M",
+          "zero_rate": 0.012250093226960536
+        },
+        {
+          "tenor": "21M",
+          "zero_rate": 0.012907195957129977
+        },
+        {
+          "tenor": "2Y",
+          "zero_rate": 0.013509309151706759
+        },
+        {
+          "tenor": "3Y",
+          "zero_rate": 0.015253067712417426
+        },
+        {
+          "tenor": "4Y",
+          "zero_rate": 0.016458231662114655
+        },
+        {
+          "tenor": "5Y",
+          "zero_rate": 0.017411381638966363
+        },
+        {
+          "tenor": "6Y",
+          "zero_rate": 0.0182632261899843
+        },
+        {
+          "tenor": "7Y",
+          "zero_rate": 0.019110392079479493
+        },
+        {
+          "tenor": "8Y",
+          "zero_rate": 0.019908670889479604
+        },
+        {
+          "tenor": "9Y",
+          "zero_rate": 0.020780852546582466
+        },
+        {
+          "tenor": "10Y",
+          "zero_rate": 0.021630636087273388
+        },
+        {
+          "tenor": "11Y",
+          "zero_rate": 0.02236684262150813
+        }
+      ]
+    }
+  },
+  "assignments": {
+    "JPY": {
+      "discount": "JPY-TONA-OIS",
+      "forecast": "JPY-TONA-OIS"
+    }
+  }
+}

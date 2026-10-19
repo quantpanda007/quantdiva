@@ -4,6 +4,7 @@ Version: 0.1.0
 Summary: Full-stack quantitative finance pricing platform built on QuantLib
 License: MIT
 Requires-Python: >=3.10
+Requires-Dist: QuantLib==1.43
 Requires-Dist: numpy>=1.24
 Requires-Dist: scipy>=1.11
 Requires-Dist: pandas>=2.0

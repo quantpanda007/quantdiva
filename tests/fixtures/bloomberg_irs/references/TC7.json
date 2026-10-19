@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "TC7",
+  "trade_id": "SLLSL9SI",
+  "source_json": "tests/fixtures/bloomberg_irs/source/TC7.json",
+  "source_oracle_sections": {
+    "leg_valuation_metrics": {
+      "fixed": {
+        "npv": -593.58,
+        "accrued": 0.0,
+        "premium": -1.14,
+        "dv01": -7.78
+      },
+      "floating": {
+        "npv": 205.51,
+        "accrued": 0.0,
+        "premium": 0.4,
+        "dv01": 0.03
+      }
+    },
+    "valuation_results": {
+      "par_coupon": 0.486944,
+      "premium": -0.74628,
+      "principal": -388.06,
+      "bp_value": -74.6276,
+      "accrued": 0.0,
+      "npv": -388.06,
+      "pv01": -7.56,
+      "dv01": -7.75,
+      "gamma_1bp": 0.0
+    },
+    "cashflows": {
+      "currency": "CHF",
+      "accrued": 0.0,
+      "net_npv": -388.06,
+      "net_cashflows": [
+        {
+          "pay_date": "2027-08-31",
+          "payments_receive": 251.29,
+          "payments_pay": -520.0,
+          "net_payment": -268.71,
+          "discount": 0.998086,
+          "zero_rate": 0.134993,
+          "pv": -268.19
+        },
+        {
+          "pay_date": "2028-07-31",
+          "payments_receive": 117.98,
+          "payments_pay": -238.33,
+          "net_payment": -120.35,
+          "discount": 0.995966,
+          "zero_rate": 0.172959,
+          "pv": -119.87
+        }
+      ],
+      "fixed_leg": {
+        "npv": -756.38,
+        "accrued": 0.0,
+        "cashflows": [
+          {
+            "pay_date": "2027-08-31",
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-08-31",
+            "days": 360,
+            "notional": -52000.0,
+            "principal": 0.0,
+            "equiv_coupon": 1.0,
+            "payment": -520.0,
+            "discount": 0.998086,
+            "zero_rate": 0.134993,
+            "pv": -519.0
+          },
+          {
+            "pay_date": "2028-07-31",
+            "accrual_start": "2027-08-31",
+            "accrual_end": "2028-07-31",
+            "days": 330,
+            "notional": -26000.0,
+            "principal": 0.0,
+            "equiv_coupon": 1.0,
+            "payment": -238.33,
+            "discount": 0.995966,
+            "zero_rate": 0.172959,
+            "pv": -237.37
+          }
+        ]
+      },
+      "floating_leg": {
+        "npv": 368.31,
+        "accrued": 0.0,
+        "cashflows": [
+          {
+            "pay_date": "2027-08-31",
+            "accrual_start": "2026-08-31",
+            "accrual_end": "2027-08-31",
+            "days": 365,
+            "notional": 52000.0,
+            "principal": 0.0,
+            "effective_reset_date": "2027-08-24",
+            "equiv_coupon": 0.4766,
+            "payment": 251.29,
+            "discount": 0.998086,
+            "zero_rate": 0.134993,
+            "pv": 250.81
+          },
+          {
+            "pay_date": "2028-07-31",
+            "accrual_start": "2027-08-31",
+            "accrual_end": "2028-07-31",
+            "days": 335,
+            "notional": 26000.0,
+            "principal": 0.0,
+            "effective_reset_date": "2028-02-25",
+            "equiv_coupon": 0.4876,
+            "payment": 117.98,
+            "discount": 0.995966,
+            "zero_rate": 0.172959,
+            "pv": 117.5
+          }
+        ]
+      }
+    }
+  }
+}

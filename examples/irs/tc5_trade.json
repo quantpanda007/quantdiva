@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "instrument_type": "ois",
+  "params": {
+    "trade_id": "SLLSL9S9",
+    "currency": "INR",
+    "valuation_date": "2026-03-31",
+    "effective_date": "2026-06-30",
+    "maturity_date": "2027-09-30",
+    "fixed_leg_side": "pay",
+    "fixed_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "annual",
+      "fixed_rate": 0.09,
+      "accrual_date_adjustment": {
+        "calendar": "RB",
+        "business_day_convention": "modified_following"
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2027-06-30",
+          "payment_date": "2027-06-30",
+          "notional": 7500000
+        },
+        {
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "payment_date": "2027-09-30",
+          "notional": 3750000
+        }
+      ]
+    },
+    "floating_leg": {
+      "day_count": "ACT/365",
+      "payment_frequency": "annual",
+      "benchmark": "IRSWOF",
+      "benchmark_tenor": "6M",
+      "spread": 0.01,
+      "leverage": 1.0,
+      "reset_frequency": "semiannual",
+      "accrual_date_adjustment": {
+        "calendar": "RB",
+        "business_day_convention": "modified_following"
+      },
+      "term_rate": {
+        "compounding": "flat",
+        "fixing_calendar": "RB",
+        "fixing_days": 1
+      },
+      "periods": [
+        {
+          "accrual_start": "2026-06-30",
+          "accrual_end": "2027-06-30",
+          "payment_date": "2027-06-30",
+          "notional": 7500000,
+          "resets": [
+            {
+              "reset_date": "2026-06-29",
+              "start": "2026-06-30",
+              "end": "2026-12-31"
+            },
+            {
+              "reset_date": "2026-12-30",
+              "start": "2026-12-31",
+              "end": "2027-06-30"
+            }
+          ]
+        },
+        {
+          "accrual_start": "2027-06-30",
+          "accrual_end": "2027-09-30",
+          "payment_date": "2027-09-30",
+          "notional": 3750000,
+          "resets": [
+            {
+              "reset_date": "2027-06-29",
+              "start": "2027-06-30",
+              "end": "2027-09-30"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
