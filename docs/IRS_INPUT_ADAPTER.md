@@ -20,7 +20,7 @@ No module here prices, builds a curve, or chooses a default.
 ## Running it
 
 ```
-python -m scripts.price_irs_workbook --workbook examples/irs/Optima_IRS_Test_Case_Inputs_v4.xlsx [--sheet TC001] [--show-trade]
+python -m scripts.price_irs_workbook --workbook examples/irs/Optima_IRS_Test_Case_Inputs_v4.xlsx --sheet TC001 [--show-trade]
 ```
 
 Exit code 0 priced; 2 input or market-data problem (every problem is listed); 1 pricing error.
@@ -120,10 +120,13 @@ selection.
 - v3 plus four floating-leg rows: Leverage, Business Day Convention, Calendar, Lookback Type.
 - Guidance text clarifies three existing fields: Amortisation Type, Fixings Source File and
   Interpolation. No other field was added, and no drop-down option was removed.
-- Worksheet `TC001` holds TC1, populated from `examples/irs/tc1_trade.json`. The normalized
-  trade equals that file exactly.
-- The expected result is not in the workbook. It is the approved baseline
-  `tests/fixtures/irs_expected_outputs/TC1.json`.
+- One worksheet per test case: `TC001`, `TC003`, `TC004`, `TC006`, `TC010` (the overnight-leg
+  cases). Each is filled from `examples/irs/tc<N>_trade.json`, and its normalized trade equals
+  that file exactly. `--sheet` is required, because the workbook has several worksheets.
+- The term-rate cases (TC2, TC5, TC7, TC8, TC9) are not in the workbook yet: they need
+  reset-schedule inputs that this contract does not have.
+- Expected results are not in the workbook. They are the approved baselines
+  `tests/fixtures/irs_expected_outputs/TC<N>.json`.
 - The reader rejects the v3 layout, because it lacks the four rows.
 - "Fixed Rate" must be a percentage-formatted cell, and "Amortisation (%)" is read as a
   percentage.

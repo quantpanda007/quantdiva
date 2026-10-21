@@ -111,8 +111,21 @@ def test_tc1_worksheet_is_read_cell_by_cell(inputs):
     assert inputs == TC1_INPUTS
 
 
-def test_only_worksheet_is_used_when_no_sheet_is_named(inputs):
-    assert read_trade_sheet(WORKBOOK) == inputs
+def test_sheet_must_be_named_unless_the_workbook_has_only_one(inputs, tmp_path):
+    with pytest.raises(WorkbookReadError, match="name the one to read"):
+        read_trade_sheet(WORKBOOK)
+    single = tmp_path / "single.xlsx"
+    shutil.copy(WORKBOOK, single)
+    wb = load_workbook(single)
+    for name in wb.sheetnames:
+        if name != SHEET:
+            del wb[name]
+    wb.save(single)
+    single_inputs, expected = read_trade_sheet(single), copy.deepcopy(inputs)
+    # A workbook saved by openpyxl has no calculated value for the Snapshot Folder formula.
+    assert single_inputs["market_data"].pop("snapshot_folder") is None
+    expected["market_data"].pop("snapshot_folder")
+    assert single_inputs == expected
 
 
 def test_reader_output_follows_the_contract(inputs):
@@ -503,9 +516,9 @@ def test_excel_route_equals_the_json_route():
 
 def test_workbook_holds_no_expected_results():
     """The expected output stays in the baseline file, never in the input workbook."""
-    ws = load_workbook(WORKBOOK, data_only=True)[SHEET]
-    labels = {str(c.value).lower() for row in ws.iter_rows() for c in row if c.value}
-    assert not any(word in label for label in labels for word in ("npv", "expected", "pv "))
+    for ws in load_workbook(WORKBOOK, data_only=True).worksheets:
+        labels = {str(c.value).lower() for row in ws.iter_rows() for c in row if c.value}
+        assert not any(word in label for label in labels for word in ("npv", "expected", "pv "))
 
 
 def test_cli(capsys):
@@ -517,7 +530,7 @@ def test_cli(capsys):
 def test_cli_reports_input_errors(tmp_path, capsys):
     path = _workbook_copy(tmp_path)
     _edit(path, **{f"B{_find_row('Leverage')}": None})
-    assert cli.main(["--workbook", str(path)]) == 2
+    assert cli.main(["--workbook", str(path), "--sheet", SHEET]) == 2
     assert "floating_leg.leverage: is required" in capsys.readouterr().err
 
 
@@ -617,3 +630,43 @@ def test_pending_options_remain_in_the_workbook():
     lists = " ".join(dv.formula1 for dv in ws.data_validations.dataValidation)
     for option in ("Percentage per Period", "Log Linear", "Linear", "Piecewise Linear (Cont)"):
         assert option in lists
+
+
+# --- 9. every case worksheet (one worksheet = one test case) ---------------------------------
+
+# Worksheets present and the case each one holds. Overnight-leg cases only: the term-rate
+# cases (TC2, TC5, TC7, TC8, TC9) need reset inputs this contract does not have yet.
+SHEET_CASES = {"TC001": "TC1", "TC003": "TC3", "TC004": "TC4", "TC006": "TC6", "TC010": "TC10"}
+
+
+def test_workbook_holds_exactly_the_supported_cases():
+    wb = load_workbook(WORKBOOK)
+    assert wb.sheetnames == list(SHEET_CASES)
+    template = sorted((str(d.sqref), d.formula1) for d in wb[SHEET].data_validations.dataValidation)
+    for ws in wb.worksheets:  # same layout and drop-down lists on every sheet
+        assert [ws.cell(r, 1).value for r in range(1, ws.max_row + 1)] == [
+            wb[SHEET].cell(r, 1).value for r in range(1, wb[SHEET].max_row + 1)]
+        assert sorted((str(d.sqref), d.formula1)
+                      for d in ws.data_validations.dataValidation) == template
+
+
+@pytest.mark.parametrize("sheet, case", sorted(SHEET_CASES.items()))
+def test_sheet_reproduces_the_existing_trade_file(sheet, case):
+    trade_file = ROOT / "examples" / "irs" / f"{case.lower()}_trade.json"
+    normalized = normalize(read_trade_sheet(WORKBOOK, sheet))
+    assert normalized.trade_document == _json(trade_file)
+    assert normalized.notes == ()
+
+
+@pytest.mark.parametrize("sheet, case", sorted(SHEET_CASES.items()))
+def test_sheet_prices_to_the_approved_baseline(sheet, case):
+    baseline = _json(suite.expected_path(case))
+    assert baseline["provenance"]["kind"] == "optima_regression_baseline"
+    priced = price_workbook(WORKBOOK, sheet)
+    assert priced.market_files == engine.resolve_market_files(
+        _json(ROOT / "examples" / "irs" / f"{case.lower()}_trade.json")).files
+    result = suite.CaseResult(case, "PASS")
+    suite.compare(_suite_outputs(priced), baseline["expected"], result)
+    assert result.failures == []
+    assert result.fields_compared == ["npv", "fixed_leg_npv", "floating_leg_npv", "cashflows",
+                                      "settled"]
