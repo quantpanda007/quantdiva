@@ -23,10 +23,14 @@ Keys of ``TradeInputs`` (every key must be present; unused optional values are `
     floating_leg: direction, benchmark, index_tenor, spread_bp, leverage, reset_frequency,
                   payment_frequency, day_count, business_day_convention, calendar,
                   rate_timing, lookback_days, lookback_type, rate_cutoff_days, compounding,
-                  spread_treatment
+                  spread_treatment                     (overnight 1D legs only)
+                  fixing_calendar, fixing_lag_days, term_compounding,
+                  observation_method                   (6M term-rate legs only)
     notional:     principal_exchange, amortisation_type,
                   schedule: [ {period, accrual_start, accrual_end, payment_date, notional,
                                amortisation_percent, amortisation_amount, action}, ... ]
+    resets:       schedule: [ {payment_period, reset_date, rate_start, rate_end}, ... ]
+                  (6M term-rate legs only; empty list for overnight legs)
     market_data:  curve, snapshot_folder, curve_source_file, fixings_source_file,
                   reference_date, interpolation
 """
@@ -47,14 +51,18 @@ SECTION_KEYS: Dict[str, Tuple[str, ...]] = {
     "floating_leg": ("direction", "benchmark", "index_tenor", "spread_bp", "leverage",
                      "reset_frequency", "payment_frequency", "day_count",
                      "business_day_convention", "calendar", "rate_timing", "lookback_days",
-                     "lookback_type", "rate_cutoff_days", "compounding", "spread_treatment"),
+                     "lookback_type", "rate_cutoff_days", "compounding", "spread_treatment",
+                     "fixing_calendar", "fixing_lag_days", "term_compounding",
+                     "observation_method"),
     "notional": ("principal_exchange", "amortisation_type", "schedule"),
+    "resets": ("schedule",),
     "market_data": ("curve", "snapshot_folder", "curve_source_file", "fixings_source_file",
                     "reference_date", "interpolation"),
 }
 SCHEDULE_ROW_KEYS: Tuple[str, ...] = ("period", "accrual_start", "accrual_end", "payment_date",
                                       "notional", "amortisation_percent",
                                       "amortisation_amount", "action")
+RESET_ROW_KEYS: Tuple[str, ...] = ("payment_period", "reset_date", "rate_start", "rate_end")
 
 
 class InputValidationError(ValueError):

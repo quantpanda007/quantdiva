@@ -52,25 +52,50 @@ priced = price_normalized(normalized)               # PricedTrade: npv, legs, ca
 | | `business_day_convention` | Modified Following, Following, Preceding, Unadjusted |
 | | `calendar` | FD, SZ, JN, RB |
 | `floating_leg` | `direction` | opposite of the fixed leg |
-| | `benchmark`, `index_tenor` | SOFR 1D (USD), TONAR 1D (JPY) |
+| | `benchmark`, `index_tenor` | overnight: SOFR 1D (USD) → SOFRRATE, TONAR 1D (JPY) → MUTKCALM; term rate: SF0006M (SARON fallback) 6M (CHF) → SF0006M, INR OIS 6M (INR) → IRSWOF |
 | | `spread_bp` | **basis points** (10 means 0.001) |
-| | `leverage` | multiplier |
-| | `reset_frequency` | Daily |
+| | `leverage` | multiplier (term-rate legs: 1 only, engine rule) |
+| | `reset_frequency` | Daily for 1D indices; Semiannual for 6M indices only |
 | | `payment_frequency`, `day_count`, `business_day_convention`, `calendar` | as the fixed leg |
-| | `rate_timing` | In Arrears, In Advance |
-| | `lookback_days`, `rate_cutoff_days` | whole days |
-| | `lookback_type` | Lookback |
-| | `compounding` | Daily Compounded |
-| | `spread_treatment` | Exclude Spread |
+| | `rate_timing` | *1D only:* In Arrears, In Advance |
+| | `lookback_days`, `rate_cutoff_days` | *1D only:* whole days |
+| | `lookback_type` | *1D only:* Lookback |
+| | `compounding` | *1D only:* Daily Compounded |
+| | `spread_treatment` | *1D only:* Exclude Spread |
+| | `fixing_calendar` | *6M only:* EN, SZ, RB |
+| | `fixing_lag_days` | *6M only:* business days from reset to rate start |
+| | `term_compounding` | *6M only:* None (exactly one reset per payment period), Flat |
+| | `observation_method` | *SF0006M only, required:* "Method A: contractual accrual (PROVISIONAL R9)", "Method B: reset-date fallback" |
 | `notional` | `principal_exchange` | Never |
 | | `amortisation_type` | Custom Schedule, Bullet / No Amortisation |
 | | `schedule` | list of {`period`, `accrual_start`, `accrual_end`, `payment_date`, `notional`, `amortisation_percent`, `amortisation_amount`, `action`} |
+| `resets` | `schedule` | *6M only* (empty list for 1D legs): list of {`payment_period`, `reset_date`, `rate_start`, `rate_end`} |
 | `market_data` | `curve` | USD SOFR, CHF SARON, JPY TONAR, INR OIS |
 | | `snapshot_folder` | optional; must be `market_data/<valuation date>/<CCY>/` |
 | | `curve_source_file` | prepared snapshot file name |
 | | `fixings_source_file` | file name in `market_data/<valuation date>/`; required when, and only when, the trade needs a fixing |
 | | `reference_date` | optional; must equal the snapshot's |
 | | `interpolation` | optional; must equal the snapshot's |
+
+Fields marked *1D only* must be empty for a 6M leg, and *6M only* fields must be empty for
+a 1D leg. Leaving a field empty never means a default.
+
+**Reset schedule (6M legs).** Each payment period needs at least one reset. Its resets must
+run contiguously from the period's accrual start to its accrual end: several resets in one
+period are sub-periods, e.g. TC5 and TC7 have annual payments with semiannual resets. Term
+Compounding "None" allows exactly one reset per period. A reset fixes on or before its rate
+start, and the engine checks that the reset date is a fixing-calendar business day. Reset
+dates are inputs, never derived. TC2 and TC9 use source reset dates that no simple rule
+produces: in TC9, quarterly periods share semiannual resets.
+
+**SF0006M observation method (OI-17, R9).** It must be selected explicitly; an empty value
+is an error and is never defaulted.
+- Method A is written to the trade as `observation_dates: contractual_accrual`. It is
+  **provisional pending SME decision R9**: every pricing that uses it returns a note saying
+  so, and the price script prints that note.
+- Method B is written in the engine's documented form, with no `observation_dates` key,
+  which is how the existing trade files hold it (TC7). A test checks that the engine's
+  default is still Method B, so this form cannot silently change meaning.
 
 `NormalizedIRSTrade.trade_document` is the existing engine trade document (schema of
 `instruments/rates/irs/pricing_instrument.py`; the same format as `examples/irs/*_trade.json`),
@@ -82,9 +107,14 @@ Every option in the workbook's drop-down lists falls in exactly one group (a tes
 this):
 
 - **Supported**: listed in the table above.
-- **Rejected, not supported by the engine** (error with the reason): SARON / INR OIS and
-  index tenors 3M/6M/1Y (term-rate legs need explicit resets this contract does not carry);
-  non-daily reset; Simple compounding; Compound Spread; principal exchange other than Never.
+- **Rejected, not supported by the engine** (error with the reason):
+  - plain SARON (there is no overnight SARON leg; the CHF 6M fallback is "SF0006M (SARON
+    fallback)");
+  - index tenors 3M and 1Y;
+  - Monthly, Quarterly and Annual reset;
+  - Simple compounding and Compound Spread;
+  - principal exchange other than Never;
+  - any benchmark, tenor and currency combination not listed above.
 - **Rejected, semantics not yet defined** (error until agreed and implemented):
   - *Amortisation Type: Percentage per Period.* Whether the percentage is of the original
     or of the outstanding notional is not defined. It is not mapped to Custom Schedule.
@@ -117,17 +147,21 @@ selection.
 
 ## Workbook v4 (`examples/irs/Optima_IRS_Test_Case_Inputs_v4.xlsx`)
 
-- v3 plus four floating-leg rows: Leverage, Business Day Convention, Calendar, Lookback Type.
-- Guidance text clarifies three existing fields: Amortisation Type, Fixings Source File and
-  Interpolation. No other field was added, and no drop-down option was removed.
-- One worksheet per test case: `TC001`, `TC003`, `TC004`, `TC006`, `TC010` (the overnight-leg
-  cases). Each is filled from `examples/irs/tc<N>_trade.json`, and its normalized trade equals
-  that file exactly. `--sheet` is required, because the workbook has several worksheets.
-- The term-rate cases (TC2, TC5, TC7, TC8, TC9) are not in the workbook yet: they need
-  reset-schedule inputs that this contract does not have.
+- v3 plus eight floating-leg rows:
+  - Leverage, Business Day Convention, Calendar, Lookback Type;
+  - for 6M legs: Fixing Calendar, Fixing Lag, Term Compounding, SARON Observation Method.
+- A **RESET SCHEDULE** section: Payment Period, Reset Date, Rate Start, Rate End, 30 rows.
+- Benchmark list: "SARON" became "SF0006M (SARON fallback)", the CHF LIBOR 6M fallback
+  (compounded SARON + 0.0741%, OI-12).
+- Guidance text marks the 1D-only and 6M-only rows and explains the benchmark labels,
+  Amortisation Type, Fixings Source File and Interpolation.
+- One worksheet per test case: `TC001` to `TC010`.
+  - Each is filled from `examples/irs/tc<N>_trade.json`, and its normalized trade equals that
+    file exactly.
+  - `--sheet` is required, because the workbook has several worksheets.
 - Expected results are not in the workbook. They are the approved baselines
   `tests/fixtures/irs_expected_outputs/TC<N>.json`.
-- The reader rejects the v3 layout, because it lacks the four rows.
+- The reader rejects earlier layouts, which lack these rows and the reset section.
 - "Fixed Rate" must be a percentage-formatted cell, and "Amortisation (%)" is read as a
   percentage.
 - "Snapshot Folder" is a formula. It is read as last calculated by Excel; if it holds no

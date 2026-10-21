@@ -7,8 +7,12 @@ analyst labels to the engine's enumerations, the notional schedule, and a consis
 check of the market-data reference. The resulting trade document is then parsed by the
 engine's own ``FreshOISInstrument.from_dict`` so it is known to be accepted.
 
-What it does not do: no defaults (every value comes from the inputs), no pricing, no
-curve selection or construction, no Excel.
+Floating legs are either overnight (1D index, daily reset, ``observation`` block) or term
+rate (6M index, semiannual reset, ``term_rate`` block with explicit resets from the reset
+schedule). Fields of the other kind must be empty.
+
+What it does not do: no defaults (every value comes from the inputs; an SF0006M trade must
+state its observation method), no pricing, no curve selection or construction, no Excel.
 
 Options are in three groups:
 * supported: mapped to the engine;
@@ -24,8 +28,14 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from instruments.rates.irs.pricing_instrument import FreshOISInstrument, InvalidIRSParameters
+from instruments.rates.irs.term_rate_leg import (
+    CONTRACTUAL_ACCRUAL,
+    DEFAULT_OBSERVATION_METHOD,
+    RESET_DATE_FALLBACK,
+)
 from market.market_data_layout import curve_snapshot_name
 from services.irs_inputs.contract import (
+    RESET_ROW_KEYS,
     SCHEDULE_ROW_KEYS,
     SECTION_KEYS,
     InputValidationError,
@@ -49,7 +59,25 @@ BUSINESS_DAY_CONVENTIONS = {"Modified Following": "modified_following",
 CALENDARS = ("FD", "JN", "RB", "SZ")
 # (benchmark label, index tenor, currency) -> engine overnight benchmark (daily reset).
 OVERNIGHT_BENCHMARKS = {("SOFR", "1D", "USD"): "SOFRRATE", ("TONAR", "1D", "JPY"): "MUTKCALM"}
-RESET_FREQUENCIES = {"Daily": "daily"}
+# (benchmark label, index tenor, currency) -> engine term-rate benchmark (6M, explicit resets).
+# Verified against the existing trade files and the engine's TERM_BENCHMARKS: SF0006M is the
+# CHF LIBOR 6M fallback (compounded SARON + 0.0741%, OI-12), used by TC2 and TC7; IRSWOF is
+# the INR 6M index projected from MIBOR (OI-15), used by TC5, TC8 and TC9.
+TERM_BENCHMARKS = {("SF0006M (SARON fallback)", "6M", "CHF"): "SF0006M",
+                   ("INR OIS", "6M", "INR"): "IRSWOF"}
+BENCHMARK_LABELS = sorted({b for b, _, _ in OVERNIGHT_BENCHMARKS} |
+                          {b for b, _, _ in TERM_BENCHMARKS})
+INDEX_TENORS = {"1D": "1D", "6M": "6M"}
+RESET_FREQUENCIES = {"Daily": "daily", "Semiannual": "semiannual"}
+# Term-rate legs. Fixing calendars as in the engine (a test keeps them equal).
+FIXING_CALENDARS = ("EN", "RB", "SZ")
+TERM_COMPOUNDING = {"None": "none", "Flat": "flat"}  # None: exactly one reset per period
+# SF0006M only, and always explicit. Method A is PROVISIONAL pending SME decision R9.
+OBSERVATION_METHODS = {
+    "Method A: contractual accrual (PROVISIONAL R9)": CONTRACTUAL_ACCRUAL,
+    "Method B: reset-date fallback": RESET_DATE_FALLBACK,
+}
+OBSERVATION_BENCHMARKS = ("SF0006M",)
 RATE_TIMINGS = {"In Arrears": "In Arrears", "In Advance": "In Advance"}
 LOOKBACK_TYPES = {"Lookback": "Lookback"}
 COMPOUNDING = {"Daily Compounded": "daily_compounded"}  # checked only; implied by daily reset
@@ -66,14 +94,15 @@ INTERPOLATIONS = {"Piecewise Linear (Cont)": "linear_zero"}
 
 # --- known options that are rejected, with the reason ----------------------------------------
 
-_TERM_RATE = ("is a term-rate (IBOR-fallback) leg; it needs explicit reset inputs that this "
-              "input contract does not have")
 UNSUPPORTED = {
-    "floating_leg.benchmark": {"SARON": _TERM_RATE, "INR OIS": _TERM_RATE},
-    "floating_leg.index_tenor": {t: _TERM_RATE for t in ("3M", "6M", "1Y")},
+    "floating_leg.benchmark": {
+        "SARON": "is not supported: there is no overnight SARON leg in the engine; the CHF 6M "
+                 "IBOR fallback is 'SF0006M (SARON fallback)'"},
+    "floating_leg.index_tenor": {t: f"is not supported: no {t} index is defined in the engine"
+                                 for t in ("3M", "1Y")},
     "floating_leg.reset_frequency": {
-        f: "only daily reset (overnight legs) is supported"
-        for f in ("Monthly", "Quarterly", "Semiannual", "Annual")},
+        f: "is not supported: only Daily (1D indices) and Semiannual (6M indices)"
+        for f in ("Monthly", "Quarterly", "Annual")},
     "floating_leg.compounding": {"Simple": "not supported by the engine (overnight legs are "
                                            "daily compounded)"},
     "floating_leg.spread_treatment": {"Compound Spread": "not supported by the engine "
@@ -174,14 +203,20 @@ def _number(value: Any, path: str, issues: _Issues, required: bool = True) -> Op
     return number
 
 
-def _whole(value: Any, path: str, issues: _Issues) -> Optional[int]:
+def _whole(value: Any, path: str, issues: _Issues, minimum: int = 0,
+           what: str = "a whole number of days") -> Optional[int]:
     number = _number(value, path, issues)
     if number is None:
         return None
-    if number != number.to_integral_value() or number < 0:
-        issues.add(path, f"must be a whole number of days >= 0, got {value!r}")
+    if number != number.to_integral_value() or number < minimum:
+        issues.add(path, f"must be {what} >= {minimum}, got {value!r}")
         return None
     return int(number)
+
+
+def _empty(value: Any, path: str, reason: str, issues: _Issues) -> None:
+    if not _missing(value):
+        issues.add(path, f"must be empty: {reason}, got {value!r}")
 
 
 def _plain(number: Decimal):
@@ -266,6 +301,75 @@ def _schedule(rows: Any, trade_notional: Optional[Decimal], effective: Optional[
     return periods
 
 
+def _reset_schedule(rows: Any, periods: List[Dict[str, Any]], compounding: Optional[str],
+                    issues: _Issues) -> Optional[List[List[Dict[str, str]]]]:
+    """Resets of a term-rate leg, grouped by payment period. Each payment period needs at
+    least one reset; its resets must run contiguously from the period's accrual start to its
+    accrual end (several resets in one period are sub-periods); compounding "None" allows
+    exactly one. A reset fixes on or before its rate start."""
+    if not isinstance(rows, (list, tuple)) or not rows:
+        issues.add("resets.schedule", "a 6M term-rate leg needs at least one reset per payment "
+                                      "period")
+        return None
+    grouped: Dict[int, List[Dict[str, Any]]] = {}
+    previous = 0
+    ok = True
+    for index, row in enumerate(rows, start=1):
+        path = f"resets.schedule[{index}]"
+        if not isinstance(row, Mapping) or set(row) != set(RESET_ROW_KEYS):
+            issues.add(path, f"must have exactly the fields {list(RESET_ROW_KEYS)}")
+            ok = False
+            continue
+        number = _whole(row["payment_period"], f"{path}.payment_period", issues, minimum=1,
+                        what="a payment period number")
+        fixing = _date(row["reset_date"], f"{path}.reset_date", issues)
+        start = _date(row["rate_start"], f"{path}.rate_start", issues)
+        end = _date(row["rate_end"], f"{path}.rate_end", issues)
+        if None in (number, fixing, start, end):
+            ok = False
+            continue
+        if number < previous:
+            issues.add(f"{path}.payment_period", f"rows must be in payment-period order "
+                                                 f"({number} after {previous})")
+            ok = False
+        if number > len(periods):
+            issues.add(f"{path}.payment_period", f"refers to payment period {number}; the "
+                                                 f"schedule has {len(periods)} period(s)")
+            ok = False
+        if not start < end:
+            issues.add(path, f"rate_start {start} must be before rate_end {end}")
+            ok = False
+        if fixing > start:
+            issues.add(f"{path}.reset_date", f"{fixing} is after rate_start {start}; a reset "
+                                             "fixes in advance")
+            ok = False
+        previous = max(previous, number)
+        grouped.setdefault(number, []).append(
+            {"reset_date": fixing.isoformat(), "start": start.isoformat(), "end": end.isoformat()})
+    result = []
+    for number, period in enumerate(periods, start=1):
+        resets = grouped.get(number, [])
+        path = f"resets.schedule (payment period {number})"
+        if not resets:
+            issues.add(path, f"no reset for payment period {number} "
+                             f"({period['accrual_start']} to {period['accrual_end']})")
+            ok = False
+            continue
+        chain = [resets[0]["start"]] + [r["end"] for r in resets]
+        if (chain[0] != period["accrual_start"] or chain[-1] != period["accrual_end"]
+                or any(a["end"] != b["start"] for a, b in zip(resets, resets[1:]))):
+            issues.add(path, "resets must cover the period contiguously from "
+                             f"{period['accrual_start']} to {period['accrual_end']}; rows run "
+                             + ", ".join(f"{r['start']}..{r['end']}" for r in resets))
+            ok = False
+        if compounding == "none" and len(resets) != 1:
+            issues.add(path, f"Term Compounding 'None' allows exactly one reset per payment "
+                             f"period, got {len(resets)}")
+            ok = False
+        result.append(resets)
+    return result if ok else None
+
+
 def normalize(inputs: TradeInputs, source: str = "trade inputs") -> NormalizedIRSTrade:
     """Validate ``inputs`` and return the engine trade document and market request.
     Raises ``InputValidationError`` listing every problem found."""
@@ -279,6 +383,7 @@ def normalize(inputs: TradeInputs, source: str = "trade inputs") -> NormalizedIR
     fixed = _section(inputs, "fixed_leg", issues)
     floating = _section(inputs, "floating_leg", issues)
     notional_section = _section(inputs, "notional", issues)
+    reset_section = _section(inputs, "resets", issues)
     market = _section(inputs, "market_data", issues)
 
     trade_id = _text(trade.get("trade_id"), "trade.trade_id", issues)
@@ -305,22 +410,31 @@ def normalize(inputs: TradeInputs, source: str = "trade inputs") -> NormalizedIR
     if fixed_side and float_side and fixed_side == float_side:
         issues.add("floating_leg.direction", f"must be the opposite of the fixed leg "
                                              f"({fixed.get('direction')})")
-    benchmark_label = _choice(floating.get("benchmark"),
-                              {b: b for b, _, _ in OVERNIGHT_BENCHMARKS},
+    benchmark_label = _choice(floating.get("benchmark"), {b: b for b in BENCHMARK_LABELS},
                               "floating_leg.benchmark", issues)
-    tenor = _choice(floating.get("index_tenor"), {"1D": "1D"}, "floating_leg.index_tenor",
+    tenor = _choice(floating.get("index_tenor"), INDEX_TENORS, "floating_leg.index_tenor",
                     issues)
-    benchmark = None
+    benchmark = kind = None
     if benchmark_label and tenor and currency:
-        benchmark = OVERNIGHT_BENCHMARKS.get((benchmark_label, tenor, currency))
-        if benchmark is None:
-            issues.add("floating_leg.benchmark", f"{benchmark_label} {tenor} is not a "
-                       f"supported {currency} overnight benchmark; supported: "
-                       f"{sorted(OVERNIGHT_BENCHMARKS)}")
+        key = (benchmark_label, tenor, currency)
+        if key in OVERNIGHT_BENCHMARKS:
+            benchmark, kind = OVERNIGHT_BENCHMARKS[key], "overnight"
+        elif key in TERM_BENCHMARKS:
+            benchmark, kind = TERM_BENCHMARKS[key], "term"
+        else:
+            supported = sorted(OVERNIGHT_BENCHMARKS) + sorted(TERM_BENCHMARKS)
+            issues.add("floating_leg.benchmark", f"{benchmark_label} {tenor} is not a supported "
+                       f"{currency} benchmark; supported (label, tenor, currency): {supported}")
     spread_bp = _number(floating.get("spread_bp"), "floating_leg.spread_bp", issues)
     leverage = _number(floating.get("leverage"), "floating_leg.leverage", issues)
     reset = _choice(floating.get("reset_frequency"), RESET_FREQUENCIES,
                     "floating_leg.reset_frequency", issues)
+    if kind == "overnight" and reset not in (None, "daily"):
+        issues.add("floating_leg.reset_frequency", f"{floating.get('reset_frequency')!r}: "
+                   "Semiannual reset is permitted only for 6M indices; a 1D index resets Daily")
+    if kind == "term" and reset not in (None, "semiannual"):
+        issues.add("floating_leg.reset_frequency", f"{floating.get('reset_frequency')!r}: a 6M "
+                   "index resets Semiannual")
     float_frequency = _choice(floating.get("payment_frequency"), PAYMENT_FREQUENCIES,
                               "floating_leg.payment_frequency", issues)
     float_day_count = _choice(floating.get("day_count"), DAY_COUNTS, "floating_leg.day_count",
@@ -329,15 +443,51 @@ def normalize(inputs: TradeInputs, source: str = "trade inputs") -> NormalizedIR
                         "floating_leg.business_day_convention", issues)
     float_calendar = _choice(floating.get("calendar"), {c: c for c in CALENDARS},
                              "floating_leg.calendar", issues)
-    rate_timing = _choice(floating.get("rate_timing"), RATE_TIMINGS, "floating_leg.rate_timing",
-                          issues)
-    lookback = _whole(floating.get("lookback_days"), "floating_leg.lookback_days", issues)
-    lookback_type = _choice(floating.get("lookback_type"), LOOKBACK_TYPES,
-                            "floating_leg.lookback_type", issues)
-    cutoff = _whole(floating.get("rate_cutoff_days"), "floating_leg.rate_cutoff_days", issues)
-    _choice(floating.get("compounding"), COMPOUNDING, "floating_leg.compounding", issues)
-    spread_treatment = _choice(floating.get("spread_treatment"), SPREAD_TREATMENTS,
-                               "floating_leg.spread_treatment", issues)
+    overnight_only = ("rate_timing", "lookback_days", "lookback_type", "rate_cutoff_days",
+                      "compounding", "spread_treatment")
+    term_only = ("fixing_calendar", "fixing_lag_days", "term_compounding", "observation_method")
+    rate_timing = lookback = lookback_type = cutoff = spread_treatment = None
+    fixing_calendar = fixing_lag = term_compounding = observation_method = None
+    reset_rows = reset_section.get("schedule")
+    if kind == "overnight":
+        rate_timing = _choice(floating.get("rate_timing"), RATE_TIMINGS,
+                              "floating_leg.rate_timing", issues)
+        lookback = _whole(floating.get("lookback_days"), "floating_leg.lookback_days", issues)
+        lookback_type = _choice(floating.get("lookback_type"), LOOKBACK_TYPES,
+                                "floating_leg.lookback_type", issues)
+        cutoff = _whole(floating.get("rate_cutoff_days"), "floating_leg.rate_cutoff_days",
+                        issues)
+        _choice(floating.get("compounding"), COMPOUNDING, "floating_leg.compounding", issues)
+        spread_treatment = _choice(floating.get("spread_treatment"), SPREAD_TREATMENTS,
+                                   "floating_leg.spread_treatment", issues)
+        for key in term_only:
+            _empty(floating.get(key), f"floating_leg.{key}", "applies to 6M term-rate legs only",
+                   issues)
+        if reset_rows:
+            issues.add("resets.schedule", "must be empty: a 1D overnight leg resets daily and "
+                                          "has no reset schedule")
+    elif kind == "term":
+        for key in overnight_only:
+            _empty(floating.get(key), f"floating_leg.{key}", "applies to overnight (1D) legs "
+                   "only", issues)
+        fixing_calendar = _choice(floating.get("fixing_calendar"),
+                                  {c: c for c in FIXING_CALENDARS},
+                                  "floating_leg.fixing_calendar", issues)
+        fixing_lag = _whole(floating.get("fixing_lag_days"), "floating_leg.fixing_lag_days",
+                            issues, what="a whole number of business days")
+        term_compounding = _choice(floating.get("term_compounding"), TERM_COMPOUNDING,
+                                   "floating_leg.term_compounding", issues)
+        if benchmark in OBSERVATION_BENCHMARKS:
+            observation_method = _choice(
+                floating.get("observation_method"), OBSERVATION_METHODS,
+                "floating_leg.observation_method", issues)
+            if observation_method is None and _missing(floating.get("observation_method")):
+                issues.add("floating_leg.observation_method", f"{benchmark} needs an explicit "
+                           "selection (Method A is provisional pending SME decision R9); it is "
+                           "never defaulted")
+        else:
+            _empty(floating.get("observation_method"), "floating_leg.observation_method",
+                   f"applies to {', '.join(OBSERVATION_BENCHMARKS)} only", issues)
 
     _choice(notional_section.get("principal_exchange"), PRINCIPAL_EXCHANGES,
             "notional.principal_exchange", issues)
@@ -345,6 +495,13 @@ def normalize(inputs: TradeInputs, source: str = "trade inputs") -> NormalizedIR
                            "notional.amortisation_type", issues)
     periods = _schedule(notional_section.get("schedule"), trade_notional, effective,
                         amortisation, issues)
+    period_resets = None
+    if kind == "term" and periods and len(periods) == len(notional_section.get("schedule")
+                                                          or []):
+        period_resets = _reset_schedule(reset_rows, periods, term_compounding, issues)
+    elif kind == "term" and not reset_rows:
+        issues.add("resets.schedule", "a 6M term-rate leg needs at least one reset per payment "
+                                      "period")
 
     curve = _choice(market.get("curve"), CURVES, "market_data.curve", issues)
     curve_benchmark = None
@@ -404,16 +561,33 @@ def normalize(inputs: TradeInputs, source: str = "trade inputs") -> NormalizedIR
             "leverage": float(leverage),
             "reset_frequency": reset,
             "accrual_date_adjustment": float_adjustment,
-            "observation": {
-                "lookback_days": lookback,
-                "cutoff_days": cutoff,
-                "reset_timing": rate_timing,
-                "compounding": spread_treatment,
-                "lookback_type": lookback_type,
-            },
-            "periods": [dict(p) for p in periods],
         },
     }
+    floating_doc = params["floating_leg"]
+    notes: Tuple[str, ...] = ()
+    if kind == "overnight":
+        floating_doc["observation"] = {
+            "lookback_days": lookback,
+            "cutoff_days": cutoff,
+            "reset_timing": rate_timing,
+            "compounding": spread_treatment,
+            "lookback_type": lookback_type,
+        }
+        floating_doc["periods"] = [dict(p) for p in periods]
+    else:
+        term_rate = {"compounding": term_compounding, "fixing_calendar": fixing_calendar,
+                     "fixing_days": fixing_lag}
+        # The engine reads an absent observation_dates as its documented default, Method B
+        # (reset-date fallback); the existing trade files are written that way. The input
+        # selection itself is always explicit; Method A is written out.
+        if observation_method is not None and observation_method != DEFAULT_OBSERVATION_METHOD:
+            term_rate["observation_dates"] = observation_method
+        if observation_method == CONTRACTUAL_ACCRUAL:
+            notes += ("floating_leg.observation_method: Method A (contractual accrual, no "
+                      "observation shift) is PROVISIONAL pending SME decision R9 (OI-17); it is "
+                      "not SME-confirmed",)
+        floating_doc["term_rate"] = term_rate
+        floating_doc["periods"] = [dict(p, resets=r) for p, r in zip(periods, period_resets)]
     try:
         FreshOISInstrument.from_dict(params)  # the engine's own validation
     except InvalidIRSParameters as exc:
@@ -423,7 +597,6 @@ def normalize(inputs: TradeInputs, source: str = "trade inputs") -> NormalizedIR
                                 curve_benchmark=curve_benchmark, curve_file=curve_file,
                                 fixings_file=fixings_file, reference_date=reference_date,
                                 interpolation=interpolation)
-    notes: Tuple[str, ...] = ()
     if interpolation is None:
         notes += ("market_data.interpolation not stated: the prepared snapshot's convention "
                   "applies and is not checked",)

@@ -24,7 +24,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from services.irs_inputs.contract import SCHEDULE_ROW_KEYS, TradeInputs
+from services.irs_inputs.contract import RESET_ROW_KEYS, SCHEDULE_ROW_KEYS, TradeInputs
 
 
 class WorkbookReadError(ValueError):
@@ -67,11 +67,16 @@ _SECTIONS: Dict[str, Tuple[str, Dict[str, Tuple[str, str]]]] = {
         "Rate Cutoff": ("rate_cutoff_days", "number"),
         "Compounding": ("compounding", "text"),
         "Spread Treatment": ("spread_treatment", "text"),
+        "Fixing Calendar": ("fixing_calendar", "text"),
+        "Fixing Lag": ("fixing_lag_days", "number"),
+        "Term Compounding": ("term_compounding", "text"),
+        "SARON Observation Method": ("observation_method", "text"),
     }),
     "NOTIONAL & AMORTISATION": ("notional", {
         "Principal Exchange": ("principal_exchange", "text"),
         "Amortisation Type": ("amortisation_type", "text"),
     }),
+    "RESET SCHEDULE": ("resets", {}),  # a table only (below)
     "MARKET DATA REFERENCE": ("market_data", {
         "Curve": ("curve", "text"),
         "Snapshot Folder": ("snapshot_folder", "text"),
@@ -81,10 +86,22 @@ _SECTIONS: Dict[str, Tuple[str, Dict[str, Tuple[str, str]]]] = {
         "Interpolation": ("interpolation", "text"),
     }),
 }
-_SCHEDULE_HEADER = "Amortisation Schedule"
-_SCHEDULE_COLUMNS = ("Period", "Effective Date", "End Date", "Payment Date", "Notional",
-                     "Amortisation (%)", "Amortisation Amount", "Action")
-_SCHEDULE_KINDS = ("number", "date", "date", "date", "number", "percent", "number", "text")
+# Tables: started by a row label (column A); the next non-empty row is the column header.
+# A row whose data columns (from ``data_from``) are all empty is a template row; data rows
+# must be consecutive.
+_TABLES = {
+    "Amortisation Schedule": {
+        "section": "notional", "name": "amortisation",
+        "columns": ("Period", "Effective Date", "End Date", "Payment Date", "Notional",
+                    "Amortisation (%)", "Amortisation Amount", "Action"),
+        "kinds": ("number", "date", "date", "date", "number", "percent", "number", "text"),
+        "keys": SCHEDULE_ROW_KEYS, "data_from": 1},
+    "RESET SCHEDULE": {
+        "section": "resets", "name": "reset",
+        "columns": ("Payment Period", "Reset Date", "Rate Start", "Rate End"),
+        "kinds": ("number", "date", "date", "date"),
+        "keys": RESET_ROW_KEYS, "data_from": 0},
+}
 
 
 def _cell_value(cell, kind: str, where: str) -> Any:
@@ -142,9 +159,17 @@ def _read(ws, source: str) -> Dict[str, Any]:
     result: Dict[str, Dict[str, Any]] = {name: {} for name, _ in _SECTIONS.values()}
     seen_sections = set()
     current: Optional[Tuple[str, Dict[str, Tuple[str, str]]]] = None
-    schedule_rows: Optional[List[Dict[str, Any]]] = None
-    schedule_header_row: Optional[int] = None
-    blank_after_data = False
+    table: Optional[Dict[str, Any]] = None  # the table being read, with its state
+
+    def start_table(label: str, row: int) -> Dict[str, Any]:
+        spec = _TABLES[label]
+        if current is None or current[0] != spec["section"]:
+            raise WorkbookReadError(f"{source} row {row}: {label!r} outside its section")
+        if "schedule" in result[spec["section"]]:
+            raise WorkbookReadError(f"{source} row {row}: second {spec['name']} table")
+        rows: List[Dict[str, Any]] = []
+        result[spec["section"]]["schedule"] = rows
+        return {"spec": spec, "rows": rows, "header": None, "blank": False}
 
     for row in range(1, ws.max_row + 1):
         label = _label(ws.cell(row, 1))
@@ -152,37 +177,38 @@ def _read(ws, source: str) -> Dict[str, Any]:
             if label in seen_sections:
                 raise WorkbookReadError(f"{source}: section {label!r} appears twice")
             seen_sections.add(label)
-            current, schedule_rows = _SECTIONS[label], None
+            current, table = _SECTIONS[label], None
+            if label in _TABLES:
+                table = start_table(label, row)
             continue
-        if label == _SCHEDULE_HEADER:
-            if current is None or current[0] != "notional":
-                raise WorkbookReadError(f"{source} row {row}: {label!r} outside NOTIONAL & "
-                                        "AMORTISATION")
-            if "schedule" in result["notional"]:
-                raise WorkbookReadError(f"{source} row {row}: second amortisation table")
-            schedule_rows, schedule_header_row = [], None
-            result["notional"]["schedule"] = schedule_rows
+        if label in _TABLES:
+            table = start_table(label, row)
             continue
-        if schedule_rows is not None:
-            if schedule_header_row is None:
-                header = tuple(_label(ws.cell(row, c)) for c in range(1, 9))
-                if header == (None,) * 8:
+        if table is not None:
+            spec, width = table["spec"], len(table["spec"]["columns"])
+            if table["header"] is None:
+                header = tuple(_label(ws.cell(row, c)) for c in range(1, width + 1))
+                if header == (None,) * width:
                     continue
-                if header != _SCHEDULE_COLUMNS:
-                    raise WorkbookReadError(f"{source} row {row}: amortisation table header "
-                                            f"is {header}, expected {_SCHEDULE_COLUMNS}")
-                schedule_header_row = row
+                if header != spec["columns"]:
+                    raise WorkbookReadError(f"{source} row {row}: {spec['name']} table header "
+                                            f"is {header}, expected {spec['columns']}")
+                table["header"] = row
                 continue
             values = [_cell_value(ws.cell(row, c), kind, f"{source} {ws.cell(row, c).coordinate}")
-                      for c, kind in zip(range(1, 9), _SCHEDULE_KINDS)]
-            if all(v is None for v in values[1:]):  # template row: period number only
-                if schedule_rows:
-                    blank_after_data = True
+                      for c, kind in zip(range(1, width + 1), spec["kinds"])]
+            beyond = [ws.cell(row, c).coordinate for c in range(width + 1, 9)
+                      if ws.cell(row, c).value not in (None, "")]
+            if beyond:
+                raise WorkbookReadError(f"{source}: {beyond} outside the {spec['name']} table")
+            if all(v is None for v in values[spec["data_from"]:]):  # template row
+                if table["rows"]:
+                    table["blank"] = True
                 continue
-            if blank_after_data:
-                raise WorkbookReadError(f"{source} row {row}: amortisation row after an empty "
-                                        "row; periods must be consecutive")
-            schedule_rows.append(dict(zip(SCHEDULE_ROW_KEYS, values)))
+            if table["blank"]:
+                raise WorkbookReadError(f"{source} row {row}: {spec['name']} row after an empty "
+                                        "row; rows must be consecutive")
+            table["rows"].append(dict(zip(spec["keys"], values)))
             continue
         if label is None:
             if current and any(ws.cell(row, c).value not in (None, "") for c in (2,)):
@@ -201,12 +227,14 @@ def _read(ws, source: str) -> Dict[str, Any]:
 
     missing_sections = [h for h in _SECTIONS if h not in seen_sections]
     if missing_sections:
-        raise WorkbookReadError(f"{source}: sections not found: {missing_sections}")
+        raise WorkbookReadError(f"{source}: sections not found: {missing_sections}; this is "
+                                "not the current v4 input layout")
     for header, (section, fields) in _SECTIONS.items():
         absent = [label for label, (name, _) in fields.items() if name not in result[section]]
         if absent:
             raise WorkbookReadError(f"{source}: section {header!r} has no rows {absent}; this "
-                                    "is not the v4 input layout")
-    if schedule_header_row is None:
-        raise WorkbookReadError(f"{source}: amortisation table not found")
+                                    "is not the current v4 input layout")
+    for label, spec in _TABLES.items():
+        if "schedule" not in result[spec["section"]]:
+            raise WorkbookReadError(f"{source}: {spec['name']} table ({label!r}) not found")
     return result

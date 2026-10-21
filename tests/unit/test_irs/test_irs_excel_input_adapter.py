@@ -24,6 +24,7 @@ from openpyxl import load_workbook
 import price_irs_engine as engine
 from instruments.rates.irs import floating_leg as engine_floating
 from instruments.rates.irs import pricing_instrument as engine_schema
+from instruments.rates.irs import term_rate_leg as TERM_ENGINE
 from scripts import irs_expected_output_suite as suite
 from scripts import price_irs_workbook as cli
 from services.irs_inputs import normalizer
@@ -59,7 +60,9 @@ TC1_INPUTS = {
                      "business_day_convention": "Modified Following", "calendar": "FD",
                      "rate_timing": "In Arrears", "lookback_days": 0, "lookback_type": "Lookback",
                      "rate_cutoff_days": 1, "compounding": "Daily Compounded",
-                     "spread_treatment": "Exclude Spread"},
+                     "spread_treatment": "Exclude Spread", "fixing_calendar": None,
+                     "fixing_lag_days": None, "term_compounding": None,
+                     "observation_method": None},
     "notional": {"principal_exchange": "Never", "amortisation_type": "Custom Schedule",
                  "schedule": [
                      {"period": 1, "accrual_start": date(2026, 5, 31),
@@ -71,6 +74,7 @@ TC1_INPUTS = {
                       "notional": 265000, "amortisation_percent": None,
                       "amortisation_amount": 265000, "action": None},
                  ]},
+    "resets": {"schedule": []},
     "market_data": {"curve": "USD SOFR", "snapshot_folder": "market_data/2026-03-31/USD/",
                     "curve_source_file": "usd_sofr_2026-03-31.json",
                     "fixings_source_file": None, "reference_date": None,
@@ -266,11 +270,17 @@ def test_amortisation_percent_cell_is_read_as_percent(tmp_path):
     ("floating_leg", "lookback_type", "Observation Shift", "not a recognised value"),
     ("floating_leg", "lookback_days", 1.5, "must be a whole number of days"),
     ("floating_leg", "rate_cutoff_days", -1, "must be a whole number of days"),
-    ("floating_leg", "benchmark", "SARON", "is a term-rate (IBOR-fallback) leg"),
-    ("floating_leg", "benchmark", "INR OIS", "is a term-rate (IBOR-fallback) leg"),
-    ("floating_leg", "benchmark", "TONAR", "TONAR 1D is not a supported USD overnight"),
-    ("floating_leg", "index_tenor", "6M", "is a term-rate (IBOR-fallback) leg"),
-    ("floating_leg", "reset_frequency", "Monthly", "only daily reset"),
+    ("floating_leg", "benchmark", "SARON", "no overnight SARON leg in the engine; the CHF 6M"),
+    ("floating_leg", "benchmark", "INR OIS", "INR OIS 1D is not a supported USD benchmark"),
+    ("floating_leg", "benchmark", "TONAR", "TONAR 1D is not a supported USD benchmark"),
+    ("floating_leg", "index_tenor", "6M", "SOFR 6M is not a supported USD benchmark"),
+    ("floating_leg", "index_tenor", "3M", "no 3M index is defined in the engine"),
+    ("floating_leg", "reset_frequency", "Monthly", "only Daily (1D indices) and Semiannual"),
+    ("floating_leg", "reset_frequency", "Semiannual", "permitted only for 6M indices"),
+    ("floating_leg", "fixing_calendar", "EN", "applies to 6M term-rate legs only"),
+    ("floating_leg", "term_compounding", "Flat", "applies to 6M term-rate legs only"),
+    ("floating_leg", "observation_method", "Method B: reset-date fallback",
+     "applies to 6M term-rate legs only"),
     ("floating_leg", "compounding", "Simple", "'Simple' not supported by the engine"),
     ("floating_leg", "spread_treatment", "Compound Spread", "not supported by the engine"),
     ("notional", "principal_exchange", "At End", "principal exchange is not supported"),
@@ -370,11 +380,8 @@ def test_unexpected_layout_is_rejected(tmp_path, edit, message):
 
 def test_sheet_selection_errors(tmp_path):
     path = _workbook_copy(tmp_path)
-    with pytest.raises(WorkbookReadError, match="no worksheet 'TC002'"):
-        read_trade_sheet(path, "TC002")
-    wb = load_workbook(path)
-    wb.copy_worksheet(wb[SHEET]).title = "TC002"
-    wb.save(path)
+    with pytest.raises(WorkbookReadError, match="no worksheet 'TC011'"):
+        read_trade_sheet(path, "TC011")
     with pytest.raises(WorkbookReadError, match="name the one to read"):
         read_trade_sheet(path)
 
@@ -542,7 +549,18 @@ def test_supported_values_match_the_engine():
     assert set(normalizer.DAY_COUNTS.values()) == set(engine_schema._DAY_COUNTS)
     assert set(normalizer.PAYMENT_FREQUENCIES.values()) == set(
         engine_schema._PAYMENT_FREQUENCIES)
-    assert set(normalizer.RESET_FREQUENCIES.values()) == set(engine_schema._RESET_FREQUENCIES)
+    assert set(normalizer.RESET_FREQUENCIES.values()) == set(engine_schema._RESET_FREQUENCIES) \
+        | set(engine_schema._TERM_RESET_FREQUENCIES)
+    assert sorted(normalizer.FIXING_CALENDARS) == sorted(engine_schema._FIXING_CALENDARS)
+    assert sorted(normalizer.TERM_COMPOUNDING.values()) == sorted(engine_schema._TERM_COMPOUNDING)
+    assert {(code, tenor, ccy) for (_, tenor, ccy), code in normalizer.TERM_BENCHMARKS.items()} \
+        == {(b.name, b.tenor, b.currency) for b in TERM_ENGINE.TERM_BENCHMARKS.values()}
+    assert set(normalizer.OBSERVATION_METHODS.values()) == set(TERM_ENGINE.OBSERVATION_METHODS)
+    # An absent observation_dates is Method B; the normalizer relies on this default.
+    assert TERM_ENGINE.DEFAULT_OBSERVATION_METHOD == TERM_ENGINE.RESET_DATE_FALLBACK
+    assert normalizer.OBSERVATION_BENCHMARKS == tuple(
+        name for name, b in TERM_ENGINE.TERM_BENCHMARKS.items()
+        if isinstance(b, TERM_ENGINE.FallbackTermBenchmark))
     assert set(normalizer.BUSINESS_DAY_CONVENTIONS.values()) <= set(
         engine_schema._BUSINESS_DAY_CONVENTIONS)
     engine_overnight = {(b, t, c) for b, t, c, _ in engine_floating._OVERNIGHT_BENCHMARKS}
@@ -569,6 +587,9 @@ _LIST_FIELDS = {
     ("SWAP LEGS — FLOATING LEG", "Lookback Type"): "floating_leg.lookback_type",
     ("SWAP LEGS — FLOATING LEG", "Compounding"): "floating_leg.compounding",
     ("SWAP LEGS — FLOATING LEG", "Spread Treatment"): "floating_leg.spread_treatment",
+    ("SWAP LEGS — FLOATING LEG", "Fixing Calendar"): "floating_leg.fixing_calendar",
+    ("SWAP LEGS — FLOATING LEG", "Term Compounding"): "floating_leg.term_compounding",
+    ("SWAP LEGS — FLOATING LEG", "SARON Observation Method"): "floating_leg.observation_method",
     ("NOTIONAL & AMORTISATION", "Principal Exchange"): "notional.principal_exchange",
     ("NOTIONAL & AMORTISATION", "Amortisation Type"): "notional.amortisation_type",
     ("MARKET DATA REFERENCE", "Curve"): "market_data.curve",
@@ -582,8 +603,11 @@ _SUPPORTED = {
     "fixed_leg.day_count": normalizer.DAY_COUNTS, "floating_leg.day_count": normalizer.DAY_COUNTS,
     "fixed_leg.business_day_convention": normalizer.BUSINESS_DAY_CONVENTIONS,
     "floating_leg.business_day_convention": normalizer.BUSINESS_DAY_CONVENTIONS,
-    "floating_leg.benchmark": {b for b, _, _ in normalizer.OVERNIGHT_BENCHMARKS},
-    "floating_leg.index_tenor": {"1D"},
+    "floating_leg.benchmark": set(normalizer.BENCHMARK_LABELS),
+    "floating_leg.index_tenor": normalizer.INDEX_TENORS,
+    "floating_leg.fixing_calendar": normalizer.FIXING_CALENDARS,
+    "floating_leg.term_compounding": normalizer.TERM_COMPOUNDING,
+    "floating_leg.observation_method": normalizer.OBSERVATION_METHODS,
     "floating_leg.reset_frequency": normalizer.RESET_FREQUENCIES,
     "floating_leg.rate_timing": normalizer.RATE_TIMINGS,
     "floating_leg.lookback_type": normalizer.LOOKBACK_TYPES,
@@ -617,8 +641,6 @@ def test_every_workbook_option_is_supported_or_rejected_with_a_reason():
             known = (option in _SUPPORTED[path]
                      or option in normalizer.UNSUPPORTED.get(path, {})
                      or option in normalizer.SEMANTICS_PENDING.get(path, {}))
-            if path == "floating_leg.benchmark" and option in ("SARON", "INR OIS"):
-                known = option in normalizer.UNSUPPORTED[path]
             assert known, f"{path}: workbook option {option!r} is not classified"
         checked.add(path)
     assert checked == set(_LIST_FIELDS.values())
@@ -634,18 +656,21 @@ def test_pending_options_remain_in_the_workbook():
 
 # --- 9. every case worksheet (one worksheet = one test case) ---------------------------------
 
-# Worksheets present and the case each one holds. Overnight-leg cases only: the term-rate
-# cases (TC2, TC5, TC7, TC8, TC9) need reset inputs this contract does not have yet.
-SHEET_CASES = {"TC001": "TC1", "TC003": "TC3", "TC004": "TC4", "TC006": "TC6", "TC010": "TC10"}
+# Worksheets present and the case each one holds: all ten cases.
+SHEET_CASES = {f"TC{n:03d}": f"TC{n}" for n in range(1, 11)}
+TERM_SHEETS = ("TC002", "TC005", "TC007", "TC008", "TC009")
 
 
 def test_workbook_holds_exactly_the_supported_cases():
     wb = load_workbook(WORKBOOK)
     assert wb.sheetnames == list(SHEET_CASES)
     template = sorted((str(d.sqref), d.formula1) for d in wb[SHEET].data_validations.dataValidation)
+    def labels(ws):
+        return [ws.cell(r, 1).value if isinstance(ws.cell(r, 1).value, str) else None
+                for r in range(1, ws.max_row + 1)]
+
     for ws in wb.worksheets:  # same layout and drop-down lists on every sheet
-        assert [ws.cell(r, 1).value for r in range(1, ws.max_row + 1)] == [
-            wb[SHEET].cell(r, 1).value for r in range(1, wb[SHEET].max_row + 1)]
+        assert labels(ws) == labels(wb[SHEET])
         assert sorted((str(d.sqref), d.formula1)
                       for d in ws.data_validations.dataValidation) == template
 
@@ -655,7 +680,11 @@ def test_sheet_reproduces_the_existing_trade_file(sheet, case):
     trade_file = ROOT / "examples" / "irs" / f"{case.lower()}_trade.json"
     normalized = normalize(read_trade_sheet(WORKBOOK, sheet))
     assert normalized.trade_document == _json(trade_file)
-    assert normalized.notes == ()
+    if sheet == "TC002":  # provisional Method A is reported, never silent
+        assert len(normalized.notes) == 1 and "PROVISIONAL pending SME decision R9" in \
+            normalized.notes[0]
+    else:
+        assert normalized.notes == ()
 
 
 @pytest.mark.parametrize("sheet, case", sorted(SHEET_CASES.items()))
@@ -670,3 +699,124 @@ def test_sheet_prices_to_the_approved_baseline(sheet, case):
     assert result.failures == []
     assert result.fields_compared == ["npv", "fixed_leg_npv", "floating_leg_npv", "cashflows",
                                       "settled"]
+
+
+# --- 10. term-rate (6M) legs: resets, term fields and the SARON observation method ---------
+
+
+@pytest.fixture(scope="module")
+def term_inputs():
+    return {sheet: read_trade_sheet(WORKBOOK, sheet) for sheet in TERM_SHEETS}
+
+
+def _term(term_inputs, sheet, change=None):
+    doc = copy.deepcopy(term_inputs[sheet])
+    if change:
+        change(doc)
+    return doc
+
+
+def test_term_sheets_carry_their_reset_schedules(term_inputs):
+    counts = {sheet: len(term_inputs[sheet]["resets"]["schedule"]) for sheet in TERM_SHEETS}
+    assert counts == {"TC002": 8, "TC005": 3, "TC007": 3, "TC008": 3, "TC009": 8}
+    # TC5 and TC7: two resets inside payment period 1 (annual payment, semiannual reset).
+    for sheet in ("TC005", "TC007"):
+        assert [r["payment_period"] for r in term_inputs[sheet]["resets"]["schedule"]] == [1, 1, 2]
+
+
+def test_tc2_method_a_is_explicit_and_marked_provisional(term_inputs):
+    assert term_inputs["TC002"]["floating_leg"]["observation_method"] == \
+        "Method A: contractual accrual (PROVISIONAL R9)"
+    term_rate = normalize(term_inputs["TC002"]).trade_document["params"]["floating_leg"][
+        "term_rate"]
+    assert term_rate["observation_dates"] == "contractual_accrual"
+
+
+def test_tc7_method_b_is_an_explicit_selection(term_inputs):
+    assert term_inputs["TC007"]["floating_leg"]["observation_method"] == \
+        "Method B: reset-date fallback"
+    term_rate = normalize(term_inputs["TC007"]).trade_document["params"]["floating_leg"][
+        "term_rate"]
+    assert "observation_dates" not in term_rate  # the engine's documented Method B form
+
+
+def test_sf0006m_without_an_observation_method_is_rejected(term_inputs):
+    doc = _term(term_inputs, "TC002",
+                lambda d: d["floating_leg"].update(observation_method=None))
+    assert "SF0006M needs an explicit selection" in _issues(doc)
+
+
+def test_switching_tc2_to_method_b_changes_the_trade_explicitly(term_inputs):
+    doc = _term(term_inputs, "TC002", lambda d: d["floating_leg"].update(
+        observation_method="Method B: reset-date fallback"))
+    normalized = normalize(doc)
+    assert "observation_dates" not in normalized.trade_document["params"]["floating_leg"][
+        "term_rate"]
+    assert normalized.notes == ()
+
+
+@pytest.mark.parametrize("sheet, key, value, message", [
+    ("TC005", "observation_method", "Method B: reset-date fallback", "applies to SF0006M only"),
+    ("TC005", "rate_timing", "In Arrears", "applies to overnight (1D) legs only"),
+    ("TC007", "lookback_days", 0, "applies to overnight (1D) legs only"),
+    ("TC008", "spread_treatment", "Exclude Spread", "applies to overnight (1D) legs only"),
+    ("TC009", "compounding", "Daily Compounded", "applies to overnight (1D) legs only"),
+    ("TC002", "reset_frequency", "Daily", "a 6M index resets Semiannual"),
+    ("TC002", "fixing_calendar", None, "floating_leg.fixing_calendar: is required"),
+    ("TC002", "fixing_calendar", "FD", "'FD' is not a recognised value"),
+    ("TC005", "fixing_lag_days", None, "floating_leg.fixing_lag_days: is required"),
+    ("TC005", "term_compounding", "Daily", "'Daily' is not a recognised value"),
+    ("TC008", "benchmark", "SF0006M (SARON fallback)", "is not a supported INR benchmark"),
+    ("TC008", "observation_method", "Method A: contractual accrual (PROVISIONAL R9)",
+     "applies to SF0006M only"),
+])
+def test_invalid_term_field_gives_a_clear_error(term_inputs, sheet, key, value, message):
+    doc = _term(term_inputs, sheet, lambda d: d["floating_leg"].update({key: value}))
+    assert message in _issues(doc)
+
+
+def _reset(doc, index, **changes):
+    doc["resets"]["schedule"][index].update(changes)
+
+
+@pytest.mark.parametrize("sheet, change, message", [
+    # a gap between the two resets of a payment period
+    ("TC005", lambda d: _reset(d, 1, rate_start=date(2027, 1, 4)), "cover the period "
+     "contiguously"),
+    # the last reset of a period ends before the accrual end
+    ("TC007", lambda d: _reset(d, 2, rate_end=date(2027, 8, 30)), "cover the period "
+     "contiguously"),
+    ("TC009", lambda d: d["resets"]["schedule"].pop(2), "no reset for payment period 3"),
+    ("TC009", lambda d: d["resets"]["schedule"].reverse(), "rows must be in payment-period order"),
+    ("TC008", lambda d: _reset(d, 2, payment_period=4), "refers to payment period 4"),
+    ("TC008", lambda d: _reset(d, 0, reset_date=date(2026, 3, 2)), "a reset fixes in advance"),
+    ("TC008", lambda d: _reset(d, 0, rate_end=date(2026, 2, 28)), "must be before rate_end"),
+    ("TC005", lambda d: d["floating_leg"].update(term_compounding="None"),
+     "allows exactly one reset per payment period, got 2"),
+    ("TC002", lambda d: d["resets"].update(schedule=[]), "needs at least one reset"),
+    ("TC002", lambda d: _reset(d, 0, payment_period=0), "payment period number >= 1"),
+])
+def test_invalid_reset_schedule_gives_a_clear_error(term_inputs, sheet, change, message):
+    assert message in _issues(_term(term_inputs, sheet, change))
+
+
+def test_overnight_leg_with_a_reset_schedule_is_rejected(inputs, term_inputs):
+    doc = copy.deepcopy(inputs)
+    doc["resets"]["schedule"] = copy.deepcopy(term_inputs["TC005"]["resets"]["schedule"])
+    assert "a 1D overnight leg resets daily and has no reset schedule" in _issues(doc)
+
+
+def test_reset_table_layout_is_checked(tmp_path):
+    path = _workbook_copy(tmp_path)
+    header = _find_row("Payment Period")
+    wb = load_workbook(path)
+    wb["TC005"].cell(header, 2).value = "Fixing Date"
+    wb["TC005"].cell(header + 1, 6).value = "note"
+    wb.save(path)
+    with pytest.raises(WorkbookReadError, match="reset table header"):
+        read_trade_sheet(path, "TC005")
+    wb = load_workbook(path)
+    wb["TC005"].cell(header, 2).value = "Reset Date"
+    wb.save(path)
+    with pytest.raises(WorkbookReadError, match="outside the reset table"):
+        read_trade_sheet(path, "TC005")
