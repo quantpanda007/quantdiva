@@ -3,7 +3,7 @@
 Run from the project root:
 
     python scripts/price_irs.py --trade examples/irs/tc1_trade.json ^
-        --market examples/irs/usd_sofr_2026-03-31.json [--output result.json]
+        --market market_data/2026-03-31/USD/usd_sofr_2026-03-31.json [--output result.json]
 
 Prints total and leg NPVs and the period-by-period cashflows. With --output, also
 writes the result as JSON. No Bloomberg data, test fixtures or FastAPI are used.

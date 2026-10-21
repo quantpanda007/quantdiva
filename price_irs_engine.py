@@ -5,6 +5,7 @@ Run from the quantlib-pricing project root (env optima-ql143):
 
     python price_irs_engine.py --trade examples/irs/tc1_trade.json
     python price_irs_engine.py --trade examples/irs/tc4_trade.json --market <file> [<file> ...]
+    python price_irs_engine.py --trade <trade.json> --market-root <market_data folder>
 
 Market data
 -----------
@@ -13,18 +14,19 @@ read (``resolve_market_files``):
 
 * currency, valuation date and floating benchmark come from the trade
   (``FreshOISInstrument.from_dict``; no market data needed);
-* the curve snapshot is ``<market-dir>/<ccy>_<curve benchmark>_<valuation date>.json``,
+* the curve snapshot is the prepared snapshot
+  ``<market-root>/<valuation date>/<CCY>/<ccy>_<curve benchmark>_<valuation date>.json``,
   where the curve benchmark is the production mapping
   ``services.pricers.irs_valuation.BENCHMARK_CURVES`` (SOFRRATE -> SOFR, SF0006M -> SARON,
-  MUTKCALM -> TONA, IRSWOF -> MIBOR); e.g. ``usd_sofr_2026-03-31.json``;
-* the shared ``<market-dir>/fixings_<valuation date>.json`` is added only when the trade's
-  conventions make a live floating coupon depend on an observation or reset on or before
-  the valuation date (``fixing_requirements``).
+  MUTKCALM -> TONA, IRSWOF -> MIBOR); e.g. ``2026-03-31/USD/usd_sofr_2026-03-31.json``;
+* the shared ``<market-root>/<valuation date>/fixings_<valuation date>.json`` is added only
+  when the trade's conventions make a live floating coupon depend on an observation or
+  reset on or before the valuation date (``fixing_requirements``).
 
-``--market-dir`` defaults to ``examples/irs`` (the pricing snapshots).
-``market_data/<date>/<CCY>/market_data.json`` holds the raw Bloomberg curve exports
-(dates, par rates, DFs); it is not a pricing snapshot and is not read here. A missing file
-is an error; there is no fallback to another date or currency.
+The layout is defined once in ``market.market_data_layout``; ``--market-root`` defaults
+to the repository's ``market_data`` folder. The raw source files beside each snapshot
+(``market_data.json`` and other exports) are builder inputs and are never read here. A
+missing file is an error; there is no fallback to another date or currency.
 
 With --market, exactly the given files are used. In both cases the files are merged with
 the same rules as the ten-case audit (one valuation date; no curve, currency or fixing
@@ -59,10 +61,11 @@ from market.curves.irs_market_snapshot import (
     parse_market_snapshot,
     resolve_market_environment,
 )
+from market.market_data_layout import MARKET_DATA_ROOT, curve_snapshot_path, fixings_path
 from services.pricers.irs_valuation import BENCHMARK_CURVES
 from services.pricers.pricing_service import PricingService
 
-DEFAULT_MARKET_DIR = "examples/irs"
+DEFAULT_MARKET_ROOT = MARKET_DATA_ROOT
 
 
 class MarketDataResolutionError(ValueError):
@@ -164,7 +167,7 @@ class MarketSelection:
     fixing_reasons: Tuple[str, ...]
 
 
-def resolve_market_files(trade_doc: dict, market_dir=DEFAULT_MARKET_DIR) -> MarketSelection:
+def resolve_market_files(trade_doc: dict, market_root=DEFAULT_MARKET_ROOT) -> MarketSelection:
     """Select the market files a trade needs, before reading any of them."""
     params = trade_doc.get("params") if isinstance(trade_doc, dict) else None
     if not isinstance(params, dict):
@@ -180,9 +183,9 @@ def resolve_market_files(trade_doc: dict, market_dir=DEFAULT_MARKET_DIR) -> Mark
         raise MarketDataResolutionError(
             f"floating benchmark {benchmark!r} has no curve mapping; supported: "
             f"{sorted(BENCHMARK_CURVES)}")
-    directory = Path(market_dir)
     stamp = trade.valuation_date.isoformat()
-    curve_file = directory / f"{trade.currency.lower()}_{curve_benchmark.lower()}_{stamp}.json"
+    curve_file = curve_snapshot_path(trade.valuation_date, trade.currency, curve_benchmark,
+                                     Path(market_root))
     if not curve_file.is_file():
         raise MarketDataResolutionError(
             f"no {trade.currency} {curve_benchmark} market snapshot for the trade's valuation "
@@ -190,7 +193,7 @@ def resolve_market_files(trade_doc: dict, market_dir=DEFAULT_MARKET_DIR) -> Mark
     files = [curve_file]
     reasons = fixing_requirements(instrument)
     if reasons:
-        fixings_file = directory / f"fixings_{stamp}.json"
+        fixings_file = fixings_path(trade.valuation_date, Path(market_root))
         if not fixings_file.is_file():
             raise MarketDataResolutionError(
                 f"the trade needs fixings on or before {stamp} ({'; '.join(reasons)}) but "
@@ -276,14 +279,14 @@ def main(argv: Optional[list] = None) -> int:
     parser.add_argument("--market", nargs="+", default=None,
                         help="market-data JSON files to use instead of resolving them from the "
                         "trade")
-    parser.add_argument("--market-dir", default=DEFAULT_MARKET_DIR,
-                        help=f"folder of market snapshots for resolution (default "
-                        f"{DEFAULT_MARKET_DIR})")
+    parser.add_argument("--market-root", default=DEFAULT_MARKET_ROOT,
+                        help="root of the market_data/<date>/<CCY>/ layout used for "
+                        "resolution (default: the repository's market_data folder)")
     args = parser.parse_args(argv)
     try:
         trade_doc = load(args.trade)
         if args.market is None:
-            selection = resolve_market_files(trade_doc, args.market_dir)
+            selection = resolve_market_files(trade_doc, args.market_root)
             files = list(selection.files)
             print(f"Market data resolved from the trade ({selection.currency}, "
                   f"{selection.floating_benchmark} -> {selection.curve_benchmark} curve, "

@@ -25,16 +25,32 @@
       },
       "market_files": [
         {
-          "path": "examples/irs/jpy_tona_2026-03-31.json",
+          "path": "market_data/2026-03-31/JPY/jpy_tona_2026-03-31.json",
           "sha256": "387664cdaff12a5c45d458f837de84895e2dabd8b7fb1c5c978a9a95679001ec"
         },
         {
-          "path": "examples/irs/fixings_2026-03-31.json",
+          "path": "market_data/2026-03-31/fixings_2026-03-31.json",
           "sha256": "8199b8abab5041120545d6b96e6f3e68bcefee47623d42d8b73e14fa24d16d59"
         }
       ]
     },
-    "recapture_reason": null
+    "recapture_reason": null,
+    "path_migrations": [
+      {
+        "migration": "2026-10-21-market-data-layout",
+        "moved": [
+          {
+            "from": "examples/irs/jpy_tona_2026-03-31.json",
+            "to": "market_data/2026-03-31/JPY/jpy_tona_2026-03-31.json"
+          },
+          {
+            "from": "examples/irs/fixings_2026-03-31.json",
+            "to": "market_data/2026-03-31/fixings_2026-03-31.json"
+          }
+        ],
+        "note": "file paths only; file contents (sha256) and expected values unchanged"
+      }
+    ]
   },
   "expected": {
     "npv": 256977.8740237035,

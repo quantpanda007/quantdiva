@@ -37,7 +37,9 @@ from market.curves.irs_zero_curve import (
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURES = ROOT / "tests/fixtures/bloomberg_irs"
-USD_SOFR_ZERO_FIXTURE = FIXTURES / "curves/2026-03-31-USD-SOFR-zero.json"
+# Raw source of the USD prepared snapshot, kept beside it in the canonical market-data layout
+# (moved from tests/fixtures/bloomberg_irs/curves/ unchanged; migration 2026-10-21).
+USD_SOFR_ZERO_FIXTURE = ROOT / "market_data/2026-03-31/USD/2026-03-31-USD-SOFR-zero.json"
 
 # Export rounding: DF to 6 dp (5e-7) plus zero rate to 5 dp of a percent
 # (<= 5e-8 * t * DF, about 2.5e-7 at 5Y). 1e-6 covers both and still rejects a

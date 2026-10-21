@@ -241,7 +241,8 @@ FINDINGS: Dict[str, List[Dict[str, Any]]] = {
             "statement": "The 31-Mar-2026 SOFR fixing (3.68%) is applied from market data; "
             "TC4 then reconciles: NPV +0.0033 vs Bloomberg, every cashflow within tolerance.",
             "evidence": "SOFR for 31-Mar-2026 is 3.68% (published 01-Apr-2026; "
-            "examples/irs/fixings_2026-03-31.json states the source), equal to the source "
+            "market_data/2026-03-31/fixings_2026-03-31.json states the source), equal to the "
+            "source "
             "latest_index. Without it Optima projects 3.651% and the 30-Jun-2026 payment is "
             "-0.59. The fixing is public market data, not a Bloomberg output; confirm the value "
             "against the NY Fed release (R4).",
@@ -367,7 +368,8 @@ FINDINGS: Dict[str, List[Dict[str, Any]]] = {
             "IRSWOF fixing of 27-Feb-2026 (5.36%) from market data; payment matches Bloomberg "
             "to the cent. Period 2 (projected) matches to the cent.",
             "evidence": "The fixing value comes from the TC8 trade record (provenance in "
-            "examples/irs/fixings_2026-03-31.json); it is not independently sourced (R7).",
+            "market_data/2026-03-31/fixings_2026-03-31.json); it is not independently "
+            "sourced (R7).",
             "open_item": "OI-10, OI-15",
         },
     ],

@@ -25,12 +25,24 @@
       },
       "market_files": [
         {
-          "path": "examples/irs/inr_mibor_2026-03-31.json",
+          "path": "market_data/2026-03-31/INR/inr_mibor_2026-03-31.json",
           "sha256": "a3ab7eebd7f469022dff1c655386fe6d040edafda5d08599a1893976b2b698cf"
         }
       ]
     },
-    "recapture_reason": null
+    "recapture_reason": null,
+    "path_migrations": [
+      {
+        "migration": "2026-10-21-market-data-layout",
+        "moved": [
+          {
+            "from": "examples/irs/inr_mibor_2026-03-31.json",
+            "to": "market_data/2026-03-31/INR/inr_mibor_2026-03-31.json"
+          }
+        ],
+        "note": "file paths only; file contents (sha256) and expected values unchanged"
+      }
+    ]
   },
   "expected": {
     "npv": -59944.820735704445,

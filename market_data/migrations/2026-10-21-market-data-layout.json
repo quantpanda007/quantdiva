@@ -1,0 +1,54 @@
+{
+  "migration": "2026-10-21-market-data-layout",
+  "purpose": "single canonical market-data store: market_data/<date>/<CCY>/ for raw and prepared curve data; shared fixings at market_data/<date>/",
+  "moves": [
+    {
+      "from": "examples/irs/usd_sofr_2026-03-31.json",
+      "to": "market_data/2026-03-31/USD/usd_sofr_2026-03-31.json",
+      "sha256": "10c80ed3c4a8667a7a75de8773a55d3ef73c6b38036196dd9aab174454ad8724"
+    },
+    {
+      "from": "examples/irs/chf_saron_2026-03-31.json",
+      "to": "market_data/2026-03-31/CHF/chf_saron_2026-03-31.json",
+      "sha256": "b99824b3b0b417cb255d48971a0bf4791fd0efc6ecf6cbafa00e02e46f1c6c8d"
+    },
+    {
+      "from": "examples/irs/inr_mibor_2026-03-31.json",
+      "to": "market_data/2026-03-31/INR/inr_mibor_2026-03-31.json",
+      "sha256": "a3ab7eebd7f469022dff1c655386fe6d040edafda5d08599a1893976b2b698cf"
+    },
+    {
+      "from": "examples/irs/jpy_tona_2026-03-31.json",
+      "to": "market_data/2026-03-31/JPY/jpy_tona_2026-03-31.json",
+      "sha256": "387664cdaff12a5c45d458f837de84895e2dabd8b7fb1c5c978a9a95679001ec"
+    },
+    {
+      "from": "examples/irs/fixings_2026-03-31.json",
+      "to": "market_data/2026-03-31/fixings_2026-03-31.json",
+      "sha256": "8199b8abab5041120545d6b96e6f3e68bcefee47623d42d8b73e14fa24d16d59"
+    },
+    {
+      "from": "tests/fixtures/bloomberg_irs/curves/2026-03-31-USD-SOFR-zero.json",
+      "to": "market_data/2026-03-31/USD/2026-03-31-USD-SOFR-zero.json",
+      "sha256": "c110828ebea8627a1abdf4fb204c5a1a49f2ce5248be9b5552350cab76e9d4e9"
+    }
+  ],
+  "content_changed": false,
+  "baselines_path_updated": [
+    "tests/fixtures/irs_expected_outputs/TC1.json",
+    "tests/fixtures/irs_expected_outputs/TC2.json",
+    "tests/fixtures/irs_expected_outputs/TC3.json",
+    "tests/fixtures/irs_expected_outputs/TC4.json",
+    "tests/fixtures/irs_expected_outputs/TC5.json",
+    "tests/fixtures/irs_expected_outputs/TC6.json",
+    "tests/fixtures/irs_expected_outputs/TC7.json",
+    "tests/fixtures/irs_expected_outputs/TC8.json",
+    "tests/fixtures/irs_expected_outputs/TC9.json",
+    "tests/fixtures/irs_expected_outputs/TC10.json"
+  ],
+  "not_moved": {
+    "examples/irs/fixings_2026-03-31_tc11_test.json": "TC11 test-only fixings override (adds SOFR 30-Mar-2026); not a canonical market file and not used by the resolver"
+  },
+  "rollback": "python -m scripts.migrate_market_data_layout --rollback",
+  "applied_at": "2026-10-21T16:56:29+00:00"
+}

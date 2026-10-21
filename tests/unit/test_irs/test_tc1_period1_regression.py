@@ -14,7 +14,7 @@ Scope and assumptions (deliberately narrow):
   The production mapping keeps Bloomberg's 1-day rate cutoff as metadata
   (lockoutDays=0); on TC1 the cutoff moves the coupon by ~0.001 bp (open item OI-2).
 * The curve is the production zero-curve builder (market/curves/irs_zero_curve.py)
-  fed from the committed fixture tests/fixtures/bloomberg_irs/curves/
+  fed from the committed fixture market_data/2026-03-31/USD/
   2026-03-31-USD-SOFR-zero.json: T+2 spot + tenor pillars, continuous ACT/365F
   zero rates, linear interpolation, one curve for projection and discounting.
   Trade assembly and the curve are shared with the reconciliation tests via

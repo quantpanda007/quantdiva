@@ -62,6 +62,7 @@ from instruments.rates.irs.term_rate_leg import (
     TermRateFixingRequired,
 )
 from market.curves.irs_fixings import overnight_fixings_applied
+from market.market_data_layout import curve_snapshot_path, fixings_path
 from instruments.rates.irs.pricing_instrument import (
     AccrualDateAdjustment,
     InvalidIRSParameters,
@@ -82,13 +83,14 @@ AUDIT_SCHEMA_VERSION = 1
 CASE_IDS = tuple(f"TC{i}" for i in range(1, 11))
 FIXTURES = ROOT / "tests" / "fixtures" / "bloomberg_irs"
 EXAMPLES = ROOT / "examples" / "irs"
-# One snapshot file per currency; the audit merges them into one market document.
+# One prepared snapshot per currency (canonical layout, market.market_data_layout) plus the
+# shared dated fixings; the audit merges them into one market document.
 MARKET_SNAPSHOT_FILES = (
-    EXAMPLES / "usd_sofr_2026-03-31.json",
-    EXAMPLES / "chf_saron_2026-03-31.json",
-    EXAMPLES / "inr_mibor_2026-03-31.json",
-    EXAMPLES / "jpy_tona_2026-03-31.json",
-    EXAMPLES / "fixings_2026-03-31.json",
+    curve_snapshot_path("2026-03-31", "USD", "SOFR"),
+    curve_snapshot_path("2026-03-31", "CHF", "SARON"),
+    curve_snapshot_path("2026-03-31", "INR", "MIBOR"),
+    curve_snapshot_path("2026-03-31", "JPY", "TONA"),
+    fixings_path("2026-03-31"),
 )
 # Cases whose contractual terms are unresolved: not priced whatever the capability.
 # (TC2's fixing-date rule, OI-11, is resolved by evidence on 14-Oct-2026: the source reset

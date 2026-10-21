@@ -59,6 +59,7 @@ from typing import Any, Dict, List, Optional
 import QuantLib as ql
 
 import price_irs_engine as engine
+from market.market_data_layout import MARKET_DATA_ROOT
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "examples" / "irs"
@@ -113,10 +114,10 @@ def expected_path(case: str, directory: Path = EXPECTED_DIR) -> Path:
 # --- pricing (production engine, unchanged) -------------------------------------------------
 
 
-def price_case(case: str, market_dir: Path = EXAMPLES) -> Dict[str, Any]:
+def price_case(case: str, market_root: Path = MARKET_DATA_ROOT) -> Dict[str, Any]:
     """Price one case through the production engine; outputs as plain JSON values."""
     trade_doc = engine.load(trade_path(case))
-    selection = engine.resolve_market_files(trade_doc, market_dir)
+    selection = engine.resolve_market_files(trade_doc, market_root)
     instrument, currency, result, legs, rows, settled = engine.price(
         trade_doc, engine.merge_market(list(selection.files)))
     term = trade_doc["params"]["floating_leg"].get("term_rate") or {}
@@ -272,7 +273,7 @@ def compare(actual: Dict[str, Any], expected: Dict[str, Any], result: CaseResult
                                    f"{expected['settled']!r}")
 
 
-def run_case(case: str, directory: Path = EXPECTED_DIR, market_dir: Path = EXAMPLES,
+def run_case(case: str, directory: Path = EXPECTED_DIR, market_root: Path = MARKET_DATA_ROOT,
              pricer=None) -> CaseResult:
     path = expected_path(case, directory)
     if not path.exists():
@@ -285,7 +286,7 @@ def run_case(case: str, directory: Path = EXPECTED_DIR, market_dir: Path = EXAMP
     if not any(k in expected for k in (*TOP_NUMERIC, "cashflows", "settled")):
         return CaseResult(case, "BLOCKED", detail=f"{_rel(path)} holds no expected values")
     try:
-        priced = pricer(case) if pricer is not None else price_case(case, market_dir)
+        priced = pricer(case) if pricer is not None else price_case(case, market_root)
     except Exception as exc:  # noqa: BLE001 - reported as ERROR, never hidden
         return CaseResult(case, "ERROR", detail=f"{type(exc).__name__}: {exc}",
                           expected_npv=expected.get("npv"))

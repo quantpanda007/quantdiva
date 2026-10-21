@@ -227,7 +227,7 @@ without explicit decisions.
     `MIBOR`. INR and JPY curves are bootstrapped from OIS par rates (OI-15, OI-16).
     Optional `fixings` section (OI-10).
   - TC1/TC3 inputs: `examples/irs/tc1_trade.json`, `examples/irs/tc3_trade.json`,
-    `examples/irs/usd_sofr_2026-03-31.json`. Generated from the existing fixtures
+    `market_data/2026-03-31/USD/usd_sofr_2026-03-31.json`. Generated from the existing fixtures
     and checked against them by `test_irs_input_workflow.py`. Bloomberg-derived:
     local commits only (OI-6). Zero rates are stored as decimals, so NPVs agree with
     the fixture route to about 1e-10, within the 1e-6 baseline tolerance.
@@ -363,7 +363,7 @@ field definition.
   still sum to the engine NPV. `settled_cashflows` lists them and `price_irs`
   reports them (`IRSValuation.settled`). Bloomberg's tables also omit them (TC4).
 - Fixings on or before the valuation date are market data: the optional `fixings`
-  section of a market snapshot (`examples/irs/fixings_2026-03-31.json`), each series
+  section of a market snapshot (`market_data/2026-03-31/fixings_2026-03-31.json`), each series
   with its source. Overnight fixings are put into QuantLib's index history only while
   a trade is priced and its cashflows read, then restored
   (`market/curves/irs_fixings.py`); term-rate fixings go to the leg directly.
@@ -499,7 +499,7 @@ not compounded). The definition is labelled PROVISIONAL in the code.
 
 **Spread-adjustment sensitivity (14-Oct-2026, scratch only, no code change).**
 Same trade (`examples/irs/tc7_trade.json`), same SME curve 234
-(`examples/irs/chf_saron_2026-03-31.json`), same flat compounding and day counts;
+(`market_data/2026-03-31/CHF/chf_saron_2026-03-31.json`), same flat compounding and day counts;
 only the reset-rate definition varied. M2–M4 are **sensitivity analyses, not
 confirmed contractual conventions**. M3 is the EU Implementing Regulation
 2021/1847 statutory replacement (3M SARON compound observed over the 3 months
@@ -656,7 +656,7 @@ evidence identifies the cause.
 5e-7 display tolerance. The 31-Aug-2027 DF agrees (0.9980859 vs 0.998086). The
 date lies between the CHF 2Y pillar (3-Apr-2028) and the 3Y pillar (3-Apr-2029).
 The curve is built from the supplied DFs (`scripts/build_chf_curve_snapshot.py`,
-`examples/irs/chf_saron_2026-03-31.json`) and reproduces curve 234's zero rates
+`market_data/2026-03-31/CHF/chf_saron_2026-03-31.json`) and reproduces curve 234's zero rates
 within about ±0.02 bp at the pillars, so the residual is in the interpolation
 between pillars, not at the pillars themselves.
 
@@ -679,7 +679,7 @@ Bloomberg DFs at additional dates in that segment. Consider together with OI-1/O
 **Curve (validated 14-Oct-2026).** `Market Rate` in
 `market_data/2026-03-31/INR/market_data.json` is the OIS par rate (established).
 Bootstrapped in QuantLib (`scripts/build_ois_curve_snapshots.py` →
-`examples/irs/inr_mibor_2026-03-31.json`): T+0 on `ql.India` (spot 02-Apr-2026),
+`market_data/2026-03-31/INR/inr_mibor_2026-03-31.json`): T+0 on `ql.India` (spot 02-Apr-2026),
 tenors up to 1Y a single payment, longer tenors semiannual, ACT/365F, linear zero.
 It reproduces all ten of Bloomberg's TC5/TC8/TC9 payment-date DFs within 4.3e-7
 (display 5e-7). Every other tested combination of settlement lag (T+0/1/2), calendar,
@@ -714,7 +714,7 @@ TC9's first reset is projected or stored, and confirmation of the IRSWOF definit
 ## OI-16: JPY curve, +390-day row and TONA leg (TC6, TC10)
 
 **Curve (validated 14-Oct-2026).** TONA OIS bootstrap from the par rates in
-`market_data/2026-03-31/JPY/market_data.json` (`examples/irs/jpy_tona_2026-03-31.json`):
+`market_data/2026-03-31/JPY/market_data.json` (`market_data/2026-03-31/JPY/jpy_tona_2026-03-31.json`):
 T+2 on `ql.Japan`, single payment up to 1Y, annual above, ACT/365F, linear zero.
 
 **+390-day row = 15M.** Read as 15M, the curve reproduces all five Bloomberg JPY

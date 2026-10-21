@@ -11,7 +11,7 @@ This is a monitoring test, not a validation claim. It does three things:
 Bloomberg values are read from tests/fixtures/bloomberg_irs/references/TC1.json.
 The Optima baseline was recorded on 09-Oct-2026 with QuantLib 1.43, Optima's
 production leg/swap/engine builders, and the production zero-curve builder fed
-from tests/fixtures/bloomberg_irs/curves/2026-03-31-USD-SOFR-zero.json
+from market_data/2026-03-31/USD/2026-03-31-USD-SOFR-zero.json
 (lookback 0 from the Bloomberg source; cutoff kept as metadata, lockoutDays=0).
 
 If a baseline assertion fails, do not edit the numbers to make it pass: find the

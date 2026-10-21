@@ -25,12 +25,24 @@
       },
       "market_files": [
         {
-          "path": "examples/irs/chf_saron_2026-03-31.json",
+          "path": "market_data/2026-03-31/CHF/chf_saron_2026-03-31.json",
           "sha256": "b99824b3b0b417cb255d48971a0bf4791fd0efc6ecf6cbafa00e02e46f1c6c8d"
         }
       ]
     },
-    "recapture_reason": null
+    "recapture_reason": null,
+    "path_migrations": [
+      {
+        "migration": "2026-10-21-market-data-layout",
+        "moved": [
+          {
+            "from": "examples/irs/chf_saron_2026-03-31.json",
+            "to": "market_data/2026-03-31/CHF/chf_saron_2026-03-31.json"
+          }
+        ],
+        "note": "file paths only; file contents (sha256) and expected values unchanged"
+      }
+    ]
   },
   "expected": {
     "npv": -153.37323684701968,

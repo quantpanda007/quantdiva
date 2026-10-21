@@ -25,12 +25,24 @@
       },
       "market_files": [
         {
-          "path": "examples/irs/usd_sofr_2026-03-31.json",
+          "path": "market_data/2026-03-31/USD/usd_sofr_2026-03-31.json",
           "sha256": "10c80ed3c4a8667a7a75de8773a55d3ef73c6b38036196dd9aab174454ad8724"
         }
       ]
     },
-    "recapture_reason": null
+    "recapture_reason": null,
+    "path_migrations": [
+      {
+        "migration": "2026-10-21-market-data-layout",
+        "moved": [
+          {
+            "from": "examples/irs/usd_sofr_2026-03-31.json",
+            "to": "market_data/2026-03-31/USD/usd_sofr_2026-03-31.json"
+          }
+        ],
+        "note": "file paths only; file contents (sha256) and expected values unchanged"
+      }
+    ]
   },
   "expected": {
     "npv": -7955.726204173618,

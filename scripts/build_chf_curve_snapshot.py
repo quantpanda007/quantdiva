@@ -3,7 +3,7 @@ from the supplied discount factors.
 
 Run from the project root; the document is printed to stdout:
 
-    python -m scripts.build_chf_curve_snapshot > examples/irs/chf_saron_2026-03-31.json
+    python -m scripts.build_chf_curve_snapshot > market_data/2026-03-31/CHF/chf_saron_2026-03-31.json
 
 Inputs: ``market_data/2026-03-31/CHF/market_data.json`` (dated Market Rate and
 Discount Factor rows). Only the discount factors are used. Each row is mapped to

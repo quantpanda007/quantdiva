@@ -75,7 +75,7 @@ DEFINITIONS = {
         currency="INR", curve_id="INR-MIBOR-OIS", benchmark="MIBOR",
         calendar_name="IN-MIBOR", calendar=ql.India, currency_ql=ql.INRCurrency,
         settlement_days=0, long_frequency=ql.Semiannual,
-        tenors={}, output="examples/irs/inr_mibor_2026-03-31.json",
+        tenors={}, output="market_data/2026-03-31/INR/inr_mibor_2026-03-31.json",
         evidence="reproduces Bloomberg's TC5/TC8/TC9 payment-date DFs within 4.3e-7",
     ),
     "JPY": OISCurveDefinition(
@@ -83,7 +83,7 @@ DEFINITIONS = {
         calendar_name="JP-TONA", calendar=ql.Japan, currency_ql=ql.JPYCurrency,
         settlement_days=2, long_frequency=ql.Annual,
         tenors={7: "1W", 14: "2W", 21: "3W", 390: "15M", 540: "18M", 630: "21M"},
-        output="examples/irs/jpy_tona_2026-03-31.json",
+        output="market_data/2026-03-31/JPY/jpy_tona_2026-03-31.json",
         evidence="reproduces Bloomberg's TC6/TC10 payment-date DFs within 1.0e-6 "
         "(+390-day row read as 15M)",
     ),

@@ -1330,7 +1330,8 @@ def to_markdown(report: Dict[str, Any]) -> str:
               "(scripts/build_ois_curve_snapshots.py); the supplied DF columns are not used "
               "(they do not reproduce Bloomberg's trade DFs).",
               "- Fixings on or before the valuation date are market data "
-              "(examples/irs/fixings_2026-03-31.json, each with its source); a missing one "
+              "(market_data/2026-03-31/fixings_2026-03-31.json, each with its source); a "
+              "missing one "
               "blocks the case (MISSING_FIXINGS), it is never inferred.",
               "- Par coupon, PV01/DV01 and accrued are not computed by the production path; "
               "only Bloomberg's values are shown.",

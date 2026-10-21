@@ -3,7 +3,7 @@ TC6, TC8, TC9 and TC10 from the Bloomberg *source* trade terms
 (``tests/fixtures/bloomberg_irs/source``). Only contractual terms are read: dates,
 notionals, rates, spreads, conventions and reset dates. No Bloomberg output (coupon,
 payment, discount factor, PV, reset rate) is used. Historical fixings are market data
-(``examples/irs/fixings_2026-03-31.json``), not trade inputs.
+(``market_data/2026-03-31/fixings_2026-03-31.json``), not trade inputs.
 
 Case notes (evidence: docs/IRS_OPEN_ITEMS.md OI-11, OI-15, OI-16):
 

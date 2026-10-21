@@ -1,7 +1,8 @@
 """Standalone, input-driven IRS pricing from a trade file and a market-data file.
 
 Production path under test: services.pricers.irs_valuation.price_irs and the CLI
-scripts/price_irs.py, fed only by examples/irs/*.json. Test fixtures are used
+scripts/price_irs.py, fed only by examples/irs/*_trade.json and the prepared snapshot in
+market_data/2026-03-31/USD/. Test fixtures are used
 here only to check that the example files carry the same inputs as the existing
 TC1/TC3 regression route, and the recorded baselines are imported from the
 existing tests (not copied).
@@ -46,7 +47,7 @@ from services.pricers.irs_valuation import (
 
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES = ROOT / "examples" / "irs"
-MARKET_FILE = EXAMPLES / "usd_sofr_2026-03-31.json"
+MARKET_FILE = ROOT / "market_data" / "2026-03-31" / "USD" / "usd_sofr_2026-03-31.json"
 TRADE_FILES = {"TC1": EXAMPLES / "tc1_trade.json", "TC3": EXAMPLES / "tc3_trade.json"}
 BASELINES = {"TC1": TC1_BASELINE, "TC3": TC3_BASELINE}
 CURVE_ID = "USD-SOFR-490"

@@ -22,9 +22,15 @@ from services.pricers.irs_valuation import price_irs
 
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES = ROOT / "examples" / "irs"
+MARKET = ROOT / "market_data" / "2026-03-31"
 SNAPSHOTS = {"USD": "usd_sofr_2026-03-31.json", "CHF": "chf_saron_2026-03-31.json",
              "INR": "inr_mibor_2026-03-31.json", "JPY": "jpy_tona_2026-03-31.json"}
 FIXINGS = "fixings_2026-03-31.json"
+
+
+def _snapshot(currency: str) -> Path:
+    """Canonical prepared snapshot (market_data/<date>/<CCY>/)."""
+    return MARKET / currency / SNAPSHOTS[currency]
 
 # case -> (currency snapshot, fixings needed?) under the production conventions
 EXPECTED = {
@@ -39,18 +45,20 @@ def _trade(case: str) -> dict:
 
 
 def _market_dir(tmp_path: Path, currency: str, with_fixings: bool = True) -> Path:
-    """Real snapshot for ``currency`` (+ fixings); every other currency's file is invalid
-    JSON, so reading it would raise."""
-    folder = tmp_path / "market"
-    folder.mkdir()
+    """A market root in the canonical layout (<root>/2026-03-31/<CCY>/, fixings at the date
+    level): real snapshot for ``currency`` (+ fixings); every other currency's snapshot is
+    invalid JSON, so reading it would raise."""
+    root = tmp_path / "market"
+    dated = root / "2026-03-31"
     for ccy, name in SNAPSHOTS.items():
+        (dated / ccy).mkdir(parents=True)
         if ccy == currency:
-            shutil.copy(EXAMPLES / name, folder / name)
+            shutil.copy(_snapshot(ccy), dated / ccy / name)
         else:
-            (folder / name).write_text("NOT JSON - must not be read", encoding="utf-8")
+            (dated / ccy / name).write_text("NOT JSON - must not be read", encoding="utf-8")
     if with_fixings:
-        shutil.copy(EXAMPLES / FIXINGS, folder / FIXINGS)
-    return folder
+        shutil.copy(MARKET / FIXINGS, dated / FIXINGS)
+    return root
 
 
 @pytest.fixture
@@ -98,7 +106,7 @@ def test_chf_trade_needing_fixings_opens_only_chf_and_fixings(tmp_path, opened, 
     fixings only. Pricing then stops on the missing SARON history (R3), clearly."""
     trade = _write_trade(tmp_path, with_method(_trade("TC2"), "reset_date_fallback"))
     folder = _market_dir(tmp_path, "CHF")
-    assert engine.main(["--trade", str(trade), "--market-dir", str(folder)]) == 1
+    assert engine.main(["--trade", str(trade), "--market-root", str(folder)]) == 1
     assert opened == ["trade.json", SNAPSHOTS["CHF"], FIXINGS]
     out = capsys.readouterr()
     assert "SARON observed from 2026-01-29 (Method B)" in out.out
@@ -110,7 +118,7 @@ def test_main_opens_only_the_resolved_files(case, tmp_path, opened, production, 
     currency, needs_fixings = EXPECTED[case]
     trade = _write_trade(tmp_path, _trade(case))
     folder = _market_dir(tmp_path, currency)
-    assert engine.main(["--trade", str(trade), "--market-dir", str(folder)]) == 0
+    assert engine.main(["--trade", str(trade), "--market-root", str(folder)]) == 0
     assert opened == ["trade.json", SNAPSHOTS[currency]] + ([FIXINGS] if needs_fixings else [])
     assert f"NPV {production[case].npv:,.4f}" in capsys.readouterr().out
 
@@ -121,7 +129,7 @@ def test_explicit_market_override_is_used_as_given(tmp_path, opened, monkeypatch
 
     monkeypatch.setattr(engine, "resolve_market_files", must_not_resolve)
     trade = _write_trade(tmp_path, _trade("TC1"))
-    usd = str(EXAMPLES / SNAPSHOTS["USD"])
+    usd = str(_snapshot("USD"))
     assert engine.main(["--trade", str(trade), "--market", usd]) == 0
     assert opened == ["trade.json", SNAPSHOTS["USD"]]
     assert "NPV -7,955.7262" in capsys.readouterr().out
@@ -140,7 +148,7 @@ def test_unavailable_valuation_date_fails_clearly(tmp_path, opened, capsys):
     doc["params"]["valuation_date"] = "2026-04-01"
     trade = _write_trade(tmp_path, doc)
     folder = _market_dir(tmp_path, "USD")
-    assert engine.main(["--trade", str(trade), "--market-dir", str(folder)]) == 2
+    assert engine.main(["--trade", str(trade), "--market-root", str(folder)]) == 2
     err = capsys.readouterr().err
     assert "no USD SOFR market snapshot for the trade's valuation date 2026-04-01" in err
     assert "usd_sofr_2026-04-01.json" in err
@@ -172,7 +180,7 @@ def test_invalid_trade_fails_before_market_resolution(tmp_path):
 
 
 def test_date_mismatch_is_rejected(tmp_path, capsys):
-    shifted = json.loads((EXAMPLES / SNAPSHOTS["USD"]).read_text(encoding="utf-8"))
+    shifted = json.loads((_snapshot("USD")).read_text(encoding="utf-8"))
     shifted["valuation_date"] = "2026-04-01"
     shifted["curves"]["USD-SOFR-490"]["reference_date"] = "2026-04-01"
     usd = _write_trade(tmp_path, shifted, "usd_shifted.json")
@@ -181,12 +189,12 @@ def test_date_mismatch_is_rejected(tmp_path, capsys):
     assert "trade valuation date 2026-03-31 != market valuation date 2026-04-01" in \
         capsys.readouterr().err
     assert engine.main(["--trade", trade, "--market", str(usd),
-                        str(EXAMPLES / FIXINGS)]) == 2
+                        str(MARKET / FIXINGS)]) == 2
     assert "different valuation dates" in capsys.readouterr().err
 
 
 def test_duplicate_definitions_are_rejected(capsys):
-    usd = str(EXAMPLES / SNAPSHOTS["USD"])
+    usd = str(_snapshot("USD"))
     assert engine.main(["--trade", str(EXAMPLES / "tc1_trade.json"), "--market", usd,
                         usd]) == 2
     assert "already defined" in capsys.readouterr().err
@@ -194,9 +202,9 @@ def test_duplicate_definitions_are_rejected(capsys):
 
 def test_currency_and_curve_incompatibilities_are_rejected(tmp_path, capsys):
     trade = str(EXAMPLES / "tc1_trade.json")
-    assert engine.main(["--trade", trade, "--market", str(EXAMPLES / SNAPSHOTS["CHF"])]) == 2
+    assert engine.main(["--trade", trade, "--market", str(_snapshot("CHF"))]) == 2
     assert "no curve assignment for USD" in capsys.readouterr().err
-    wrong = json.loads((EXAMPLES / SNAPSHOTS["USD"]).read_text(encoding="utf-8"))
+    wrong = json.loads((_snapshot("USD")).read_text(encoding="utf-8"))
     wrong["curves"]["USD-SOFR-490"]["benchmark"] = "TONA"
     path = _write_trade(tmp_path, wrong, "usd_wrong_benchmark.json")
     assert engine.main(["--trade", trade, "--market", str(path)]) == 2
@@ -239,8 +247,29 @@ def test_fixings_rule_matches_what_pricing_needs(case, production):
 
 def test_report_output_is_unchanged(tmp_path, capsys):
     trade = _write_trade(tmp_path, copy.deepcopy(_trade("TC4")))
-    assert engine.main(["--trade", str(trade), "--market-dir", str(EXAMPLES)]) == 0
+    assert engine.main(["--trade", str(trade)]) == 0  # default: the canonical store
     out = capsys.readouterr().out
     assert "Settled (pay on or before the valuation date; excluded from the NPV)" in out
     assert "2026-06-30       -1,924.15       -1,906.43" in out
     assert "Total" in out and "difference" in out
+
+
+# --- canonical market-data layout (market_data/<date>/<CCY>/, fixings at the date level) ----
+
+
+@pytest.mark.parametrize("case", sorted(EXPECTED))
+def test_default_resolution_uses_the_single_canonical_store(case):
+    currency, needs_fixings = EXPECTED[case]
+    selection = engine.resolve_market_files(_trade(case))
+    expected = [_snapshot(currency)] + ([MARKET / FIXINGS] if needs_fixings else [])
+    assert list(selection.files) == expected
+
+
+def test_no_prepared_market_file_remains_in_examples():
+    """One canonical copy: examples/irs holds trades (and the TC11 test-only fixings
+    override), never a curve snapshot or the shared fixings file."""
+    leftovers = sorted(p.name for p in EXAMPLES.glob("*_2026-03-31.json"))
+    assert leftovers == []
+    for currency, name in SNAPSHOTS.items():
+        assert _snapshot(currency).is_file()
+    assert (MARKET / FIXINGS).is_file()

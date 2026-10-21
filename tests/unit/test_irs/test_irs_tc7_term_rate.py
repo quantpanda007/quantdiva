@@ -36,7 +36,7 @@ from services.pricers.pricing_service import PricingService
 
 ROOT = Path(__file__).resolve().parents[3]
 TRADE = ROOT / "examples" / "irs" / "tc7_trade.json"
-SNAPSHOT = ROOT / "examples" / "irs" / "chf_saron_2026-03-31.json"
+SNAPSHOT = ROOT / "market_data" / "2026-03-31" / "CHF" / "chf_saron_2026-03-31.json"
 SOURCE = ROOT / "tests" / "fixtures" / "bloomberg_irs" / "source" / "TC7.json"
 VALUATION = ql.Date(31, 3, 2026)
 
