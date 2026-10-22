@@ -120,6 +120,7 @@ def test_guard_rejects_ois_only():
 # --- unsafe OIS request is rejected -------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_single_rejects_ois(client, ois_instrument):
     response = client.post(
         f"{URL}/single",
@@ -137,6 +138,7 @@ def test_single_rejects_ois(client, ois_instrument):
     assert "npv" not in response.json()
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_batch_reports_ois_as_a_row_error(client, ois_instrument):
     response = client.post(
         f"{URL}/batch",
@@ -153,6 +155,7 @@ def test_batch_reports_ois_as_a_row_error(client, ois_instrument):
     assert GUARD_MESSAGE in ois_row["diagnostics"]["error"]
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_compare_rejects_ois(client, ois_instrument):
     response = client.post(
         f"{URL}/compare",
@@ -195,6 +198,7 @@ def test_supported_batch_request_unchanged(client):
 # --- the library path is unaffected ---------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_ois_still_prices_with_a_configured_environment(ois_instrument, usd_sofr_market_data,
                                                         usd_sofr_curve_conventions):
     from market.curves.irs_zero_curve import build_zero_curve

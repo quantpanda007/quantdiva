@@ -104,6 +104,7 @@ def test_curve_reproduces_supplied_dfs_and_bloomberg_zero_rates():
         assert zeros[tenor] == pytest.approx(expected, abs=3e-4), tenor
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_payment_date_dfs_against_bloomberg(bloomberg, priced):
     rows = {(r.leg, r.payment_date.isoformat()): r for r in priced["valuation"].cashflows}
     for row in bloomberg["cashflows"]["floating_leg"]["cashflows"]:
@@ -117,6 +118,7 @@ def test_payment_date_dfs_against_bloomberg(bloomberg, priced):
 # --- term-rate mechanics ---------------------------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_flat_compounding_with_bloomberg_reset_rates_reproduces_bloomberg_payments(bloomberg):
     """Mechanics only: Bloomberg's own reset rates in, Bloomberg's payments out."""
     s = 0.002
@@ -135,6 +137,7 @@ def test_flat_compounding_does_not_compound_the_spread():
     assert total == pytest.approx(12.3)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_observation_windows_end_on_bloomberg_effective_reset_dates(bloomberg, priced):
     last_windows = [p.resets[-1].observation_end.isoformat() for p in priced["leg"].period_details]
     expected = [r["effective_reset_date"]
@@ -142,6 +145,7 @@ def test_observation_windows_end_on_bloomberg_effective_reset_dates(bloomberg, p
     assert last_windows == expected == ["2027-08-24", "2028-02-25"]
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_rate_period_starts_one_fixing_day_after_the_reset(priced):
     """28-Aug-2026 + 1 EN business day is 01-Sep-2026 (31-Aug-2026 is a UK holiday)."""
     resets = [r for p in priced["leg"].period_details for r in p.resets]
@@ -151,6 +155,7 @@ def test_rate_period_starts_one_fixing_day_after_the_reset(priced):
     assert all(r.source == "projected" for r in resets)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_provisional_fallback_against_resets_tab(priced):
     resets = [r for p in priced["leg"].period_details for r in p.resets]
     assert [r.reset_date.isoformat() for r in resets] == list(RESETS_TAB_PCT)
@@ -179,6 +184,7 @@ def test_fallback_window_before_valuation_needs_fixings():
 # --- end-to-end -------------------------------------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_tc7_prices_through_the_production_workflow(priced, bloomberg):
     v = priced["valuation"]
     assert (v.discount_curve_id, v.forecast_curve_id) == ("CHF-SARON-234", "CHF-SARON-234")
@@ -193,6 +199,7 @@ def test_tc7_prices_through_the_production_workflow(priced, bloomberg):
         -0.309, abs=0.002)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_cashflow_rows_carry_spread_and_equivalent_coupon(priced, bloomberg):
     floating = [r for r in priced["valuation"].cashflows if r.leg == "floating"]
     assert [r.spread for r in floating] == [0.002, 0.002]
@@ -203,6 +210,7 @@ def test_cashflow_rows_carry_spread_and_equivalent_coupon(priced, bloomberg):
     assert [round(r.amount, 2) for r in fixed] == [-520.00, -238.33]  # Bloomberg, exactly
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_pricing_restores_shared_state(priced):
     assert priced["eval_after"] == priced["eval_before"]
     assert priced["saron_fixings"] == 0

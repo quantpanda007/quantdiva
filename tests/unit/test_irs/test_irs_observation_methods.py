@@ -111,6 +111,7 @@ def test_method_a_is_rejected_for_a_projected_term_benchmark():
 # --- observation dates -----------------------------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_tc2_p1_window_under_each_method(comparison):
     p1 = comparison["periods"][0]
     assert p1["accrual"] == "2026-04-30 -> 2026-07-31" and p1["reset_date"] == "2026-01-30"
@@ -121,6 +122,7 @@ def test_tc2_p1_window_under_each_method(comparison):
     assert b1["computable"] is False and "SARON 2026-01-29 onwards" in b1["reason"]
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_all_tc2_periods_under_both_methods(comparison):
     a_rows = comparison["methods"][CONTRACTUAL_ACCRUAL]["periods"]
     assert [(r["accrual_start"], r["accrual_end"]) for r in a_rows] == TC2_ACCRUALS
@@ -140,6 +142,7 @@ def test_all_tc2_periods_under_both_methods(comparison):
 # --- rates, cashflows and NPV ----------------------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_method_a_prices_tc2_and_its_bloomberg_difference_stays_visible(comparison):
     a = comparison["methods"][CONTRACTUAL_ACCRUAL]
     assert a["npv"] == pytest.approx(TC2_METHOD_A_NPV, abs=1e-6)
@@ -149,11 +152,13 @@ def test_method_a_prices_tc2_and_its_bloomberg_difference_stays_visible(comparis
     assert comparison["npv_vs_bloomberg"][CONTRACTUAL_ACCRUAL] == pytest.approx(5.5368, abs=1e-4)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_method_a_period_amounts_are_the_production_cashflows(comparison):
     for row in comparison["methods"][CONTRACTUAL_ACCRUAL]["periods"]:
         assert row["amount"] == pytest.approx(row["production_amount"], abs=1e-9)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_differences_between_the_methods(comparison):
     diffs = [c["a_minus_b_coupon_bp"] for c in comparison["periods"]]
     assert diffs[0] is None  # Method B P1 not computable
@@ -176,6 +181,7 @@ def test_differences_between_the_methods(comparison):
 # --- historical fixings ----------------------------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_method_b_still_needs_the_historical_saron_fixings(market, comparison):
     with pytest.raises(Exception, match="SARON 2026-01-29 onwards"):
         price_irs(_tc2(RESET_DATE_FALLBACK), market)
@@ -210,6 +216,7 @@ def test_method_b_with_synthetic_fixings_is_a_capability_check_only(market):
     assert len(ql.Saron().timeSeries()) == 0  # history restored
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_comparison_markdown_labels_the_methods(comparison):
     text = "\n".join(methods.to_markdown(comparison))
     assert "Method A (contractual_accrual, provisional default)" in text

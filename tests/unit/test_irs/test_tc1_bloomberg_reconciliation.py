@@ -23,6 +23,10 @@ from __future__ import annotations
 
 import pytest
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 # --- Recorded Optima baseline (QuantLib 1.43) ---------------------------------
 BASELINE = {
     "floating_p1_rate_pct": 3.7854551860800054,

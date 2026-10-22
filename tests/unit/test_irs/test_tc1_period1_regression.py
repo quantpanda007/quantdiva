@@ -29,6 +29,10 @@ from datetime import date
 
 import pytest
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 # Bloomberg reference values (references/TC1.json, cashflow_leg_2[0]).
 BBG_P1_COUPON_PCT = 3.78546
 BBG_P1_PAYMENT = 20174.40

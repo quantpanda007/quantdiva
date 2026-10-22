@@ -105,6 +105,7 @@ def test_snapshot_comparison_rejects_real_differences():
     assert len(obs) > 8
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 @pytest.mark.parametrize("case", trades_generator.CASES)
 def test_trade_inputs_are_exactly_the_generator_output(case):
     text = trades_generator.to_text(trades_generator.BUILDERS[case]())
@@ -120,6 +121,7 @@ def test_tc2_trade_input_uses_the_settled_notional_basis():
 # --- curves ----------------------------------------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 @pytest.mark.parametrize("currency, cases, tolerance", [
     ("INR", ("TC5", "TC8", "TC9"), 5e-7),
     ("JPY", ("TC6", "TC10"), 1.1e-6),
@@ -147,6 +149,7 @@ def test_production_curve_equals_the_quantlib_bootstrap(environment, currency):
         ql.Settings.instance().evaluationDate = previous
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_supplied_discount_factors_are_not_the_trade_curve(environment):
     """The supplied DF columns differ from Bloomberg's trade DFs; kept as references only."""
     inr = _json(ROOT / "market_data" / "2026-03-31" / "INR" / "market_data.json")
@@ -166,6 +169,7 @@ def test_jpy_390_day_row_is_the_15m_quote():
 # --- term-rate legs ------------------------------------------------------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_tc5_first_period_reproduces_bloomberg(priced):
     row = next(r for r in priced["TC5"].cashflows
                if r.leg == "floating" and r.period == 1)
@@ -173,6 +177,7 @@ def test_tc5_first_period_reproduces_bloomberg(priced):
         _bloomberg_rows("TC5")[("floating", "2027-06-30")]["payment"], abs=0.01)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_tc8_uses_the_historical_fixing_and_matches_the_first_two_periods(priced):
     bbg = _bloomberg_rows("TC8")
     rows = [r for r in priced["TC8"].cashflows if r.leg == "floating"]
@@ -182,6 +187,7 @@ def test_tc8_uses_the_historical_fixing_and_matches_the_first_two_periods(priced
                                          abs=0.01)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_irswof_full_6m_resets_against_bloomberg(priced):
     """Provisional IRSWOF rule: every full 6M reset within 0.3 bp of Bloomberg."""
     for case, full in (("TC8", ("2026-08-28",)),
@@ -198,6 +204,7 @@ def test_irswof_full_6m_resets_against_bloomberg(priced):
                 assert ((r.rate - spread) * 100 - bbg[reset]) * 100 == pytest.approx(0, abs=0.3)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_irswof_short_reset_periods_are_a_known_difference(priced):
     """Pinned (unresolved, OI-15): Bloomberg is 23-39 bp below the 6M forward for every
     reset period shorter than 6M."""
@@ -212,6 +219,7 @@ def test_irswof_short_reset_periods_are_a_known_difference(priced):
         assert (row.rate * 100 - bbg) * 100 == pytest.approx(expected_bp, abs=0.1), (case, pay)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 @pytest.mark.parametrize("case, tolerance_bp", [("TC6", 0.02), ("TC10", 0.005)])
 def test_tona_coupons_against_bloomberg(priced, case, tolerance_bp):
     bbg = _bloomberg_rows(case)
@@ -221,6 +229,7 @@ def test_tona_coupons_against_bloomberg(priced, case, tolerance_bp):
             assert (r.rate * 100 - b) * 100 == pytest.approx(0, abs=tolerance_bp)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 @pytest.mark.parametrize("case", ["TC5", "TC6", "TC8", "TC9", "TC10"])
 def test_cashflows_close_to_the_engine_npv(priced, case):
     v = priced[case]
@@ -243,6 +252,7 @@ def test_tc2_needs_saron_fixings_for_period_1(market):
         price_irs(_tc2_method_b(), market)
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_tc2_fixing_rule_reproduces_bloomberg_effective_reset_dates(environment):
     """Source reset date + 1 EN business day starts the 6M IBOR period: every observable
     window ends on Bloomberg's effective reset date and the rate matches the coupon."""
@@ -268,6 +278,7 @@ def test_tc2_fixing_rule_reproduces_bloomberg_effective_reset_dates(environment)
         ql.Settings.instance().evaluationDate = previous
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_tc2_period_1_window_and_its_open_one_day_difference(environment):
     """OI-11 / TC2-F2 / R8: under the current rule P1's full observation window is
     29-Jan-2026 -> 30-Jul-2026, while Bloomberg's effective reset date is 29-Jul-2026.

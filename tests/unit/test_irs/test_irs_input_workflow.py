@@ -124,6 +124,7 @@ def test_production_path_does_not_import_tests_or_fastapi():
 # --- input files carry the same inputs as the fixture route ---------------------------
 
 
+@pytest.mark.validation  # reads Bloomberg fixtures
 def test_example_trades_equal_fixture_route_params(trades):
     case, source, _ = load_tc1()
     assert trades["TC1"] == {"schema_version": 1, "instrument_type": "ois",

@@ -40,3 +40,4 @@ yarn-error.log*
 
 # mypy
 .mypy_cache/
+results/

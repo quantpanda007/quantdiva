@@ -17,6 +17,10 @@ from test_tc1_bloomberg_reconciliation import KNOWN_DIFFERENCES as TC1_KNOWN_DIF
 from test_tc3_pricing_service_e2e import BASELINE as TC3_BASELINE
 from test_tc3_pricing_service_e2e import KNOWN_DIFFERENCES as TC3_KNOWN_DIFFERENCES
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "irs_fresh_pricing_report.py"
 EXPECTED = {
     "TC1": ("SLLSL9RR", TC1_BASELINE, TC1_KNOWN_DIFFERENCES),

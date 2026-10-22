@@ -40,6 +40,10 @@ from market.curves.irs_zero_curve import build_zero_curve
 from registry import engine_registry, instrument_registry
 from services.pricers.pricing_service import PricingService
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 VALUATION_DATE = date(2026, 3, 31)
 
 # Bloomberg business-day adjustment labels seen in the fixtures. Strict lookup:

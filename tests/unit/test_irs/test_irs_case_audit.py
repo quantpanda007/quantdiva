@@ -26,6 +26,10 @@ from test_tc3_pricing_service_e2e import BASELINE as TC3_BASELINE
 from test_tc3_pricing_service_e2e import KNOWN_DIFFERENCES as TC3_KNOWN
 from test_tc3_pricing_service_e2e import tc3_params
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts" / "irs_case_audit.py"
 MODULE = "scripts.irs_case_audit"

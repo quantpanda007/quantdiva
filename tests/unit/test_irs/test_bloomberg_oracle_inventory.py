@@ -4,6 +4,12 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest  # noqa: E402
+
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_ROOT = REPOSITORY_ROOT / "tests/fixtures/bloomberg_irs"

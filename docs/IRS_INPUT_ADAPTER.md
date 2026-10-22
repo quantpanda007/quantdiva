@@ -25,6 +25,26 @@ python -m scripts.price_irs_workbook --workbook examples/irs/Optima_IRS_Test_Cas
 
 Exit code 0 priced; 2 input or market-data problem (every problem is listed); 1 pricing error.
 
+### Results workbook
+
+Add `--output results\TC002.xlsx` to also save the result to Excel. An existing file is
+not replaced unless you add `--overwrite`. The workbook comes from
+`services/irs_outputs/excel_report.py` and has four sheets:
+
+| Sheet | Contents |
+|---|---|
+| Summary | Trade, swap NPV, fixed- and floating-leg NPVs, market data used, notes (e.g. TC2's provisional Method A), sign convention |
+| Fixed Leg | One row per period: status, side, accrual and payment dates, notional, amortisation (notional reduction from the previous period), day count fraction, fixed rate, amount, discount factor, present value; leg NPV |
+| Floating Leg | As Fixed Leg, with the rate including spread and the spread in bp |
+| Net Cashflow | One row per payment date: notional, amortisation, fixed amount, floating amount, net amount, discount factor, net present value; swap NPV |
+
+- **Source of the numbers:** all are the engine's outputs. The writer adds only the
+  per-date net (fixed + floating) and the notional changes between periods.
+- **Settled periods:** periods paid on or before the valuation date are listed as
+  "Settled", with no amounts.
+- **Signs:** the paid leg is negative.
+- **No formulas:** the workbook holds values only.
+
 ## The interface a UI adapter implements
 
 A UI adapter builds a `TradeInputs` dictionary and calls the same two functions:
@@ -167,4 +187,11 @@ selection.
 - "Snapshot Folder" is a formula. It is read as last calculated by Excel; if it holds no
   calculated value, it is treated as not stated.
 
-Tests: `tests/unit/test_irs/test_irs_excel_input_adapter.py`.
+Tests:
+- `tests/unit/test_irs/test_irs_excel_input_adapter.py` covers the input workbook.
+- `tests/unit/test_irs/test_irs_excel_output.py` writes all ten results workbooks and checks
+  them against the approved baselines.
+
+The validation-phase Optima-vs-Bloomberg tests, which read `tests/fixtures/bloomberg_irs`,
+are marked `validation` and excluded from the default run. Run them with
+`pytest -m validation`.

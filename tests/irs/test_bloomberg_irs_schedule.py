@@ -15,6 +15,10 @@ from api.v1.schemas import InstrumentRequest
 from core.interfaces.base import MarketEnvironment
 from core.types.value_objects import PricingDate
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 
 FIXTURE_PATH = (
     Path(__file__).resolve().parents[1]

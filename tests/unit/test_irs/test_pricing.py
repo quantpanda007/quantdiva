@@ -36,6 +36,10 @@ from market.curves.irs_market_data import (
 )
 from market.curves.irs_provisional_projection import build_provisional_projection_curve
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 
 FIXTURE_PATH = (
     Path(__file__).resolve().parents[2]

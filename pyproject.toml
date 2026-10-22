@@ -74,11 +74,14 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 pythonpath = ["."]                  # ← add this line
 
-addopts = "-v --tb=short --strict-markers"
+# Validation-phase tests (they read the Bloomberg fixtures in tests/fixtures/bloomberg_irs and
+# compare Optima with Bloomberg) are excluded by default; run them with `pytest -m validation`.
+addopts = "-v --tb=short --strict-markers -m 'not validation'"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "regression: known-good pricing regression tests",
     "integration: cross-module integration tests",
+    "validation: validation-phase Optima-vs-Bloomberg tests (excluded by default)",
 ]
 
 [tool.mypy]

@@ -2,12 +2,14 @@
 
     python -m scripts.price_irs_workbook --workbook examples/irs/Optima_IRS_Test_Case_Inputs_v4.xlsx
     python -m scripts.price_irs_workbook --workbook <file.xlsx> --sheet TC001 [--market-root <dir>]
-                                         [--show-trade]
+                                         [--show-trade] [--output <results.xlsx> [--overwrite]]
 
 Excel worksheet -> services.irs_inputs.excel_reader (trade inputs) -> normalizer (engine
 trade document) -> pricing (price_irs_engine: canonical market data, PricingService).
 Prints the same cashflow statement as price_irs_engine.py. --show-trade also prints the
-normalized trade document (JSON).
+normalized trade document (JSON). --output also saves the result as an Excel workbook
+(Summary, Fixed Leg, Floating Leg, Net Cashflow; services.irs_outputs.excel_report); an
+existing file is not replaced unless --overwrite is given.
 
 Exit codes: 0 priced; 2 input or market-data problem (all problems listed); 1 pricing error.
 """
@@ -31,6 +33,10 @@ from services.irs_inputs.contract import InputValidationError  # noqa: E402
 from services.irs_inputs.excel_reader import WorkbookReadError, read_trade_sheet  # noqa: E402
 from services.irs_inputs.normalizer import normalize  # noqa: E402
 from services.irs_inputs.pricing import price_normalized  # noqa: E402
+from services.irs_outputs.excel_report import (  # noqa: E402
+    ReportExistsError,
+    write_pricing_report,
+)
 
 
 def main(argv: Optional[list] = None) -> int:
@@ -41,7 +47,14 @@ def main(argv: Optional[list] = None) -> int:
                         help="root of the market_data/<date>/<CCY>/ layout")
     parser.add_argument("--show-trade", action="store_true",
                         help="print the normalized trade document")
+    parser.add_argument("--output", default=None,
+                        help="also save the result to this Excel file (.xlsx)")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="replace an existing --output file")
     args = parser.parse_args(argv)
+    if args.output and Path(args.output).exists() and not args.overwrite:
+        print(f"ERROR: {args.output} exists; not overwritten (add --overwrite)", file=sys.stderr)
+        return 2
     try:
         inputs = read_trade_sheet(args.workbook, args.sheet)
         normalized = normalize(inputs, source=f"{Path(args.workbook).name}"
@@ -62,6 +75,15 @@ def main(argv: Optional[list] = None) -> int:
         print(f"  note: {note}")
     print()
     engine.report(*priced.engine_outputs)
+    if args.output:
+        source = f"{Path(args.workbook).name} [{args.sheet or 'only sheet'}]"
+        try:
+            path = write_pricing_report(priced, args.output, source=source,
+                                        overwrite=args.overwrite)
+        except (ReportExistsError, ValueError, OSError) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        print(f"\nResults saved: {path}")
     return 0
 
 

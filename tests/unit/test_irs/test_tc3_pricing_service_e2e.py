@@ -54,6 +54,10 @@ from market.curves.irs_market_environment import build_single_curve_irs_environm
 from market.curves.irs_zero_curve import build_zero_curve
 from services.pricers.pricing_service import PricingService
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 FIXTURES = Path(__file__).resolve().parents[3] / "tests/fixtures/bloomberg_irs"
 VALUATION_DATE = date(2026, 3, 31)
 CONTRACTUAL_MATURITY = date(2028, 4, 30)  # Sunday

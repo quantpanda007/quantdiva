@@ -21,6 +21,10 @@ import pytest
 import QuantLib as ql
 from test_irs_tc7_term_rate import RESETS_TAB_PCT
 
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 ROOT = Path(__file__).resolve().parents[3]
 CASE_IDS = [f"TC{i}" for i in range(1, 11)]
 WATCHED = [ROOT / "tests" / "fixtures" / "bloomberg_irs", ROOT / "examples" / "irs",

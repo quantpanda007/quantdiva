@@ -22,6 +22,12 @@ from market.curves.irs_market_data import (
     SimpleForwardObservation,
 )
 
+import pytest  # noqa: E402
+
+# Validation-phase test (reads Bloomberg fixtures): excluded from the default run;
+# run with `pytest -m validation`.
+pytestmark = pytest.mark.validation
+
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 CASE_PATH = REPOSITORY_ROOT / "tests/fixtures/bloomberg_irs/cases/TC1.json"
