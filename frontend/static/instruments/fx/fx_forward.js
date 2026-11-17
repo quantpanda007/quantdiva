@@ -34,11 +34,11 @@ const fx_forward = {
         id:'market_data', label:'Market Data as on Valuation Date',
         fields: [...FX_MARKET_DATA],
       },
-	  {
+      {
         id:'dates', label:'Dates',
         fields: [
           ...BASE_DATES,
-          {id:'maturity_date',label:'Maturity Date',type:'date',val:'2025-07-29'},
+          {id:'maturity_date',label:'Maturity Date',type:'date',val:'2027-07-29'},
         ],
       },
     ],
@@ -69,12 +69,37 @@ const fx_forward = {
   hideModelEngine: true,
 
   onFieldChange(fieldId) {
+
+    // 🔹 Attach listener ONCE (robust fix)
+    if (!window.__fx_forward_bound) {
+      window.__fx_forward_bound = true;
+
+      setTimeout(() => {
+        const ccy1El = document.getElementById('f-notional_1_position');
+        const ccy2El = document.getElementById('f-notional_2_position');
+
+        if (ccy1El && ccy2El) {
+          ccy1El.addEventListener('change', () => {
+            const val = (ccy1El.value || '').toLowerCase();
+            ccy2El.value = (val === 'buy') ? 'sell' : 'buy';
+          });
+        }
+      }, 0);
+    }
+
+    // 🔹 EXISTING LOGIC (UNCHANGED)
     const triggerFields = [
       'transaction_ref','cpty_a_name','cpty_b_name',
       'notional_1_amount','strike','ccy_pair','transaction_date',
     ];
+
     if (!triggerFields.includes(fieldId)) return;
-    const g = (id) => { const el = document.getElementById('f-' + id); return el ? el.value : ''; };
+
+    const g = (id) => {
+      const el = document.getElementById('f-' + id);
+      return el ? el.value : '';
+    };
+
     const id = generateOptimaId({
       asset:           'FWD',
       ccy_pair:        g('ccy_pair'),
@@ -85,6 +110,7 @@ const fx_forward = {
       notional:        g('notional_1_amount'),
       strike:          g('strike'),
     });
+
     const el = document.getElementById('f-optima_id');
     if (el) el.value = id;
   },

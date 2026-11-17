@@ -1,0 +1,280 @@
+/* ══════════════════════════════════════════════════════
+   Optima — Theme Variables
+   ══════════════════════════════════════════════════════
+   EDIT THIS FILE to change colours, fonts, and spacing.
+   All other CSS files reference these variables.
+   
+   To change a colour: update the hex value e.g. #2F86B5
+   To change font size: update the px value e.g. 13px
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #2D6C96;
+  --panel: #FFFFFF;
+  --card: #FFFFFF;
+  --card-hover: #E5F3FC;
+  --border: #B7D8EA;
+  --border-accent: #70B6E2;
+  --text: #163B5C;
+  --text-muted: #3E7194;
+  --text-dim: #527B96;
+  --accent: #287CB1;
+  --accent-glow: rgba(40, 124, 177, 0.18);
+  --green: #4F8A76;
+  --red: #B85C6B;
+  --blue: #4B88B8;
+  --purple: #6E86B1;
+  --cyan: #5BA4C3;
+  --eq-badge: #4B88B8;
+  --rates-badge: #2F86B5;
+  --credit-badge: #B85C6B;
+  --fx-badge: #6E86B1;
+  --cmdty-badge: #4F8A76;
+}
+
+/* ── Per-card independent colour control ──────────────
+   Each card can have its own background colour.
+   Defaults to var(--card) so all cards match by default.
+   Override individually to style each card differently.
+   ───────────────────────────────────────────────────── */
+:root {
+
+  --card-login: #FFFFFF;
+  --card-valuation:    var(--card);
+  --card-fixed-income: var(--card);
+  --card-correlation:  var(--card);
+  --card-het:          var(--card);
+  --card-ecl:          var(--card);
+  --card-var:          var(--card);
+  --card-cash:         var(--card);
+  --card-alm:          var(--card);
+  --card-counterparty: var(--card);
+  --card-economic:     var(--card);
+  --card-dates:        var(--card);
+  --card-market-data:  var(--card);
+  --card-results:      var(--card);
+  --card-fx-vanilla:   var(--card);
+  --card-fx-range:     var(--card);
+}
+
+:root {
+
+  /* ─────────────────────────
+     CARD SYSTEM
+     ───────────────────────── */
+  --card-padding: 16px;
+  --card-radius: 10px;
+  --card-border-width: 1px;
+
+  /* Card titles */
+  --card-title-size: 11px;
+  --card-title-weight: 600;
+  --card-title-spacing: 0.8px;
+  --card-title-color: var(--text-muted);
+
+  /* ─────────────────────────
+     FORMS
+     ───────────────────────── */
+  --label-size: 10px;
+  --label-spacing: 0.6px;
+  --label-color: var(--text-muted);
+
+  --input-padding: 6px 9px;
+  --input-radius: 5px;
+  --input-font-size: 12px;
+  --input-bg: #FFFFFF;
+  --input-text: var(--text);
+  --input-border-width: 1px;
+
+  /* ─────────────────────────
+     BUTTONS
+     ───────────────────────── */
+  --btn-padding: 10px 20px;
+  --btn-radius: 6px;
+  --btn-font-size: 13px;
+  --btn-font-weight: 500;
+  --accent-hover: #1C5B83;
+
+  /* ─────────────────────────
+     BADGES
+     ───────────────────────── */
+  --badge-padding: 3px 8px;
+  --badge-font-size: 10px;
+  --badge-radius: 4px;
+
+  /* ─────────────────────────
+     NPV / KPI
+     ───────────────────────── */
+  --npv-font-size: 36px;
+  --npv-color: var(--accent);
+  --npv-gradient-end: #E5F3FC;
+
+  /* ─────────────────────────
+     TABLES
+     ───────────────────────── */
+  --table-header-size: 10px;
+  --table-header-spacing: 0.7px;
+  --table-header-padding: 8px 10px;
+
+  --table-cell-size: 13px;
+  --table-cell-padding: 8px 10px;
+
+  /* ─────────────────────────
+     MODULE CARDS (HOME)
+     ───────────────────────── */
+  --module-radius: 12px;
+  --module-padding: 28px 20px;
+
+  /* ─────────────────────────
+     FX / INSTRUMENT CARDS
+     ───────────────────────── */
+  --fx-card-font-size: 13px;
+  --fx-card-padding: 12px 16px;
+
+  /* ─────────────────────────
+     RESULTS / STRIPS
+     ───────────────────────── */
+  --results-padding: 10px 14px;
+  --results-radius: 8px;
+
+  /* ─────────────────────────
+     BULK UPLOAD / DROP ZONE
+     ───────────────────────── */
+  --dropzone-radius: 12px;
+  --dropzone-padding: 40px 20px;
+
+}
+
+
+
+/* ───────── LOGIN HEADER (LOGOS) ───────── */
+
+.login-header {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  width: 100%;
+  padding: 0 40px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  z-index: 20;
+  box-sizing: border-box;   /* 👈 IMPORTANT */
+}
+
+/* ───────── OPTIMA BRAND LOGO ───────── */
+
+.login-logo-left {
+  display: flex;
+  align-items: baseline;   /* 👈 KEY CHANGE */
+  gap: 2px;
+}
+
+/* Diamond mark */
+.optima-mark {
+  font-size: 16px;
+  color: #5AA8D0;   /* soft blue */
+  opacity: 0.9;
+}
+
+/* Main text */
+.optima-text {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: #163F5F;
+  
+  line-height: 1;   /* 👈 ensures correct baseline */
+
+
+  /* 👇 subtle glow */
+  text-shadow: 0 0 8px rgba(47, 134, 181, 0.25);
+}
+
+/* Accent dot (like Deloitte style) */
+.optima-dot {
+  width: 5px;
+  height: 5px;
+  background: #22c55e;
+  border-radius: 50%;
+
+  margin-left: 2px;
+  margin-bottom: 3px;
+
+  /* base glow */
+  box-shadow: 0 0 4px rgba(79, 138, 118, 0.5);
+
+  /* 👇 animation */
+  animation: optimaPulse 1.1s infinite ease-in-out;
+}
+
+@keyframes optimaPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 4px rgba(79, 138, 118, 0.4);
+    opacity: 0.85;
+  }
+
+  50% {
+    transform: scale(1.35);
+    box-shadow: 0 0 10px rgba(79, 138, 118, 0.9);
+    opacity: 1;
+  }
+}
+
+.login-logo-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  flex-shrink: 0;          /* 👈 prevents compression */
+}
+
+.login-logo-right img {
+  height: 30px;
+  width: auto;        /* 👈 CRITICAL FIX */
+  max-width: 140px;   /* 👈 prevents overflow */
+  object-fit: contain;
+  object-position: right;  /* 👈 aligns properly */
+  opacity: 0.95;
+}
+
+.login-header {
+  padding: 0 40px;  /* increase from 32px */
+}	
+
+/* =========================================================
+   REFERENCE IMAGE GLOBAL PALETTE — COLOR ONLY
+   ========================================================= */
+:root {
+  --bg: #2D6C96;
+  --panel: #FFFFFF;
+  --card: #FFFFFF;
+  --card-hover: #E5F3FC;
+  --border: #B7D8EA;
+  --border-accent: #70B6E2;
+  --text: #163B5C;
+  --text-muted: #3E7194;
+  --text-dim: #527B96;
+  --accent: #287CB1;
+  --accent-glow: rgba(47,134,181,0.15);
+  --green: #4F8A76;
+  --red: #B85C6B;
+  --blue: #4B88B8;
+  --purple: #6E86B1;
+  --cyan: #5BA4C3;
+  --eq-badge: #4B88B8;
+  --rates-badge: #2F86B5;
+  --credit-badge: #B85C6B;
+  --fx-badge: #6E86B1;
+  --cmdty-badge: #4F8A76;
+  --card-login: #F8FCFF;
+  --input-bg: #FFFFFF;
+  --input-text: #163F5F;
+  --accent-hover: #1C5B83;
+  --npv-color: #2F86B5;
+  --npv-gradient-end: #E5F3FC;
+}
+

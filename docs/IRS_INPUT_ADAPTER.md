@@ -45,6 +45,46 @@ not replaced unless you add `--overwrite`. The workbook comes from
 - **Signs:** the paid leg is negative.
 - **No formulas:** the workbook holds values only.
 
+## Web UI (Optima frontend)
+
+The IRS workspace is the three-tab page `#page-irs` in `frontend/static/optima.html`:
+Economic Terms, Amortization Schedule, and Market Data & Pricing Results. Its styles are in
+`css/irs.css`. Its module `frontend/static/instruments/rates/irs.js` is registered in
+`INSTRUMENT_REGISTRY` like every instrument.
+
+- **Opening it:** the module sets `workspacePage: 'page-irs'`, so `optima_core.js`
+  `openWorkspace` opens that page (`openModulePage`), and the module's `onOpen` binds it.
+- **Pricing it:** `apiEndpoint`. `priceViaModuleEndpoint` posts the module's
+  `buildRequest()` and hands the response to `onPriceResult` / `onPriceError`.
+- **The form:**
+  - sends analyst labels and units, as the workbook does;
+  - every select starts blank;
+  - an empty or not-applicable field is sent as `null`, never 0. The fields of the other
+    floating-leg type are sent as `null`, and the reset schedule of a 1D leg as `[]`.
+- **Market Data tab:** shows the prepared curve snapshot read-only. It is not an input.
+- **Results:** engine outputs only. Fixed Leg PV, Floating Leg PV and Net NPV, plus
+  Cashflows, Fixed Leg, Floating Leg and Notes. There are no PV01/DV01: the engine does not
+  produce them.
+
+Endpoints (`api/v1/endpoints/irs_pricing.py`, no pricing logic):
+
+| Endpoint | Does |
+|---|---|
+| `POST /api/v1/pricing/irs` | Body: `TradeInputs` (below). Runs `normalize` → `price_normalized`. Returns NPV, leg NPVs, Fixed Leg / Floating Leg rows (settled periods included), Net rows per payment date (the Excel results workbook's functions), market files used and notes. Errors: 422 `input_validation` with every issue, 422 `market_data`, 400 `pricing`. |
+| `GET /api/v1/pricing/irs/market-files?valuation_date=&currency=` | The prepared curve snapshots and the fixings file present under `market_data/<date>/`, for the cross-check drop-downs. Selects nothing. |
+| `GET /api/v1/pricing/irs/curve?valuation_date=&currency=` | The snapshot the engine uses: tenors, zero rates, and pillar dates and discount factors from the production curve builder (`parse_market_snapshot` → `resolve_market_environment`). Display only. |
+| `POST /api/v1/pricing/irs/workbook` (file, optional sheet) | Lists an input workbook's sheets. With a sheet, returns its `TradeInputs` from `excel_reader` to fill the page. |
+
+`/api/v1/pricing/single` still rejects IRS.
+
+Tests:
+- `tests/unit/test_irs/test_irs_api.py`: all ten sheets through the API against the
+  baselines.
+- `tests/unit/test_irs/test_irs_frontend_contract.py`: option lists, field map and page
+  markup against the normalizer.
+- `tests/frontend/test_irs_browser.py`: Playwright. Skipped when Playwright or Chromium is
+  missing.
+
 ## The interface a UI adapter implements
 
 A UI adapter builds a `TradeInputs` dictionary and calls the same two functions:

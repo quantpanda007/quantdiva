@@ -18,6 +18,9 @@ from api.v1.endpoints.snapshots import router as snapshots_router
 api_v1_router = APIRouter()
 
 api_v1_router.include_router(pricing_router, prefix="/pricing", tags=["pricing"])
+# IRS: existing input adapter + engine (services.irs_inputs); /pricing/single rejects IRS
+from api.v1.endpoints.irs_pricing import router as irs_pricing_router
+api_v1_router.include_router(irs_pricing_router, prefix="/pricing", tags=["pricing (IRS)"])
 api_v1_router.include_router(sensitivities_router, prefix="/sensitivities", tags=["sensitivities"])
 api_v1_router.include_router(risk_router, prefix="/risk", tags=["risk"])
 api_v1_router.include_router(calibration_router, prefix="/calibration", tags=["calibration"])

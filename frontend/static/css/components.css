@@ -1,0 +1,2595 @@
+/* ══════════════════════════════════════════════════════
+   Optima — Components CSS
+   Cards, forms, buttons, tables, badges, results etc.
+   ══════════════════════════════════════════════════════ */
+
+/* ═══ Cards ════════════════════════════════════ */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+.card-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-muted);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+
+/* ═══ Forms ════════════════════════════════════ */
+label {
+  display: block; font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-muted); margin: 5px 0 2px;
+}
+select, input {
+  width: 70%; padding: 6px 9px; border-radius: 5px;
+  border: 1px solid var(--border); background: #FFFFFF;
+  color: var(--text); font-size: 12px; font-family: inherit;
+  transition: border-color 0.2s;
+}
+select:focus, input:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+input::placeholder { color: var(--text-dim); }
+
+
+/* ═══ Buttons ══════════════════════════════════ */
+.btn {
+  padding: 10px 20px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 13px;
+  font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit;
+}
+.btn:hover { background: var(--card-hover); border-color: var(--border-accent); }
+.btn-primary { background: var(--accent); color: #fff; border-color: transparent; font-weight: 700; }
+.btn-primary:hover { background: #1C5B83; }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+
+/* ═══ Badges ═══════════════════════════════════ */
+.badge {
+  display: inline-flex; align-items: center; padding: 3px 8px;
+  border-radius: 4px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-eq { background: rgba(47, 134, 181, 0.15); color: var(--eq-badge); }
+.badge-rates { background: rgba(47, 134, 181, 0.15); color: var(--rates-badge); }
+.badge-credit { background: rgba(184, 92, 107, 0.15); color: var(--credit-badge); }
+.badge-fx { background: rgba(47, 134, 181, 0.15); color: var(--fx-badge); }
+.badge-cmdty { background: rgba(79, 138, 118, 0.15); color: var(--cmdty-badge); }
+
+
+/* ═══ NPV Display ══════════════════════════════ */
+.npv-display {
+  text-align: center; padding: 20px;
+  background: linear-gradient(135deg, var(--card) 0%, #E1F0FB 100%);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.npv-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); }
+.npv-value { font-size: 36px; font-weight: 700; color: var(--accent); margin: 6px 0; font-variant-numeric: tabular-nums; }
+.npv-meta { font-size: 11px; color: var(--text-dim); }
+
+
+
+
+/* ═══ KPI Tiles ════════════════════════════════ */
+.kpi-grid { display: grid; gap: 6px; }
+.kpi-tile {
+  background: var(--bg); border: 1px dashed var(--border);
+  border-radius: 6px; padding: 6px 8px; text-align: center;
+}
+.kpi-tile .kpi-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+.kpi-tile .kpi-val { font-size: 14px; font-weight: 600; margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+
+/* ═══ Tables ═══════════════════════════════════ */
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
+td { padding: 8px 10px; font-size: 13px; border-bottom: 1px solid rgba(47, 134, 181, 0.5); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+
+/* ═══ Asset Class Links ════════════════════════ */
+.asset-links {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;
+}
+.asset-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 28px; border-radius: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s; flex: 1; min-width: 180px;
+}
+.asset-link:hover {
+  border-color: var(--accent); background: var(--card-hover);
+  transform: translateY(-2px); box-shadow: 0 4px 20px rgba(47, 134, 181, 0.3);
+}
+.asset-link .al-label { font-size: 15px; font-weight: 600; }
+.asset-link .al-count { font-size: 11px; color: var(--text-muted); }
+
+
+/* ═══ FX Category Layout ══════════════════════ */
+.fx-categories {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 16px; align-items: start;
+}
+.fx-cat-col {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+}
+.fx-cat-header {
+  padding: 12px 16px; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--accent); border-bottom: 1px solid var(--border);
+  background: rgba(47, 134, 181, 0.05);
+}
+.fx-card {
+  display: block; padding: 12px 16px;
+  color: var(--text); cursor: pointer; transition: all 0.15s;
+  border-bottom: 1px solid rgba(47, 134, 181, 0.3);
+  font-size: 13px; font-weight: 500;
+}
+.fx-card:last-child { border-bottom: none; }
+.fx-card:hover { background: var(--card-hover); color: var(--accent); }
+.fx-card .fx-card-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+
+
+/* ═══ Collapsible (generic) ════════════════════ */
+details.ws-section { border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; background: var(--card); }
+details.ws-section > summary {
+  cursor: pointer; padding: 12px 16px; list-style: none;
+  font-size: 12px; font-weight: 600; color: var(--cyan);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+details.ws-section > summary::-webkit-details-marker { display: none; }
+details.ws-section > summary::before { content: '▸'; font-size: 11px; color: var(--text-muted); display: inline-block; transition: transform 0.2s; }
+details.ws-section[open] > summary::before { transform: rotate(90deg); }
+details.ws-section[open] > summary { border-bottom: 1px solid var(--border); }
+details.ws-section > .ws-body { padding: 14px 16px; }
+
+
+/* ═══ Grouped Workspace ═══════════════════════ */
+.ws-grouped-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; align-items: start; }
+.field-group { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.field-group.full-width { grid-column: 1 / -1; }
+.field-group-header { padding: 5px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); border-bottom: 1px solid var(--border); background: rgba(47, 134, 181, 0.04); }
+.field-group-body { padding: 3px 5px 6px; display: flex; flex-direction: column; align-items: flex-start; }
+.field-group-body label { font-size: 10px; margin: 4px 0 2px; color: var(--accent); opacity: 0.85; }
+.field-group-body input, .field-group-body select { padding: 5px 6px; font-size: 12px; width: auto; min-width: 80px; max-width: 120px; }
+.sub-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--cyan); margin: 7px 0 2px; padding-top: 5px; border-top: 1px solid rgba(47, 134, 181, 0.5); }
+.sub-group-title:first-of-type { border-top: none; margin-top: 2px; }
+.fg-row { display: grid; gap: 8px; }
+.fg-row.r2 { grid-template-columns: 1fr 1fr; }
+.fg-row.r3 { grid-template-columns: 1fr 1fr 1fr; }
+
+
+/* ═══ Collapsible Field Group ═════════════════ */
+.field-group-collapsible > summary {
+  cursor: pointer; list-style: none;
+  padding: 7px 12px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--accent);
+  background: rgba(47, 134, 181, 0.04);
+  display: flex; align-items: center; gap: 6px;
+}
+.field-group-collapsible > summary::-webkit-details-marker { display: none; }
+.field-group-collapsible > summary::before {
+  content: '▸'; font-size: 10px; color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.field-group-collapsible[open] > summary::before { transform: rotate(90deg); }
+.field-group-collapsible[open] > summary { border-bottom: 1px solid var(--border); }
+.field-group-collapsible > .field-group-body { display: none; }
+.field-group-collapsible[open] > .field-group-body { display: block; }
+
+
+/* ═══ Results Strip ═══════════════════════════ */
+.results-strip { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 10px; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; border-top: 2px solid var(--accent); }
+.results-strip .rs-title { grid-column: 1 / -1; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 2px; }
+.rs-cell { text-align: center; }
+.rs-cell .rs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.rs-cell .rs-val { font-size: 18px; font-weight: 700; margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+
+/* ═══ Module Boxes ═════════════════════════════ */
+.module-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 960px; margin: 0 auto; padding: 50px 24px 40px; }
+.module-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+.module-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); opacity: 0; transition: opacity 0.25s; }
+.module-box:hover { border-color: var(--accent); background: var(--card-hover); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(47, 134, 181, 0.3); }
+.module-box:hover::before { opacity: 1; }
+.module-box:hover .mb-label { color: var(--accent); }
+.module-box.disabled { opacity: 0.4; cursor: default; }
+.module-box.disabled:hover { border-color: var(--border); background: var(--card); transform: none; box-shadow: none; }
+.module-box.disabled:hover::before { opacity: 0; }
+.mb-icon { font-size: 28px; margin-bottom: 10px; }
+.mb-label { font-size: 14px; font-weight: 700; color: #fff; }
+.mb-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.mb-coming { display: inline-block; margin-top: 8px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); padding: 2px 8px; border: 1px solid var(--border); border-radius: 10px; }
+
+
+/* ═══ Valuation Sections (vertical expandable) ═ */
+.val-sections { max-width: 1000px; margin: 0 auto; padding: 24px; }
+.val-section { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; background: var(--card); overflow: hidden; }
+.val-section-toggle { cursor: pointer; padding: 16px 20px; list-style: none; display: flex; align-items: center; gap: 12px; transition: background 0.15s; }
+.val-section-toggle:hover { background: rgba(255,255,255,0.02); }
+.val-section-toggle::-webkit-details-marker { display: none; }
+.val-section-toggle::after { content: '▸'; margin-left: auto; color: var(--text-dim); font-size: 12px; transition: transform 0.2s; }
+details.val-section[open] > .val-section-toggle::after { transform: rotate(90deg); }
+details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(--border); }
+.val-section-name { font-size: 15px; font-weight: 600; }
+.val-section-count { font-size: 11px; color: var(--text-dim); }
+.val-section-body { padding: 14px 20px; }
+
+
+/* ═══ Bulk Upload Bar ═════════════════════════ */
+.bulk-upload-bar {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+  border-left: 3px solid var(--accent);
+}
+.bulk-left { flex: 1; }
+.bulk-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.bulk-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.bulk-rates { display: flex; gap: 12px; }
+.bulk-rates label { font-size: 10px; color: var(--accent); }
+.bulk-rates input { text-align: center; }
+.bulk-actions { display: flex; gap: 8px; align-items: center; }
+.bulk-upload-btn { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.bulk-status {
+  margin: -8px 0 16px; padding: 12px 16px;
+  border-radius: 8px; font-size: 13px;
+  border: 1px solid var(--border);
+}
+.bulk-status.success { background: rgba(79, 138, 118, 0.08); border-color: var(--green); color: var(--green); }
+.bulk-status.error { background: rgba(184, 92, 107, 0.08); border-color: var(--red); color: var(--red); }
+.bulk-status.loading { background: rgba(47, 134, 181, 0.08); border-color: var(--accent); color: var(--accent); }
+
+
+/* ═══ Workspace Mode Toggle ═══════════════════ */
+.mode-toggle {
+  display: flex; gap: 0; margin-bottom: 7px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; width: fit-content;
+}
+.mode-btn {
+  padding: 10px 24px; font-size: 13px; font-weight: 600;
+  border: none; background: transparent; color: var(--text-dim);
+  cursor: pointer; font-family: inherit; transition: all 0.2s;
+  border-right: 1px solid var(--border);
+}
+.mode-btn:last-child { border-right: none; }
+.mode-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.mode-btn.active {
+  background: var(--accent); color: #fff; font-weight: 700;
+}
+
+#ws-outputs { display: none; }
+#ws-results-strip { display: none; }
+.ws-action-row {
+  display: flex; gap: 8px; align-items: center;
+  margin: 7px 0 0; flex-wrap: wrap;
+}
+
+
+/* ═══ Bulk Results ════════════════════════════ */
+.bulk-summary-strip {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  margin: 10px 0; padding: 10px 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; border-top: 2px solid var(--accent);
+}
+.bulk-summary-strip .bs-cell { text-align: center; }
+.bulk-summary-strip .bs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.bulk-summary-strip .bs-val { font-size: 16px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.bulk-results-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.bulk-results-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
+.bulk-results-table th:first-child, .bulk-results-table th:nth-child(2), .bulk-results-table th:nth-child(3) { text-align: left; }
+.bulk-results-table td { padding: 6px 8px; border-bottom: 1px solid rgba(47, 134, 181, 0.4); text-align: right; }
+.bulk-results-table td:first-child, .bulk-results-table td:nth-child(2), .bulk-results-table td:nth-child(3) { text-align: left; }
+.bulk-results-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.bulk-results-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
+
+
+/* ═══ Bulk Drop Zone ══════════════════════════ */
+.bulk-upload-area { margin-top: 0; }
+.bulk-drop-zone {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 40px 20px; text-align: center; cursor: pointer;
+  margin: 16px 0; transition: all 0.25s;
+  background: rgba(47, 134, 181, 0.02);
+}
+.bulk-drop-zone:hover, .bulk-drop-zone.dragover {
+  border-color: var(--accent); background: rgba(47, 134, 181, 0.06);
+}
+.bulk-drop-icon { font-size: 36px; margin-bottom: 8px; }
+.bulk-drop-text { font-size: 14px; font-weight: 600; color: var(--text); }
+.bulk-drop-hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+.bulk-bar-actions { margin-top: 8px; }
+.bulk-results-table { width: 100%; margin-top: 12px; }
+.bulk-results-table th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--accent); padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.bulk-results-table td {
+  padding: 6px 10px; font-size: 12px; border-bottom: 1px solid rgba(47, 134, 181, 0.3);
+}
+
+
+/* ═══ Single Deal FX Results ══════════════════ */
+.fx-single-summary {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  margin: 10px 0; padding: 10px 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; border-top: 2px solid var(--accent);
+}
+.fx-single-summary .ss-cell { text-align: center; }
+.fx-single-summary .ss-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.fx-single-summary .ss-val { font-size: 15px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.fx-single-table-wrap { max-height: 180px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
+.fx-single-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.fx-single-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
+.fx-single-table th:first-child, .fx-single-table th:nth-child(2), .fx-single-table th:nth-child(3) { text-align: left; }
+.fx-single-table td { padding: 6px 8px; border-bottom: 1px solid rgba(47, 134, 181, 0.4); text-align: right; }
+.fx-single-table td:first-child, .fx-single-table td:nth-child(2), .fx-single-table td:nth-child(3) { text-align: left; }
+
+
+/* ── Per-card background targeting ─────────────────── */
+.login-box                              { background: var(--card-login) !important; }
+[data-module="valuation"]               { background: var(--card-valuation) !important; }
+.module-box.disabled:nth-child(2)       { background: var(--card-fixed-income) !important; }
+.module-box.disabled:nth-child(3)       { background: var(--card-correlation) !important; }
+.module-box.disabled:nth-child(4)       { background: var(--card-het) !important; }
+.module-box.disabled:nth-child(5)       { background: var(--card-ecl) !important; }
+.module-box.disabled:nth-child(6)       { background: var(--card-var) !important; }
+.module-box.disabled:nth-child(7)       { background: var(--card-cash) !important; }
+.module-box.disabled:nth-child(8)       { background: var(--card-alm) !important; }
+.field-group[data-group="counterparty"] { background: var(--card-counterparty) !important; }
+.field-group[data-group="economic"]     { background: var(--card-economic) !important; }
+.field-group[data-group="dates"]        { background: var(--card-dates) !important; }
+.field-group[data-group="market_data"]  { background: var(--card-market-data) !important; }
+.fx-single-summary                      { background: var(--card-results) !important; }
+.fx-card[data-inst="fx_forward"]        { background: var(--card-fx-vanilla) !important; }
+.fx-card[data-inst="fx_range_forward"]  { background: var(--card-fx-range) !important; }
+
+/* ── Login screen text colours ─────────────────── */
+
+.login-box .logo-mark {
+  color: #163B5C;
+}
+
+.login-box .logo-sub {
+  color:#163F5F;
+}
+
+.login-box label {
+  color: #163B5C;
+}
+
+/* ── Login button ───────────────────────────── */
+
+.login-btn {
+  background: #ffffff!important;
+  color: #163F5F !important;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+/* ── Login input fields ───────────────────────── */
+
+
+
+/* ── Login input fields (white box, dark text) ── */
+
+
+
+
+.login-box {
+  background: #C7E4F7;
+  border-radius: 48px;
+  box-shadow: 0 0 0 6px green !important;
+}
+
+
+.login-box input {
+  background: #ffffff;
+  color: #163B5C;
+}
+
+
+.login-box .login-btn {
+  background-color: #287CB1;   /* white button */
+  color: #163B5C;              /* black text */
+  border: 1px solid #D8EAF3;   /* optional subtle border */
+
+  padding: 10px 14px;
+  border-radius: 8	px;
+
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+/* ───────── LOGIN FOOTER BAR ───────── */
+
+
+
+
+#logo-home {
+  color: #163B5C;   /* 👈 white text */
+}
+
+#logo-home::first-letter {
+  color: #5AA8D0;   /* 👈 same blue as login */
+}
+
+
+#logo-home {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+#logo-home .optima-text {
+  color: #163B5C;   /* white */
+  font-size: 16px;
+}
+
+#logo-home .optima-mark {
+  color: #5AA8D0;   /* blue */
+}
+
+#logo-home .optima-dot {
+  width: 5px;
+  height: 5px;
+  background: #22c55e;
+  border-radius: 50%;
+  margin-bottom: 3px;
+}
+
+.login-tagline {
+  position: absolute;
+  top: 28%;                 /* 👈 places it above login box */
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  font-style: italic;
+  font-size: 20px;
+  color: #C4DFF1;
+  text-align: center;
+
+  z-index: 10;
+}
+
+
+.login-screen {
+  position: relative;
+}
+
+.module-grid .module-box {
+  background-color: #287CB1 !important;
+}
+
+
+.module-grid .module-box.disabled {
+  background-color: #E9F5FF !important;
+}
+
+#page-modules {
+  background-color: #287CB1;
+}
+
+#page-valuation {
+  background-color: #287CB1;
+}
+
+#page-workspace {
+  background-color: #287CB1;
+}
+
+.module-box .mb-desc {
+  color: #163B5C;   /* 👈 brighter than muted text */
+}
+
+
+.module-box .mb-coming {
+  color: #163B5C;   /* brighter */
+}
+
+#btn-logout {
+  color: #ffffff !important;   /* brighter text */
+  opacity: 1;
+}
+
+
+#page-modules p[style] {
+  color: #163B5C;
+}
+
+.module-box {
+  border: 1px solid #5AA8D0;
+  box-shadow: 0 0 0 1px #5AA8D0;
+}
+
+.val-section-count {
+  color: #163B5C;
+}
+
+.fx-card-sub {
+  color: #163F5F!important;
+}
+
+.login-footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30px;
+
+  background: #22c55e;   /* green accent (matches your dot) */
+  z-index: 999;
+  box-shadow: 0 -2px 10px rgba(79, 138, 118, 0.4);
+  background: linear-gradient(90deg, #22c55e 0%, #5AA8D0 50%, #C7E4F7 100%);}
+  
+  
+  
+ /* ═══ IRS Results ══════════════════════════════ */
+#ws-irs-results { display: none; margin-top: 10px; }
+
+.irs-summary-strip {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+  padding: 10px 14px; margin-bottom: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; border-top: 2px solid var(--accent);
+}
+.irs-ss-cell { text-align: center; }
+.irs-ss-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.irs-ss-val   { font-size: 14px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+.irs-tabs {
+  display: flex; gap: 0; margin-bottom: 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px 8px 0 0; overflow: hidden; width: fit-content;
+}
+.irs-tab {
+  padding: 8px 20px; font-size: 12px; font-weight: 600;
+  border: none; background: transparent; color: var(--text-dim);
+  cursor: pointer; font-family: inherit; transition: all 0.2s;
+  border-right: 1px solid var(--border);
+}
+.irs-tab:last-child { border-right: none; }
+.irs-tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.irs-tab.active { background: var(--accent); color: #fff; }
+
+.irs-table-wrap {
+  max-height: 380px; overflow-y: auto;
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 8px 8px;
+}
+.irs-cf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.irs-cf-table th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-muted); padding: 6px 10px; text-align: left;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+  position: sticky; top: 0;
+}
+
+.irs-cf-table th:nth-child(n+3) { text-align: right; }
+.irs-cf-table td {
+  padding: 6px 10px; border-bottom: 1px solid rgba(47, 134, 181, 0.4);
+  font-size: 12px;
+}
+.irs-cf-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.irs-cf-table tfoot td {
+  background: var(--panel); border-top: 1px solid var(--border);
+  font-size: 12px;
+} 
+/* Larger hero heading and tagline */
+.hero-title,
+.hero-title h1 {
+    font-size: 52px !important;
+    line-height: 1.1 !important;
+}
+
+.hero-description {
+    font-size: 19px !important;
+    line-height: 1.5 !important;
+}
+.hero-title,
+.hero-title h1 {
+    font-size: 64px !important;
+    line-height: 1.05 !important;
+}
+.reference-footer {
+    font-size: 14px !important;
+}
+.reference-deloitte-logo {
+    width: 95px !important;
+    height: auto !important;
+}
+/* =========================================
+   OPTIMA REFERENCE FONT STYLE
+   FONT ONLY — NO LAYOUT/COLOUR CHANGES
+   ========================================= */
+
+body,
+.reference-login-layout,
+.reference-hero,
+.reference-login-card,
+.reference-footer,
+.reference-hero h1,
+.reference-hero .hero-description,
+.feature-item,
+.feature-item strong,
+.feature-item span,
+.login-box,
+.login-box h2,
+.login-box p,
+.login-box label,
+.login-box input,
+.login-box button,
+.login-btn,
+.sso-btn,
+.reference-header,
+.reference-header-controls {
+    font-family: "Inter", "Segoe UI", Arial, sans-serif !important;
+}
+
+/* Main heading */
+.reference-hero h1 {
+    font-weight: 700 !important;
+}
+
+/* Tagline */
+.reference-hero .hero-description {
+    font-weight: 400 !important;
+}
+
+/* Feature headings */
+.feature-item strong {
+    font-weight: 600 !important;
+}
+
+/* Feature descriptions */
+.feature-item span {
+    font-weight: 400 !important;
+}
+
+/* Login heading */
+.login-box h2 {
+    font-weight: 700 !important;
+}
+
+/* Login labels */
+.login-box label {
+    font-weight: 600 !important;
+}
+
+/* Buttons */
+.login-box button,
+.login-btn,
+.sso-btn {
+    font-weight: 600 !important;
+}
+
+/* Footer */
+.reference-footer {
+    font-weight: 400 !important;
+}
+.feature-item strong {
+    white-space: nowrap !important;
+}
+.reference-optima-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 0 !important;
+    background: #287CB1 !important;
+    box-shadow: 0 0 8px #2F86B5, 0 0 16px rgba(47, 134, 181, .8);
+    animation: referenceOptimaDotBlink 1.4s ease-in-out infinite;
+}
+.reference-field label {
+    font-size: 14px !important;
+}
+.reference-lock {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    border: 2px solid #4AA8D0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(47, 134, 181, 0.08) !important;
+    box-shadow:
+        0 0 8px rgba(47, 134, 181, 0.65),
+        inset 0 0 10px rgba(47, 134, 181, 0.12) !important;
+}
+
+.reference-lock svg {
+    width: 24px !important;
+    height: 24px !important;
+    fill: none !important;
+    stroke: #4AA8D0 !important;
+    stroke-width: 2 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+}
+
+.reference-lock svg circle {
+    fill: #4AA8D0 !important;
+    stroke: none !important;
+}
+.reference-input-wrap > span:first-child {
+    font-size: 16px !important;
+    color: #B8CEDE !important;
+    line-height: 1 !important;
+}
+.user-icon {
+    width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+}
+
+.user-head {
+    width: 7px !important;
+    height: 7px !important;
+    background: #B8CEDE !important;
+    border-radius: 50% !important;
+    display: block !important;
+}
+
+.user-body {
+    width: 13px !important;
+    height: 7px !important;
+    background: #B8CEDE !important;
+    border-radius: 7px 7px 2px 2px !important;
+    display: block !important;
+}
+.user-icon {
+    position: relative !important;
+    left: 5px !important;
+}
+.password-icon {
+    width: 18px !important;
+    height: 19px !important;
+    position: relative !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+.lock-shackle {
+    position: absolute !important;
+    width: 8px !important;
+    height: 8px !important;
+    border: 2px solid #B8CEDE !important;
+    border-bottom: none !important;
+    border-radius: 6px 6px 0 0 !important;
+    top: 0 !important;
+    left: 5px !important;
+    box-sizing: border-box !important;
+}
+
+.lock-body {
+    position: absolute !important;
+    width: 13px !important;
+    height: 10px !important;
+    background: #B8CEDE !important;
+    border-radius: 2px !important;
+    top: 7px !important;
+    left: 2.5px !important;
+}
+
+.lock-body::after {
+    content: "" !important;
+    position: absolute !important;
+    width: 2px !important;
+    height: 5px !important;
+    background: #6F8796 !important;
+    left: 5.5px !important;
+    top: 3px !important;
+    border-radius: 2px !important;
+}
+.password-icon {
+    position: relative !important;
+    left: 5px !important;
+}
+.sso-building-icon {
+    width: 17px !important;
+    height: 18px !important;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+    position: relative !important;
+}
+
+.sso-building-icon::before {
+    content: "" !important;
+    width: 15px !important;
+    height: 3px !important;
+    border: 2px solid #4AA8D0 !important;
+    border-bottom: none !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+.sso-building-icon::after {
+    content: "" !important;
+    width: 13px !important;
+    height: 11px !important;
+    border: 2px solid #4AA8D0 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    margin-top: -1px !important;
+}
+
+.sso-building-icon span {
+    position: absolute !important;
+    width: 2px !important;
+    height: 5px !important;
+    background: #4AA8D0 !important;
+    bottom: 3px !important;
+}
+
+.sso-building-icon span:nth-child(1) {
+    left: 4px !important;
+}
+
+.sso-building-icon span:nth-child(2) {
+    left: 8px !important;
+}
+
+.sso-building-icon span:nth-child(3) {
+    left: 12px !important;
+}
+.sso-building {
+    color: #4AA8D0 !important;
+    font-size: 18px !important;
+    filter: grayscale(1) brightness(0) saturate(100%)
+            invert(55%) sepia(99%) saturate(1500%)
+            hue-rotate(165deg) brightness(105%) !important;
+    vertical-align: middle !important;
+}
+.password-toggle {
+    background: transparent !important;
+    border: none !important;
+    color: #B8CEDE !important;
+    font-size: 15px !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.password-toggle,
+.password-toggle::before,
+.password-toggle::after {
+    color: #D8EAF3 !important;
+    border-color: #D8EAF3 !important;
+    opacity: 1 !important;
+}
+.password-toggle {
+    background: none !important;
+    background-image: none !important;
+    color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: relative !important;
+}
+
+.password-toggle::before {
+    content: "" !important;
+    position: absolute !important;
+    width: 15px !important;
+    height: 9px !important;
+    border: 2px solid #D8EAF3 !important;
+    border-radius: 50% !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    box-sizing: border-box !important;
+}
+
+.password-toggle::after {
+    content: "" !important;
+    position: absolute !important;
+    width: 4px !important;
+    height: 4px !important;
+    background: #D8EAF3 !important;
+    border-radius: 50% !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}.password-toggle::before {
+    left: 45% !important;
+}
+
+.password-toggle::after {
+    left: 45% !important;
+}
+.reference-input-wrap input[type="password"] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+#login-user {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+.reference-login-card .reference-login-title-row h2 {
+    font-size: 24px !important;
+}
+
+.reference-login-card .reference-login-title-row p {
+    font-size: 13px !important;
+}
+.reference-demo-note {
+    font-size: 11.5px !important;
+}.reference-input-wrap input {
+    padding-left: 13px !important;
+}
+.sso-bank-icon {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+    fill: none !important;
+    stroke: #4AA8D0 !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    vertical-align: middle !important;
+}
+
+
+.reference-sso-btn .sso-building {
+    position: relative !important;
+    left: -3px !important;
+}
+
+.sso-bank-icon {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+    fill: none !important;
+    stroke: #4AA8D0 !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    top: -2px !important;
+}
+/* --- Refined Password Eye Icon --- */
+.password-toggle {
+    color: #6FC2E5 !important;
+    font-size: 18px !important;
+    opacity: 0.85 !important;
+    cursor: pointer;
+}
+
+.password-toggle svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: currentColor !important;
+    stroke-width: 1.7 !important;
+    fill: none !important;
+}
+
+.password-toggle:hover {
+    color: #5AA8D0 !important;
+    opacity: 1 !important;
+}
+/* Hide browser's native password reveal/clear icons */
+#login-pass::-ms-reveal,
+#login-pass::-ms-clear {
+    display: none !important;
+}
+
+#login-pass {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+/* Professional password visibility icon */
+.password-toggle::before {
+    border-color: #B8CEDE !important;
+    border-width: 1.5px !important;
+    opacity: 0.9 !important;
+}
+
+.password-toggle::after {
+    width: 3px !important;
+    height: 3px !important;
+    background: #B8CEDE !important;
+    opacity: 0.9 !important;
+}
+
+.password-toggle {
+    opacity: 0.9 !important;
+    transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+.password-toggle:hover {
+    opacity: 1 !important;
+}
+/* Refined professional password-eye icon */
+.password-toggle::before {
+    width: 17px !important;
+    height: 10px !important;
+    border: 1.5px solid #B8CEDE !important;
+    border-radius: 50% / 60% !important;
+    left: 43% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    box-shadow: none !important;
+}
+
+.password-toggle::after {
+    width: 4px !important;
+    height: 4px !important;
+    background: #B8CEDE !important;
+    border: 1px solid #6F8796 !important;
+    border-radius: 50% !important;
+    left: 43% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    box-sizing: border-box !important;
+}
+/* Dark professional password eye */
+.password-toggle::before {
+    width: 17px !important;
+    height: 10px !important;
+    border: 1.6px solid #163F5F !important;
+    border-radius: 50% !important;
+    left: 43% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    box-shadow: none !important;
+}
+
+.password-toggle::after {
+    width: 4px !important;
+    height: 4px !important;
+    background: #163F5F !important;
+    border: none !important;
+    border-radius: 50% !important;
+    left: 43% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+/* Soft grey professional password eye */
+.password-toggle::before {
+    border-color: #B8CEDE !important;
+    border-width: 1.6px !important;
+}
+
+.password-toggle::after {
+    background: #B8CEDE !important;
+}
+/* Add space between input icons and placeholder text */
+.user-icon {
+    margin-right: 10px !important;
+}
+
+.password-icon {
+    margin-right: 10px !important;
+}
+/* ── Match module-page header to Sign-in header ── */
+.header-top {
+    height: 80px !important;
+}
+
+/* Match Optima branding size */
+#logo-home .optima-text {
+    font-size: 30px !important;
+}
+/* ── Make module page fill the full viewport ── */
+#page-modules {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: calc(100vh - 80px) !important;
+    margin: 0 !important;
+    padding: 16px 0 !important;
+}
+/* ── Match module-page Optima logo to Sign-in page ── */
+#logo-home .optima-text {
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    letter-spacing: -1.1px !important;
+    color: #163F5F !important;
+    line-height: 1 !important;
+}
+
+/* Match the blue square Optima dot */
+#logo-home .optima-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 0 !important;
+    background: #287CB1 !important;
+    margin: 0 0 4px 2px !important;
+    box-shadow: 0 0 8px #2F86B5, 0 0 16px rgba(47, 134, 181, .8) !important;
+}
+/* ── Make Sign Out text slightly larger ── */
+#btn-logout {
+    font-size: 15px !important;
+}
+/* =========================================================
+   OPTIMA SIGN-IN — REFERENCE COLOR + GLOSS EFFECT ONLY
+   No layout / size / spacing / functionality changes
+   ========================================================= */
+
+
+
+/* Semi-transparent glass navy header */
+#login-screen .reference-login-header {
+    background: rgba(47, 134, 181, 0.35) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid rgba(47, 134, 181, 0.22) !important;
+    box-shadow: 0 2px 18px rgba(47, 134, 181, 0.25) !important;
+}
+
+/* Subtle glossy grid/background illumination */
+#login-screen .login-grid-glow {
+    opacity: 0.7 !important;
+    background-image:
+        linear-gradient(
+            rgba(47, 134, 181, 0.055) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(47, 134, 181, 0.055) 1px,
+            transparent 1px
+        ) !important;
+}
+
+/* Glossy sign-in card */
+#login-screen .reference-login-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(47, 134, 181, 0.94) 0%,
+            rgba(47, 134, 181, 0.96) 48%,
+            rgba(47, 134, 181, 0.98) 100%
+        ) !important;
+
+    border-color: rgba(47, 134, 181, 0.86) !important;
+
+    box-shadow:
+        0 22px 70px rgba(47, 134, 181, 0.58),
+        0 0 30px rgba(47, 134, 181, 0.14),
+        0 0 8px rgba(47, 134, 181, 0.10),
+        inset 0 1px 0 rgba(47, 134, 181, 0.10),
+        inset 0 0 32px rgba(47, 134, 181, 0.08) !important;
+}
+
+/* Input fields — deep glossy navy */
+#login-screen .reference-input-wrap {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(47, 134, 181, 0.96),
+            rgba(47, 134, 181, 0.98)
+        ) !important;
+
+    border-color: #B8CEDE !important;
+
+    box-shadow:
+        inset 0 1px 5px rgba(47, 134, 181, 0.06),
+        inset 0 0 16px rgba(47, 134, 181, 0.30),
+        0 0 0 1px rgba(47, 134, 181, 0.05) !important;
+}
+
+/* Cyan glossy focus glow */
+#login-screen .reference-input-wrap:focus-within {
+    border-color: #4AA8D0 !important;
+
+    box-shadow:
+        0 0 0 2px rgba(47, 134, 181, 0.12),
+        0 0 14px rgba(47, 134, 181, 0.16),
+        inset 0 0 16px rgba(47, 134, 181, 0.12) !important;
+}
+
+/* Bright cyan Sign-in button */
+#login-screen .reference-signin-btn {
+    background:
+        linear-gradient(
+            180deg,
+            #4AA8D0 0%,
+            #3F95C0 45%,
+            #2F86B5 100%
+        ) !important;
+
+    box-shadow:
+        0 5px 24px rgba(47, 134, 181, 0.28),
+        0 0 14px rgba(47, 134, 181, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Glossy SSO button */
+#login-screen .reference-sso-btn {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(47, 134, 181, 0.72),
+            rgba(47, 134, 181, 0.86)
+        ) !important;
+
+    border-color: #3A9CC4 !important;
+
+    box-shadow:
+        0 0 12px rgba(47, 134, 181, 0.08),
+        inset 0 0 16px rgba(47, 134, 181, 0.06) !important;
+}
+
+/* Cyan divider glow */
+#login-screen .reference-or span {
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(47, 134, 181, 0.55),
+            transparent
+        ) !important;
+}
+
+/* Slight cyan glow around feature icons */
+#login-screen .feature-icon {
+    border-color: #4AA8D0 !important;
+
+    box-shadow:
+        inset 0 0 16px rgba(47, 134, 181, 0.10),
+        0 0 15px rgba(47, 134, 181, 0.12) !important;
+}
+
+/* Keep the overall page edges dark/glossy */
+#login-screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+
+    box-shadow:
+        inset 0 0 80px rgba(47, 134, 181, 0.30),
+        inset 0 0 20px rgba(47, 134, 181, 0.08);
+}
+/* =========================================================
+   OPTIMA MODULE PAGE — MATCH SIGN-IN GLOSSY COLOR EFFECT
+   Colors/effects ONLY
+   ========================================================= */
+
+#page-modules {
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(255, 255, 255, 0.035),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 15% 70%,
+            rgba(255, 255, 255, 0.025),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 85% 70%,
+            rgba(255, 255, 255, 0.025),
+            transparent 30%
+        ),
+        linear-gradient(
+            180deg,
+            #2F6B98 0%,
+            #2E6A95 52%,
+            #307199 100%
+        ) !important;
+
+    box-shadow:
+        inset 0 0 80px rgba(47, 134, 181, 0.30),
+        inset 0 0 25px rgba(47, 134, 181, 0.08) !important;
+}
+
+/* Glossy module cards */
+#page-modules .module-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(47, 134, 181, 0.92) 0%,
+            rgba(47, 134, 181, 0.96) 50%,
+            rgba(47, 134, 181, 0.98) 100%
+        ) !important;
+
+    border-color: rgba(47, 134, 181, 0.86) !important;
+
+    box-shadow:
+        0 12px 35px rgba(47, 134, 181, 0.42),
+        0 0 18px rgba(47, 134, 181, 0.10),
+        inset 0 1px 0 rgba(47, 134, 181, 0.10),
+        inset 0 0 25px rgba(47, 134, 181, 0.07) !important;
+}
+
+/* Cyan edge glow on hover — visual only */
+#page-modules .module-card:hover {
+    border-color: #4AA8D0 !important;
+
+    box-shadow:
+        0 14px 40px rgba(47, 134, 181, 0.48),
+        0 0 24px rgba(47, 134, 181, 0.18),
+        inset 0 1px 0 rgba(47, 134, 181, 0.14),
+        inset 0 0 28px rgba(47, 134, 181, 0.09) !important;
+}
+
+/* Subtle glossy header/footer edge lighting */
+#page-modules::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    box-shadow:
+        inset 0 0 70px rgba(47, 134, 181, 0.25),
+        inset 0 0 18px rgba(47, 134, 181, 0.07);
+}
+/* Background animation visual canvas layer disabled */
+#login-screen #login-volsurface {
+    display: none !important;
+}
+/* Temporarily hide Deloitte logo on Sign In page */
+#login-screen img[alt*="Deloitte" i],
+#login-screen img[src*="deloitte" i] {
+    display: none !important;
+}
+#login-screen .hero-description {
+    white-space: nowrap !important;
+}
+#login-screen .hero-description {
+    white-space: nowrap !important;
+    transform: translateY(-20px) !important;
+}
+/* Deloitte logo - top right */
+#login-screen .reference-deloitte {
+    position: absolute !important;
+    top: 24px !important;
+    right: 32px !important;
+    width: 115px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    z-index: 100 !important;
+}
+/* Deloitte logo - force top right */
+#login-screen .reference-deloitte {
+    display: block !important;
+    position: fixed !important;
+    top: 20px !important;
+    right: 30px !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: 115px !important;
+    height: auto !important;
+    max-width: 115px !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+    object-fit: contain !important;
+}
+/* Move heading and tagline slightly down */
+#login-screen .reference-hero h1 {
+    transform: translateY(20px) !important;
+}
+
+#login-screen .hero-description {
+    transform: translateY(20px) !important;
+}
+
+#login-screen .reference-hero h1 {
+    font-size: 52px !important;
+}
+
+/* Move only the tagline slightly upward */
+#login-screen .hero-description {
+    position: relative !important;
+    top: -20px !important;
+}
+
+/* Deloitte logo - top right */
+#login-screen .reference-deloitte {
+    display: block !important;
+    position: fixed !important;
+    top: 20px !important;
+    right: 30px !important;
+    width: 115px !important;
+    height: auto !important;
+    max-width: 115px !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+}
+/* Move heading + tagline slightly down */
+#login-screen .reference-hero h1 {
+    position: relative !important;
+    top: 10px !important;
+}
+
+#login-screen .hero-description {
+    position: relative !important;
+    top: -10px !important;
+    transform: translateY(10px) !important;
+}
+#login-screen .reference-deloitte-text {
+    position: fixed !important;
+    top: 20px !important;
+    right: 30px !important;
+    color: #ffffff !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    z-index: 9999 !important;
+}
+/* Deloitte text + green dot */
+#login-screen .reference-deloitte-text {
+    position: fixed !important;
+    top: 20px !important;
+    right: 30px !important;
+    color: #ffffff !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+#login-screen .deloitte-green-dot {
+    width: 6px !important;
+    height: 6px !important;
+    background: #86BC25 !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+}
+#login-screen .deloitte-green-dot {
+    position: relative !important;
+    top: 7px !important;
+}
+#login-screen .reference-login-card {
+    transform: translateX(30px) !important;
+}
+#login-screen .reference-login-card {
+    width:400px !important;
+    max-width:400px !important;
+}
+#login-screen .reference-login-card {
+    height:500px !important;
+    min-height:500px !important;
+}
+#login-screen .reference-login-card .reference-login-title-row,
+#login-screen .reference-login-card .reference-field,
+#login-screen .reference-login-card .reference-login-actions,
+#login-screen .reference-login-card .reference-demo-note {
+    transform: translate(-10px) !important;
+
+}
+
+.signin-card {
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: 22px 22px 18px 22px !important;
+}
+
+/* Keep all inner elements inside the card */
+.signin-card * {
+  box-sizing: border-box !important;
+}
+
+/* Heading */
+.signin-card h2,
+.signin-card .title {
+  font-size: 17px !important;
+  margin: 0 !important;
+}
+
+/* Description */
+.signin-card p {
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+  margin: 4px 0 0 0 !important;
+}
+
+/* Labels */
+.signin-card label {
+  font-size: 11px !important;
+  margin: 10px 0 4px 0 !important;
+}
+
+/* Inputs */
+.signin-card input {
+  height: 38px !important;
+  font-size: 12px !important;
+  padding: 0 34px !important;
+  margin: 0 !important;
+}
+
+/* Input wrapper */
+.signin-card .input-wrap {
+  margin: 0 !important;
+  height: 38px !important;
+}
+
+/* Login button */
+.signin-card button {
+  height: 40px !important;
+  margin-top: 10px !important;
+  font-size: 13px !important;
+}
+
+/* Divider */
+.signin-card .divider {
+  margin: 10px 0 !important;
+}
+
+/* SSO button */
+.signin-card .sso-btn {
+  height: 38px !important;
+  margin-top: 0 !important;
+}
+
+.signin-card {
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  justify-content: flex-start !important;
+  padding-top: 14px !important;
+  padding-bottom: 12px !important;
+}
+
+/* Header */
+.signin-card h2 {
+  margin-top: 0 !important;
+  margin-bottom: 3px !important;
+  font-size: 17px !important;
+}
+
+.signin-card p {
+  margin-top: 2px !important;
+  margin-bottom: 5px !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+/* User ID / Password fields */
+.signin-card .reference-field {
+  margin-top: 5px !important;
+  margin-bottom: 0 !important;
+}
+.signin-card .reference-field label {
+  display: block !important;
+  margin-top: 0 !important;
+  margin-bottom: 3px !important;
+  font-size: 11px !important;
+}
+
+.signin-card .reference-input-wrap {
+  height: 36px !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+}
+
+.signin-card .reference-input-wrap input {
+  height: 36px !important;
+  min-height: 36px !important;
+  font-size: 12px !important;
+}
+
+/* Error message */
+.signin-card .login-error {
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 2px 0 0 !important;
+  font-size: 10px !important;
+}
+
+/* Sign in button */
+.signin-card .reference-signin-btn {
+  height: 38px !important;
+  min-height: 38px !important;
+  margin-top: 6px !important;
+  font-size: 13px !important;
+}
+
+/* OR divider */
+.signin-card .reference-or {
+  margin: 6px 0 !important;
+  height: 14px !important;
+}
+
+/* SSO */
+.signin-card .reference-sso-btn {
+  height: 36px !important;
+  min-height: 36px !important;
+  margin-top: 0 !important;
+  font-size: 12px !important;
+}
+
+/* Bottom demo text */
+.signin-card .reference-demo-note {
+  margin: 4px 0 0 !important;
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+}
+.signin-card {
+  padding-top: 10px !important;
+  padding-bottom: 18px !important;
+}
+.signin-card {
+  padding-top: 22px !important;
+}
+
+/* Move the content group upward */
+.signin-card > div:first-child {
+  margin-top: -12px !important;
+  transform: translateY(-12px) !important;
+}
+
+/* Keep the fields/buttons following it in the same upward position */
+.signin-card > .reference-field,
+.signin-card > .login-error,
+.signin-card > .reference-signin-btn,
+.signin-card > .reference-or,
+.signin-card > .reference-sso-btn,
+.signin-card > .reference-demo-note {
+  transform: translateY(-12px) !important;
+}
+.signin-card > * {
+  position: relative !important;
+  top: -22px !important;
+}
+.signin-card {
+  overflow: hidden !important;
+}
+
+/* Move ONLY the login content upward */
+.signin-card h2,
+.signin-card p,
+.signin-card .reference-field,
+.signin-card .login-error,
+.signin-card .reference-signin-btn,
+.signin-card .reference-or,
+.signin-card .reference-sso-btn,
+.signin-card .reference-demo-note {
+  position: relative !important;
+  top: -20px !important;
+}
+/* Move only the Sign In contents upward */
+#login-screen .reference-login-card .reference-login-title-row,
+#login-screen .reference-login-card .reference-field,
+#login-screen .reference-login-card .reference-login-actions,
+#login-screen .reference-login-card .reference-demo-note {
+    transform: translateY(-35px) !important;
+}
+
+/* Move only lower Sign In contents slightly upward */
+#login-screen .reference-login-card .reference-login-actions,
+#login-screen .reference-login-card .reference-demo-note {
+    transform: translateY(-10px) !important;
+}
+/* Move only bottom section slightly up */
+#login-screen .reference-login-actions,
+#login-screen .reference-demo-note {
+    transform: translateY(-10px) !important;
+}
+
+/* Fix only the bottom Sign In section */
+#login-screen .reference-login-card .reference-login-actions,
+#login-screen .reference-login-card .reference-demo-note {
+    position: relative !important;
+    top: -50px !important;
+    transform: none !important;
+}
+
+#login-screen .reference-login-card .reference-login-actions {
+    position: relative !important;
+    top: -35px !important;
+    transform: none !important;
+}
+
+/* Move Sign in + OR + SSO upward */
+#login-screen .reference-login-card .reference-login-actions {
+    position: relative !important;
+    top: -20px !important;
+    margin-top: -20px !important;
+}
+
+/* Move only Sign in + OR + SSO upward */
+#login-screen .reference-login-actions {
+    position: relative !important;
+    top: -10px !important;
+}
+
+/* Move ONLY Sign in + OR + SSO upward */
+#login-screen .reference-sso-btn {
+    position: relative !important;
+    top: -15px !important;
+}
+
+#login-screen .reference-login-card .reference-login-actions button:first-child {
+    position: relative !important;
+    top: -15px !important;
+}
+
+#login-screen .reference-login-card .reference-login-actions .or,
+#login-screen .reference-login-card .reference-login-actions span {
+    position: relative !important;
+    top: -15px !important;
+}
+/* Move Sign in + OR + SSO a little more upward */
+#login-screen .reference-sso-btn {
+    top: -20px !important;
+}
+
+#login-screen .reference-login-card .reference-login-actions button:first-child {
+    top: -20px !important;
+}
+
+#login-screen .reference-login-card .reference-login-actions .or,
+#login-screen .reference-login-card .reference-login-actions span {
+    top: -20px !important;
+}
+/* Move Sign in + OR + SSO together */
+#login-screen .reference-signin-btn,
+#login-screen .reference-or,
+#login-screen .reference-sso-btn {
+    position: relative !important;
+    top: -20px !important;
+}
+/* Move Sign in + OR + SSO a little more up */
+#login-screen .reference-signin-btn,
+#login-screen .reference-or,
+#login-screen .reference-sso-btn {
+    top: -42px !important;
+}
+
+/* Move only Sign in heading + description slightly down */
+#login-screen .reference-login-title-row {
+    position: relative !important;
+    top: 10px !important;
+}
+/* Move the entire Sign In box slightly right */
+#login-screen .reference-login-card {
+    transform: translateX(120px) !important;
+}
+/* Move only the Sign In box slightly down */
+#login-screen .reference-login-card {
+    position: relative !important;
+    top: 10px !important;
+}
+
+/* Move only the feature row to the right */
+#login-screen .feature-row {
+    position: relative !important;
+    left: 50px !important;
+}
+/* Move only the 3 feature fields slightly down */
+#login-screen .feature-row {
+    position: relative !important;
+    top: 20px !important;
+}
+/* Reduce the vibrant/glowing look of Optima in the main header */
+#app-header .logo .optima-text {
+    font-weight: 500 !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 0.9 !important;
+}
+
+#app-header .logo .optima-dot {
+    box-shadow: none !important;
+}
+
+/* Increase ONLY the Sign-in box size */
+#login-screen .reference-login-card {
+    width: 420px !important;
+    max-width: 420px !important;
+    height: 540px !important;
+    min-height: 540px !important;
+}
+
+#login-screen .reference-login-card {
+    transform: translateX(70px) !important;
+}
+
+
+
+/* Force header Optima to match login screen */
+
+#logo-home .optima-text {
+    font-size: 56px !important;
+    font-weight: 900 !important;
+    font-family: "Segoe UI", Arial, sans-serif !important;
+    color: #ffffff !important;
+    letter-spacing: -2px !important;
+    line-height: 1 !important;
+    text-shadow: 0 0 1px rgba(255,255,255,.3);
+}
+
+#logo-home .optima-dot {
+    width: 10px !important;
+    height: 10px !important;
+    margin-left: 6px !important;
+    background: #287CB1 !important;
+    display: inline-block !important;
+}
+/* Header Optima - match login screen style */
+
+#logo-home .optima-text {
+    font-family: "Segoe UI Black", "Arial Black", sans-serif !important;
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    letter-spacing: -2px !important;
+    line-height: 1 !important;
+    text-rendering: geometricPrecision;
+}
+
+#logo-home .optima-dot {
+    width: 5px !important;
+    height: 5px !important;
+    margin-left: 1px !important;
+}
+/* Match welcome-page header height to login page */
+
+#app-header {
+    height: 61px !important;
+    min-height: 61px !important;
+    padding: 0 !important;
+    border-bottom: 1px solid rgba(47, 134, 181, 0.35) !important;
+}
+
+#app-header .header-top {
+    height: 88px !important;
+    padding: 0 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+/* Move Optima logo and Sign Out button slightly up */
+
+#app-header .header-top {
+    align-items: flex-start !important;
+    padding-top: 6px !important;
+}
+
+#logo-home {
+    margin-top: -3px !important;
+}
+
+#btn-logout {
+    margin-top: -3px !important;
+}
+/* Move logo and signout slightly DOWN */
+
+#logo-home {
+    margin-top: 6px !important;
+}
+
+#btn-logout {
+    margin-top: 6px !important;
+}
+#logo-home,
+#btn-logout {
+    transform: translateY(5px);
+}
+/* Move breadcrumb and Back button down */
+#app-header .breadcrumb,
+#btn-go-back {
+    transform: translateY(7px);
+}
+#btn-go-back {
+    position: relative !important;
+    top: 7px !important;
+}
+/* Bigger Back button + arrow */
+#btn-go-back{
+    font-size: 15px !important;
+    padding: 6px 16px !important;
+    min-height: 38px !important;
+}
+
+#btn-go-back::first-letter{
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+/* Back button white text */
+#btn-go-back{
+    color: #ffffff !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+#btn-go-back:hover{
+    color: #ffffff !important;
+}
+/* Move breadcrumb and Back button slightly up */
+#app-header .breadcrumb,
+#btn-go-back{
+    position: relative !important;
+    top: 3px !important;
+}#app-header .breadcrumb{
+    position: relative !important;
+    top: 8px !important;   /* was 16px */
+}
+
+#app-header .breadcrumb .bc-link,
+#app-header .breadcrumb .bc-current,
+#app-header .breadcrumb .sep{
+    font-size: 18px !important;
+}
+/* Create gap between header and Sign In box */
+#login-screen .reference-login-card {
+    width: 400px !important;
+    max-width: 400px !important;
+    height: 500px !important;
+    min-height: 500px !important;
+
+    position: relative !important;
+    top: 20px !important;   /* moves card down */
+}
+/* Move Sign In box right */
+#login-screen .reference-login-card{
+    margin-left: -20px !important;
+}
+/* Move Sign In box slightly up */
+#login-screen .reference-login-card{
+    position: relative !important;
+    top: 5px !important;
+}
+/* Enable all modules */
+.module-box {
+    opacity: 1 !important;
+    filter: none !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Show Coming Soon badges */
+.module-box .mb-coming {
+    display: inline-block !important;
+}
+/***** ONLY VALUATION + HET ACTIVE *****/
+
+/* Disable all modules */
+.module-box {
+    opacity: 0.25 !important;
+    filter: grayscale(100%) !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}
+
+/* Enable Valuation */
+.module-box[data-module="valuation"] {
+    opacity: 1 !important;
+    filter: none !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Enable HET (4th card) */
+.module-grid .module-box:nth-child(4) {
+    opacity: 1 !important;
+    filter: none !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Remove Coming Soon from HET */
+.module-grid .module-box:nth-child(4) .mb-coming {
+    display: none !important;
+}
+/***** Match Valuation page background to Home page *****/
+
+#page-valuation {
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(255, 255, 255, 0.035),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 15% 70%,
+            rgba(255, 255, 255, 0.025),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 85% 70%,
+            rgba(255, 255, 255, 0.025),
+            transparent 30%
+        ),
+        linear-gradient(
+            180deg,
+            #2F6B98 0%,
+            #2E6A95 52%,
+            #307199 100%
+        ) !important;
+        /* Make Valuation page fill remaining screen with blue background */
+#page-valuation{
+    min-height: calc(100vh - 88px) !important;
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(47, 134, 181, .12),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 15% 70%,
+            rgba(47, 134, 181, .07),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 85% 70%,
+            rgba(47, 134, 181, .08),
+            transparent 30%
+        ),
+        linear-gradient(
+            180deg,
+            #2F6B98 0%,
+            #2E6A95 52%,
+            #307199 100%
+        ) !important;
+}
+
+/* Remove black gap below page */
+body{
+    background: linear-gradient(180deg,#2F6B98 0%,#2E6A95 52%,#307199 100%) !important;
+}
+}
+/* Remove black area below valuation content */
+html,
+body,
+#app-shell,
+.page,
+#page-valuation,
+.val-sections{
+    background: transparent !important;
+}
+
+#page-valuation{
+    min-height: calc(100vh - 88px) !important;
+    background:
+        radial-gradient(circle at 50% 35%, rgba(255,255,255,.035), transparent 32%),
+        radial-gradient(circle at 15% 70%, rgba(255,255,255,.025), transparent 28%),
+        radial-gradient(circle at 85% 70%, rgba(255,255,255,.025), transparent 30%),
+        linear-gradient(180deg,#2F6B98 0%,#2E6A95 52%,#307199 100%) !important;
+}
+/* Remove white strip below valuation page */
+html,
+body,
+#app-shell,
+.page,
+#page-valuation {
+    background-color: #2F6B98 !important;
+}
+
+#page-valuation {
+    background:
+        radial-gradient(circle at 50% 35%, rgba(255,255,255,.035), transparent 32%),
+        radial-gradient(circle at 15% 70%, rgba(255,255,255,.025), transparent 28%),
+        radial-gradient(circle at 85% 70%, rgba(255,255,255,.025), transparent 30%),
+        linear-gradient(
+            180deg,
+            #2F6B98 0%,
+            #2E6A95 52%,
+            #307199 100%
+        ) !important;
+}
+/* Match area below valuation page to Optima blue theme */
+html,
+body,
+#app-shell {
+    background:
+        radial-gradient(circle at 50% 35%, rgba(255,255,255,.035), transparent 32%),
+        radial-gradient(circle at 15% 70%, rgba(255,255,255,.025), transparent 28%),
+        radial-gradient(circle at 85% 70%, rgba(255,255,255,.025), transparent 30%),
+        linear-gradient(
+            180deg,
+            #2F6B98 0%,
+            #2E6A95 52%,
+            #307199 100%
+        ) !important;
+}
+
+/* Make IRS/Rates section same layout as FX */
+#page-valuation .fx-cat-grid{
+    display:grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap:16px !important;
+    align-items:start !important;
+}
+
+#page-valuation .fx-cat-grid .fx-cat-col{
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+/* Clickable breadcrumb */
+#app-header .bc-link,
+#app-header .bc-link:hover,
+#bc-home,
+#bc-module,
+#bc-asset {
+    cursor: pointer !important;
+}
+
+#bc-home:hover,
+#bc-module:hover,
+#bc-asset:hover {
+    color: #5AA8D0 !important;
+    text-decoration: none !important;
+}
+/* ===== VALUATION PAGE - FULLER LAYOUT ===== */
+
+.val-sections{
+    max-width: 1450px !important;
+    width: 96% !important;
+    margin: 0 auto !important;
+    padding: 24px 32px !important;
+}
+
+/* Category columns */
+.fx-cat-col{
+    min-height: 320px !important;
+    border-radius: 12px !important;
+}
+
+/* Category headers */
+.fx-cat-header{
+    font-size: 14px !important;
+    padding: 14px 18px !important;
+    font-weight: 700 !important;
+}
+
+/* Instrument cards */
+.fx-card{
+    padding: 16px 18px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    min-height: 72px !important;
+}
+
+/* Instrument descriptions */
+.fx-card-sub{
+    font-size: 12px !important;
+    margin-top: 5px !important;
+    line-height: 1.4 !important;
+}
+
+/* Section headers */
+.val-section-name{
+    font-size: 18px !important;
+    font-weight: 700 !important;
+}
+
+.val-section-count{
+    font-size: 13px !important;
+}
+
+/* More breathing space */
+.fx-categories,
+.fx-cat-grid,
+.inst-grid{
+    gap: 20px !important;
+}
+
+/* Better spacing for Price / Clear row */
+.ws-action-row {
+    margin-top: 24px !important;
+    margin-bottom: 16px !important;
+}
+
+#btn-price,
+#btn-clear {
+    height: 48px !important;
+    min-width: 120px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+/* Move Price/Clear below Model & Engine */
+#ws-single-mode{
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#ws-action-row{
+    order: 999 !important;
+    margin-top: 16px !important;
+    margin-bottom: 12px !important;
+}
+
+#ws-engine-card{
+    order: 998 !important;
+}
+
+/* =========================================================
+   FINAL LIGHT BLUE + WHITE OVERRIDE
+   Inputs/buttons must stay blue; card/background stays light.
+   This block intentionally comes last so older dark-theme rules
+   cannot override the requested Light Blue + White palette.
+   ========================================================= */
+#login-screen .reference-login-card {
+  background: #ffffff !important;
+  color: #163F5F !important;
+  border: 1px solid #d8eaf3 !important;
+  box-shadow: 0 16px 40px rgba(47, 134, 181, .18) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+#login-screen .reference-input-wrap,
+#login-screen .reference-input-wrap:focus-within {
+  background: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid #9FD4E8 !important;
+  box-shadow: none !important;
+}
+
+#login-screen .reference-input-wrap input,
+#login-screen .reference-input-wrap input:focus {
+  background: transparent !important;
+  color: #163F5F !important;
+  -webkit-text-fill-color: #163F5F !important;
+}
+
+#login-screen .reference-input-wrap input::placeholder {
+  background: transparent !important;
+  color: #6f8796 !important;
+  -webkit-text-fill-color: #6f8796 !important;
+  opacity: 1 !important;
+}
+
+#login-screen .reference-input-wrap > span,
+#login-screen .reference-input-wrap .password-toggle,
+#login-screen .reference-input-wrap button {
+  color: #2F86B5 !important;
+}
+
+#login-screen .reference-signin-btn,
+#login-screen .reference-sso-btn,
+#login-screen .reference-signin-btn:hover,
+#login-screen .reference-sso-btn:hover {
+  background: #287CB1 !important;
+  background-image: none !important;
+  border-color: #2F86B5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(47, 134, 181, .20) !important;
+}
+
+
+/* Targeted fix: selected FX Vanilla Forward and Range Forward cards use the same blue fill as IRS selection. */
+.fx-card[data-inst="fx_forward"].fx-forward-selected,
+.fx-card[data-inst="fx_range_forward"].fx-forward-selected {
+  background: var(--card-hover, rgba(47, 134, 181, 0.22)) !important;
+  color: var(--accent, #2f86b5) !important;
+  box-shadow: inset 0 0 0 1px var(--accent, #2f86b5);
+}
+.fx-card[data-inst="fx_forward"].fx-forward-selected .fx-card-sub,
+.fx-card[data-inst="fx_range_forward"].fx-forward-selected .fx-card-sub {
+  color: inherit !important;
+}
+
+
+/* ============================================================
+   REFERENCE IMAGE COLOR FIX — sign-in actions + home text only
+   Preserve all geometry, structure, and behavior.
+   ============================================================ */
+#login-screen .reference-signin-btn,
+#login-screen .reference-sso-btn,
+#login-screen .reference-signin-btn:visited,
+#login-screen .reference-sso-btn:visited {
+  background: linear-gradient(105deg, #174F75 0%, #2F7FB3 100%) !important;
+  background-color: #216A98 !important;
+  background-image: linear-gradient(105deg, #174F75 0%, #2F7FB3 100%) !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  border: 1px solid #75BDE5 !important;
+  box-shadow: 0 6px 18px rgba(17, 67, 101, 0.24) !important;
+}
+#login-screen .reference-signin-btn:hover,
+#login-screen .reference-sso-btn:hover,
+#login-screen .reference-signin-btn:focus-visible,
+#login-screen .reference-sso-btn:focus-visible {
+  background: linear-gradient(105deg, #123F60 0%, #246D9C 100%) !important;
+  background-color: #174F75 !important;
+  background-image: linear-gradient(105deg, #123F60 0%, #246D9C 100%) !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  border-color: #A5D9F4 !important;
+}
+#login-screen .reference-signin-btn:active,
+#login-screen .reference-sso-btn:active {
+  background: #123F60 !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+#login-screen .reference-signin-btn:disabled,
+#login-screen .reference-sso-btn:disabled {
+  background: #6F9DB9 !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  border-color: #A8C8DB !important;
+}
+
+/* Reference home/login hero: white copy with a light-blue emphasis. */
+#login-screen .reference-hero h1 {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+#login-screen .reference-hero h1 span {
+  color: #B7E5FA !important;
+  -webkit-text-fill-color: #B7E5FA !important;
+}
+#login-screen .reference-hero p,
+#login-screen .reference-hero .hero-description,
+#login-screen .reference-hero .feature-item span,
+#login-screen .reference-hero .hero-subtitle {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+#login-screen .reference-hero .feature-item strong,
+#login-screen .reference-hero .eyebrow,
+#login-screen .reference-hero .hero-kicker {
+  color: #C6EBFC !important;
+  -webkit-text-fill-color: #C6EBFC !important;
+}
+#login-screen .reference-hero .hero-badge,
+#login-screen .reference-hero .eyebrow {
+  border-color: rgba(183, 229, 250, 0.62) !important;
+}
+
+/* Home/module cards are white in the reference, so use legible navy text. */
+#page-modules .module-box .mb-label,
+#app-shell.home-page .module-box .mb-label,
+.module-grid .module-box .mb-label {
+  color: #163F5F !important;
+  -webkit-text-fill-color: #163F5F !important;
+}
+#page-modules .module-box .mb-desc,
+#app-shell.home-page .module-box .mb-desc,
+.module-grid .module-box .mb-desc {
+  color: #426F8B !important;
+  -webkit-text-fill-color: #426F8B !important;
+}
+#page-modules .module-box .mb-coming,
+#app-shell.home-page .module-box .mb-coming,
+.module-grid .module-box .mb-coming {
+  color: #2F6B98 !important;
+  border-color: #9BC9E2 !important;
+}
+.module-grid .module-box:hover .mb-label,
+#page-modules .module-box:hover .mb-label,
+#app-shell.home-page .module-box:hover .mb-label {
+  color: #1C6F9F !important;
+  -webkit-text-fill-color: #1C6F9F !important;
+}
+/* Keep home-page secondary text readable against the medium-blue canvas. */
+#page-modules > p,
+#page-modules .page-subtitle,
+#app-shell.home-page .page-subtitle,
+#app-shell.home-page .home-description {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   VALUATION — STACKED ROWS (asset class list → instrument page)
+   Level 1: #vs-list (one row per asset class)
+   Level 2: .vs-detail (instruments for one asset class)
+   Instrument cards keep .fx-card / .inst-card so existing click
+   handlers, data-inst / data-label / data-preset still work.
+   ═══════════════════════════════════════════════════════════════ */
+#page-valuation .val-sections { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+
+.vs-title { display: flex; align-items: center; gap: 14px; margin: 0 0 6px; color: #fff; }
+.vs-t1 { font-size: 30px; font-weight: 700; }
+.vs-div { width: 1px; height: 22px; background: rgba(255,255,255,.55); }
+.vs-t2 { font-size: 16px; font-weight: 400; color: #d6ecf8; }
+.vs-sub { margin: 0 0 20px; color: #d6ecf8; font-size: 13.5px; }
+
+/* Level 1 — stacked rows */
+.vs-rows { display: flex; flex-direction: column; gap: 10px; }
+.vs-row {
+  display: flex; align-items: center; gap: 20px; width: 100%; text-align: left;
+  background: #fff; border: 1px solid var(--border); border-radius: 6px;
+  padding: 16px 22px; cursor: pointer; font-family: inherit; color: var(--text);
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.vs-row:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(15,58,90,.22); transform: translateY(-1px); }
+.vs-ini {
+  width: 48px; height: 48px; flex: none; display: grid; place-items: center;
+  border: 1px solid #b9cfe0; background: #e8f1f8; color: #0f3a5a;
+  border-radius: 4px; font-size: 14px; font-weight: 700;
+}
+.vs-ini.sm { width: 34px; height: 34px; font-size: 11px; }
+.vs-main { flex: 1; min-width: 0; }
+.vs-main b { display: block; font-size: 16px; font-weight: 600; }
+.vs-main span { color: var(--text-muted); font-size: 13px; }
+.vs-side {
+  width: 430px; flex: none; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  border-left: 1px solid var(--border); padding-left: 22px; color: var(--text-muted); font-size: 12px;
+}
+.vs-side b { color: var(--accent); font-weight: 600; white-space: nowrap; }
+.vs-row:hover .vs-side b { text-decoration: underline; }
+
+/* Level 2 — instruments */
+.vs-back { background: none; border: 0; color: #fff; cursor: pointer; padding: 0; margin-bottom: 12px; font-size: 13px; font-family: inherit; opacity: .9; }
+.vs-back:hover { opacity: 1; text-decoration: underline; }
+.vs-switch { display: flex; gap: 22px; border-bottom: 1px solid rgba(255,255,255,.3); margin: 4px 0 22px; overflow-x: auto; }
+.vs-switch a { padding: 8px 0; color: #cfe6f5; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; font-size: 13px; }
+.vs-switch a:hover { color: #fff; }
+.vs-switch a.on { color: #fff; font-weight: 600; border-color: #fff; }
+.vs-gl { display: flex; align-items: center; gap: 10px; margin: 20px 0 10px; color: #d6ecf8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
+.vs-gl::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.3); }
+.vs-detail .vs-title + .vs-sub + .vs-switch + .vs-tiles { margin-top: 0; }
+.vs-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.vs-detail .vs-tiles .fx-card,
+.vs-detail .vs-tiles .inst-card {
+  display: flex; gap: 12px; align-items: flex-start; text-align: left; text-decoration: none;
+  background: #fff !important; color: var(--text) !important; cursor: pointer;
+  border: 1px solid var(--border) !important; border-radius: 6px; padding: 12px 14px;
+  box-shadow: none; transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.vs-detail .vs-tiles .fx-card:hover,
+.vs-detail .vs-tiles .inst-card:hover { border-color: var(--accent) !important; box-shadow: 0 3px 12px rgba(15,58,90,.2); transform: translateY(-1px); }
+.vs-txt { display: flex; flex-direction: column; min-width: 0; }
+.vs-txt b { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.vs-txt .fx-card-sub, .vs-txt .ic-desc { margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--text-muted); }
+/* neutralise the old "selected" blue fill — the page navigates away on click */
+.vs-detail .fx-card.fx-forward-selected { background: #fff !important; color: var(--text) !important; box-shadow: none !important; }
+
+@media (max-width: 900px) {
+  .vs-row { flex-wrap: wrap; }
+  .vs-side { width: 100%; border-left: 0; padding: 10px 0 0; border-top: 1px solid var(--border); }
+}
+
+/* Valuation instrument tiles — tighten spacing (overrides older global card rules) */
+.vs-detail .vs-tiles .fx-card,
+.vs-detail .vs-tiles .inst-card { line-height: 1.35 !important; padding: 12px 14px !important; align-items: center !important; }
+.vs-detail .vs-txt .fx-card-sub,
+.vs-detail .vs-txt .ic-desc { margin-top: 2px !important; line-height: 1.3 !important; }
+
+/* Select Instrument page heading: balanced sizes, baseline-aligned */
+.vs-title:has(.vs-t2) { margin-bottom: 20px; align-items: baseline; gap: 16px; }
+.vs-title:has(.vs-t2) .vs-t1 { font-size: 32px; font-weight: 700; line-height: 1.1; letter-spacing: -.2px; }
+.vs-title:has(.vs-t2) .vs-div { height: 20px; align-self: center; transform: translateY(2px); }
+.vs-title:has(.vs-t2) .vs-t2 { font-size: 19px; font-weight: 400; line-height: 1.1; }
+
+/* Select Instrument page: compact so it fits laptop screens without scrolling */
+#page-valuation .val-sections { padding-top: 20px; padding-bottom: 24px; }
+.vs-title:has(.vs-t2) { margin-bottom: 14px; }
+.vs-rows { gap: 10px; }
+.vs-row { padding: 14px 22px; }
+.vs-ini { width: 46px; height: 46px; }
+
+/* ================================================================
+   Valuation page refinements — requested UI-only adjustments
+   ================================================================ */
+/* Point 1: matching white, bold, single-line page heading */
+#page-valuation .vs-title:has(.vs-t2) {
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+  line-height: 1.1 !important;
+}
+#page-valuation .vs-title:has(.vs-t2) .vs-t1,
+#page-valuation .vs-title:has(.vs-t2) .vs-t2 {
+  color: #fff !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap;
+}
+#page-valuation .vs-title:has(.vs-t2) .vs-div {
+  display: inline-block !important;
+  width: 1px !important;
+  min-width: 1px !important;
+  height: 24px !important;
+  background: rgba(255,255,255,.9) !important;
+  transform: none !important;
+  align-self: center !important;
+}
+/* Point 2: slightly larger category and instrument text; preserve dimensions/layout */
+#page-valuation .vs-row .vs-main b { font-size: 18px !important; }
+#page-valuation .vs-row .vs-main span { font-size: 14px !important; }
+#page-valuation .vs-row .vs-side { font-size: 13px !important; border-left-width: 2px !important; border-left-color: rgba(76,157,211,.55) !important; }
+#page-valuation .vs-row .vs-side b { font-size: 14px !important; }
+#page-valuation .vs-detail .vs-tiles .vs-txt > b,
+#page-valuation .vs-detail .vs-tiles .vs-txt b { font-size: 15px !important; }
+#page-valuation .vs-detail .vs-tiles .fx-card-sub,
+#page-valuation .vs-detail .vs-tiles .ic-desc { font-size: 13px !important; }
+#page-valuation .vs-detail .vs-gl { font-size: 12px !important; }
+/* Point 3: restrained blue hover/focus/pressed effect, inspired by Welcome tiles */
+#page-valuation .vs-row,
+#page-valuation .vs-detail .vs-tiles .fx-card,
+#page-valuation .vs-detail .vs-tiles .inst-card {
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease !important;
+}
+#page-valuation .vs-row:hover,
+#page-valuation .vs-row:focus-visible,
+#page-valuation .vs-detail .vs-tiles .fx-card:hover,
+#page-valuation .vs-detail .vs-tiles .fx-card:focus-visible,
+#page-valuation .vs-detail .vs-tiles .inst-card:hover,
+#page-valuation .vs-detail .vs-tiles .inst-card:focus-visible {
+  background: #eaf5fc !important;
+  border-color: rgba(53,153,211,.78) !important;
+  box-shadow: 0 4px 14px rgba(24,112,169,.16), inset 0 0 0 1px rgba(83,177,224,.12) !important;
+  transform: translateY(-1px);
+  outline: none;
+}
+#page-valuation .vs-row:active,
+#page-valuation .vs-detail .vs-tiles .fx-card:active,
+#page-valuation .vs-detail .vs-tiles .inst-card:active {
+  background: #dfeffc !important;
+  box-shadow: 0 2px 7px rgba(24,112,169,.13) !important;
+  transform: translateY(0);
+}
+/* Point 4: gentle blue-tinted tab/card surfaces inspired by login input fields */
+#page-valuation .vs-row {
+  background: linear-gradient(135deg, #f7fbff 0%, #edf7fd 100%) !important;
+  border-color: #c5ddeb !important;
+}
+#page-valuation .vs-detail .vs-tiles .fx-card,
+#page-valuation .vs-detail .vs-tiles .inst-card {
+  background: linear-gradient(135deg, #f8fcff 0%, #edf7fd 100%) !important;
+  border-color: #c5ddeb !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 3px rgba(33,103,146,.06) !important;
+}
+@media (max-width: 600px) {
+  #page-valuation .vs-title:has(.vs-t2) { gap: 8px !important; }
+  #page-valuation .vs-title:has(.vs-t2) .vs-t1,
+  #page-valuation .vs-title:has(.vs-t2) .vs-t2 { font-size: 20px !important; }
+}
+
+/* Valuation page: show the pale-blue card fill before any click.
+   Use the Optima header navy for a clearly visible border against the blue page background. */
+#page-valuation .vs-row:not(:hover):not(:active),
+#page-valuation .vs-detail .vs-tiles .fx-card:not(:hover):not(:active):not(:focus-visible),
+#page-valuation .vs-detail .vs-tiles .inst-card:not(:hover):not(:active):not(:focus-visible) {
+  background: #F3F9FC !important;
+  background-color: #F3F9FC !important;
+  border: 1px solid #143B5C !important;
+  border-color: #143B5C !important;
+  box-shadow: none;
+}
+
+/* Latest requested refinement: lift the Valuation / Select Instrument heading slightly.
+   Keep the card surfaces light blue from the first render, matching the Welcome page tiles. */
+#page-valuation .vs-title:has(.vs-t2) {
+  transform: translateY(-5px) !important;
+}
+#page-valuation .vs-row:not(:hover):not(:active),
+#page-valuation .vs-detail .vs-tiles .fx-card:not(:hover):not(:active):not(:focus-visible),
+#page-valuation .vs-detail .vs-tiles .inst-card:not(:hover):not(:active):not(:focus-visible) {
+  background: #B9E4F7 !important;
+  background-color: #B9E4F7 !important;
+  background-image: none !important;
+  border: 1px solid #143B5C !important;
+  border-color: #143B5C !important;
+  box-shadow: 0 2px 5px rgba(13, 56, 88, .08) !important;
+}
+

@@ -1,1022 +1,921 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Optima — Derivatives Valuation Platform</title>
-<style>
-:root {
-  --bg: #0a0f1a;
-  --panel: #0f1629;
-  --card: #151d30;
-  --card-hover: #1a2540;
-  --border: #1e2d4a;
-  --border-accent: #2e4a7a;
-  --text: #e2e8f0;
-  --text-muted: #64748b;
-  --text-dim: #475569;
-  --accent: #0ea5e9;
-  --accent-glow: rgba(14,165,233,0.15);
-  --green: #10b981;
-  --red: #ef4444;
-  --blue: #3b82f6;
-  --purple: #8b5cf6;
-  --cyan: #06b6d4;
-  --eq-badge: #3b82f6;
-  --rates-badge: #0ea5e9;
-  --credit-badge: #ef4444;
-  --fx-badge: #8b5cf6;
-  --cmdty-badge: #10b981;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg); color: var(--text);
-  font: 13.5px/1.5 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  min-height: 100vh;
-}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Optima</title>
 
-/* ═══ Header ═══════════════════════════════════ */
-header {
-  position: sticky; top: 0; z-index: 100;
-  background: linear-gradient(180deg, var(--panel) 0%, rgba(15,22,41,0.95) 100%);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-}
-.header-top {
-  display: flex; align-items: center; height: 48px; padding: 0 24px;
-}
-.logo {
-  font-size: 17px; font-weight: 700; color: var(--accent);
-  letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;
-  cursor: pointer;
-}
-.logo span { color: var(--text-muted); font-weight: 400; font-size: 12px; }
-.breadcrumb {
-  margin-left: 20px; display: flex; align-items: center; gap: 6px;
-  font-size: 13px; color: var(--text-muted);
-}
-.breadcrumb .sep { color: var(--text-dim); }
-.breadcrumb .bc-link { color: var(--text-muted); cursor: pointer; text-decoration: none; }
-.breadcrumb .bc-link:hover { color: var(--text); }
-.breadcrumb .bc-current { color: var(--text); font-weight: 600; }
-.header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.status-pill {
-  font-size: 11px; padding: 4px 10px; border-radius: 20px;
-  border: 1px solid var(--border); color: var(--text-muted); background: var(--card);
-}
-.status-pill.ok { border-color: var(--green); color: var(--green); }
-.btn-back {
-  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
-  background: var(--card); color: var(--text-muted); font-size: 12px;
-  cursor: pointer; transition: all 0.15s;
-}
-.btn-back:hover { background: var(--card-hover); color: var(--text); }
-
-/* ═══ Module Tab Bar ═══════════════════════════ */
-.mod-tabs {
-  display: flex; gap: 0; padding: 0 24px;
-  border-top: 1px solid var(--border);
-  overflow-x: auto;
-}
-.mod-tab {
-  padding: 10px 18px; font-size: 12px; font-weight: 500;
-  color: var(--text-muted); cursor: pointer; white-space: nowrap;
-  border-bottom: 2px solid transparent; transition: all 0.15s;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.mod-tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
-.mod-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
-
-/* ═══ Layout ═══════════════════════════════════ */
-.page { display: none; padding: 16px; max-width: 1360px; margin: 0 auto; }
-#page-workspace { padding: 8px 14px; }
-.page.active { display: block; }
-.grid { display: grid; gap: 14px; }
-.g2 { grid-template-columns: 1fr 1fr; }
-.g3 { grid-template-columns: 1fr 1fr 1fr; }
-.g4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-
-/* ═══ Cards ════════════════════════════════════ */
-.card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 16px;
-}
-.card-title {
-  font-size: 11px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--text-muted);
-  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
-}
-.card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-
-/* ═══ Forms ════════════════════════════════════ */
-label {
-  display: block; font-size: 10px; text-transform: uppercase;
-  letter-spacing: 0.6px; color: var(--text-muted); margin: 5px 0 2px;
-}
-select, input {
-  width: 70%; padding: 6px 9px; border-radius: 5px;
-  border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); font-size: 12px; font-family: inherit;
-  transition: border-color 0.2s;
-}
-select:focus, input:focus {
-  outline: none; border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-input::placeholder { color: var(--text-dim); }
-
-/* ═══ Buttons ══════════════════════════════════ */
-.btn {
-  padding: 10px 20px; border-radius: 6px; border: 1px solid var(--border);
-  background: var(--card); color: var(--text); font-size: 13px;
-  font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit;
-}
-.btn:hover { background: var(--card-hover); border-color: var(--border-accent); }
-.btn-primary { background: var(--accent); color: #fff; border-color: transparent; font-weight: 700; }
-.btn-primary:hover { background: #0284c7; }
-.btn-sm { padding: 6px 14px; font-size: 12px; }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-
-/* ═══ Badges ═══════════════════════════════════ */
-.badge {
-  display: inline-flex; align-items: center; padding: 3px 8px;
-  border-radius: 4px; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.badge-eq { background: rgba(59,130,246,0.15); color: var(--eq-badge); }
-.badge-rates { background: rgba(14,165,233,0.15); color: var(--rates-badge); }
-.badge-credit { background: rgba(239,68,68,0.15); color: var(--credit-badge); }
-.badge-fx { background: rgba(139,92,246,0.15); color: var(--fx-badge); }
-.badge-cmdty { background: rgba(16,185,129,0.15); color: var(--cmdty-badge); }
-
-/* ═══ NPV Display ══════════════════════════════ */
-.npv-display {
-  text-align: center; padding: 20px;
-  background: linear-gradient(135deg, var(--card) 0%, #1a2540 100%);
-  border: 1px solid var(--border); border-radius: 10px;
-}
-.npv-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); }
-.npv-value { font-size: 36px; font-weight: 700; color: var(--accent); margin: 6px 0; font-variant-numeric: tabular-nums; }
-.npv-meta { font-size: 11px; color: var(--text-dim); }
-
-/* ═══ KPI Tiles ════════════════════════════════ */
-.kpi-grid { display: grid; gap: 6px; }
-.kpi-tile {
-  background: var(--bg); border: 1px dashed var(--border);
-  border-radius: 6px; padding: 6px 8px; text-align: center;
-}
-.kpi-tile .kpi-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
-.kpi-tile .kpi-val { font-size: 14px; font-weight: 600; margin-top: 1px; font-variant-numeric: tabular-nums; }
-
-/* ═══ Tables ═══════════════════════════════════ */
-table { width: 100%; border-collapse: collapse; }
-th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
-td { padding: 8px 10px; font-size: 13px; border-bottom: 1px solid rgba(30,45,74,0.5); }
-tbody tr:hover { background: rgba(255,255,255,0.02); }
-
-/* ═══ Asset Class Links ════════════════════════ */
-.asset-links {
-  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;
-}
-.asset-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 20px 28px; border-radius: 10px;
-  background: var(--card); border: 1px solid var(--border);
-  cursor: pointer; transition: all 0.2s; flex: 1; min-width: 180px;
-}
-.asset-link:hover {
-  border-color: var(--accent); background: var(--card-hover);
-  transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-.asset-link .al-label { font-size: 15px; font-weight: 600; }
-.asset-link .al-count { font-size: 11px; color: var(--text-muted); }
-
-/* ═══ FX Category Layout ══════════════════════ */
-.fx-categories {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 16px; align-items: start;
-}
-.fx-cat-col {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; overflow: hidden;
-}
-.fx-cat-header {
-  padding: 12px 16px; font-size: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.8px;
-  color: var(--accent); border-bottom: 1px solid var(--border);
-  background: rgba(14,165,233,0.05);
-}
-.fx-card {
-  display: block; padding: 12px 16px;
-  color: var(--text); cursor: pointer; transition: all 0.15s;
-  border-bottom: 1px solid rgba(30,45,74,0.3);
-  font-size: 13px; font-weight: 500;
-}
-.fx-card:last-child { border-bottom: none; }
-.fx-card:hover { background: var(--card-hover); color: var(--accent); }
-.fx-card .fx-card-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
-
-/* ═══ Collapsible (generic) ════════════════════ */
-details.ws-section { border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; background: var(--card); }
-details.ws-section > summary {
-  cursor: pointer; padding: 12px 16px; list-style: none;
-  font-size: 12px; font-weight: 600; color: var(--cyan);
-  text-transform: uppercase; letter-spacing: 0.5px;
-  display: flex; align-items: center; gap: 8px;
-}
-details.ws-section > summary::-webkit-details-marker { display: none; }
-details.ws-section > summary::before { content: '▸'; font-size: 11px; color: var(--text-muted); display: inline-block; transition: transform 0.2s; }
-details.ws-section[open] > summary::before { transform: rotate(90deg); }
-details.ws-section[open] > summary { border-bottom: 1px solid var(--border); }
-details.ws-section > .ws-body { padding: 14px 16px; }
-
-/* ═══ Coming Soon ══════════════════════════════ */
-.coming-soon {
-  text-align: center; padding: 80px 20px;
-  color: var(--text-dim); font-size: 16px;
-}
-.coming-soon h2 { color: var(--text-muted); font-size: 20px; margin-bottom: 8px; }
-
-/* ═══ Scrollbar ════════════════════════════════ */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-/* ═══ Grouped Workspace ═══════════════════════ */
-.ws-grouped-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; align-items: start; }
-.field-group { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.field-group.full-width { grid-column: 1 / -1; }
-.field-group-header { padding: 5px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); border-bottom: 1px solid var(--border); background: rgba(14,165,233,0.04); }
-.field-group-body { padding: 3px 5px 6px; display: flex; flex-direction: column; align-items: flex-start; }
-.field-group-body label { font-size: 10px; margin: 4px 0 2px; color: var(--accent); opacity: 0.85; }
-.field-group-body input, .field-group-body select { padding: 5px 6px; font-size: 12px; width: auto; min-width: 80px; max-width: 120px; }
-.sub-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--cyan); margin: 7px 0 2px; padding-top: 5px; border-top: 1px solid rgba(30,45,74,0.5); }
-.sub-group-title:first-of-type { border-top: none; margin-top: 2px; }
-.fg-row { display: grid; gap: 8px; }
-.fg-row.r2 { grid-template-columns: 1fr 1fr; }
-.fg-row.r3 { grid-template-columns: 1fr 1fr 1fr; }
-
-/* ═══ Collapsible Field Group ═════════════════ */
-.field-group-collapsible > summary {
-  cursor: pointer; list-style: none;
-  padding: 7px 12px;
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--accent);
-  background: rgba(14,165,233,0.04);
-  display: flex; align-items: center; gap: 6px;
-}
-.field-group-collapsible > summary::-webkit-details-marker { display: none; }
-.field-group-collapsible > summary::before {
-  content: '▸'; font-size: 10px; color: var(--text-muted);
-  transition: transform 0.2s;
-}
-.field-group-collapsible[open] > summary::before { transform: rotate(90deg); }
-.field-group-collapsible[open] > summary { border-bottom: 1px solid var(--border); }
-.field-group-collapsible > .field-group-body { display: none; }
-.field-group-collapsible[open] > .field-group-body { display: block; }
-
-/* ═══ Results Strip ═══════════════════════════ */
-.results-strip { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 10px; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; border-top: 2px solid var(--accent); }
-.results-strip .rs-title { grid-column: 1 / -1; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 2px; }
-.rs-cell { text-align: center; }
-.rs-cell .rs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.rs-cell .rs-val { font-size: 18px; font-weight: 700; margin-top: 1px; font-variant-numeric: tabular-nums; }
-
-/* ═══ Login Page ═══════════════════════════════ */
-.login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: radial-gradient(ellipse at 30% 20%, rgba(14,165,233,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%), var(--bg); }
-.login-box { width: 380px; padding: 40px 36px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-.login-logo { text-align: center; margin-bottom: 28px; }
-.login-logo .logo-mark { font-size: 32px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
-.login-logo .logo-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
-.login-box label { margin-top: 16px; }
-.login-error { color: var(--red); font-size: 12px; min-height: 18px; margin: 10px 0 4px; text-align: center; }
-.login-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; margin-top: 4px; }
-.login-btn:hover { background: #0284c7; }
-
-/* ═══ Module Boxes ═════════════════════════════ */
-.module-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 960px; margin: 0 auto; padding: 50px 24px 40px; }
-.module-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
-.module-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); opacity: 0; transition: opacity 0.25s; }
-.module-box:hover { border-color: var(--accent); background: var(--card-hover); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
-.module-box:hover::before { opacity: 1; }
-.module-box:hover .mb-label { color: var(--accent); }
-.module-box.disabled { opacity: 0.4; cursor: default; }
-.module-box.disabled:hover { border-color: var(--border); background: var(--card); transform: none; box-shadow: none; }
-.module-box.disabled:hover::before { opacity: 0; }
-.mb-icon { font-size: 28px; margin-bottom: 10px; }
-.mb-label { font-size: 14px; font-weight: 700; color: #fff; }
-.mb-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-.mb-coming { display: inline-block; margin-top: 8px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); padding: 2px 8px; border: 1px solid var(--border); border-radius: 10px; }
-
-/* ═══ Valuation Sections (vertical expandable) ═ */
-.val-sections { max-width: 1000px; margin: 0 auto; padding: 24px; }
-.val-section { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; background: var(--card); overflow: hidden; }
-.val-section-toggle { cursor: pointer; padding: 16px 20px; list-style: none; display: flex; align-items: center; gap: 12px; transition: background 0.15s; }
-.val-section-toggle:hover { background: rgba(255,255,255,0.02); }
-.val-section-toggle::-webkit-details-marker { display: none; }
-.val-section-toggle::after { content: '▸'; margin-left: auto; color: var(--text-dim); font-size: 12px; transition: transform 0.2s; }
-details.val-section[open] > .val-section-toggle::after { transform: rotate(90deg); }
-details.val-section[open] > .val-section-toggle { border-bottom: 1px solid var(--border); }
-.val-section-name { font-size: 15px; font-weight: 600; }
-.val-section-count { font-size: 11px; color: var(--text-dim); }
-.val-section-body { padding: 14px 20px; }
-
-/* ═══ Bulk Upload Bar ═════════════════════════ */
-.bulk-upload-bar {
-  display: flex; align-items: center; gap: 20px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
-  border-left: 3px solid var(--accent);
-}
-.bulk-left { flex: 1; }
-.bulk-title { font-size: 14px; font-weight: 600; color: var(--text); }
-.bulk-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.bulk-rates { display: flex; gap: 12px; }
-.bulk-rates label { font-size: 10px; color: var(--accent); }
-.bulk-rates input { text-align: center; }
-.bulk-actions { display: flex; gap: 8px; align-items: center; }
-.bulk-upload-btn { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-.bulk-status {
-  margin: -8px 0 16px; padding: 12px 16px;
-  border-radius: 8px; font-size: 13px;
-  border: 1px solid var(--border);
-}
-.bulk-status.success { background: rgba(16,185,129,0.08); border-color: var(--green); color: var(--green); }
-.bulk-status.error { background: rgba(239,68,68,0.08); border-color: var(--red); color: var(--red); }
-.bulk-status.loading { background: rgba(14,165,233,0.08); border-color: var(--accent); color: var(--accent); }
-
-/* ═══ Workspace Mode Toggle ═══════════════════ */
-.mode-toggle {
-  display: flex; gap: 0; margin-bottom: 7px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 8px; overflow: hidden; width: fit-content;
-}
-.mode-btn {
-  padding: 10px 24px; font-size: 13px; font-weight: 600;
-  border: none; background: transparent; color: var(--text-dim);
-  cursor: pointer; font-family: inherit; transition: all 0.2s;
-  border-right: 1px solid var(--border);
-}
-.mode-btn:last-child { border-right: none; }
-.mode-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-.mode-btn.active {
-  background: var(--accent); color: #fff; font-weight: 700;
-}
-
-#ws-outputs { display: none; }
-#ws-results-strip { display: none; }
-.ws-action-row {
-  display: flex; gap: 8px; align-items: center;
-  margin: 7px 0 0; flex-wrap: wrap;
-}
-
-/* ═══ Bulk Results ════════════════════════════ */
-.bulk-summary-strip {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-  margin: 10px 0; padding: 10px 14px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 8px; border-top: 2px solid var(--accent);
-}
-.bulk-summary-strip .bs-cell { text-align: center; }
-.bulk-summary-strip .bs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.bulk-summary-strip .bs-val { font-size: 16px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
-.bulk-results-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.bulk-results-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
-.bulk-results-table th:first-child, .bulk-results-table th:nth-child(2), .bulk-results-table th:nth-child(3) { text-align: left; }
-.bulk-results-table td { padding: 6px 8px; border-bottom: 1px solid rgba(30,45,74,0.4); text-align: right; }
-.bulk-results-table td:first-child, .bulk-results-table td:nth-child(2), .bulk-results-table td:nth-child(3) { text-align: left; }
-.bulk-results-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-.bulk-results-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
-
-/* ═══ Bulk Drop Zone ══════════════════════════ */
-.bulk-upload-area { margin-top: 0; }
-.bulk-drop-zone {
-  border: 2px dashed var(--border); border-radius: 12px;
-  padding: 40px 20px; text-align: center; cursor: pointer;
-  margin: 16px 0; transition: all 0.25s;
-  background: rgba(14,165,233,0.02);
-}
-.bulk-drop-zone:hover, .bulk-drop-zone.dragover {
-  border-color: var(--accent); background: rgba(14,165,233,0.06);
-}
-.bulk-drop-icon { font-size: 36px; margin-bottom: 8px; }
-.bulk-drop-text { font-size: 14px; font-weight: 600; color: var(--text); }
-.bulk-drop-hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
-.bulk-bar-actions { margin-top: 8px; }
-.bulk-results-table { width: 100%; margin-top: 12px; }
-.bulk-results-table th {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
-  color: var(--accent); padding: 8px 10px; text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-.bulk-results-table td {
-  padding: 6px 10px; font-size: 12px; border-bottom: 1px solid rgba(30,45,74,0.3);
-}
-
-/* ═══ Login Page Animations ════════════════════ */
-.login-screen {
-  overflow: hidden;
-  position: relative;
-}
-#login-volsurface {
-  position: absolute;
-  inset: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-.login-box { position: relative; z-index: 2; }
-
-/* ═══ Single Deal FX Results ══════════════════ */
-.fx-single-summary {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
-  margin: 10px 0; padding: 10px 14px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 8px; border-top: 2px solid var(--accent);
-}
-.fx-single-summary .ss-cell { text-align: center; }
-.fx-single-summary .ss-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
-.fx-single-summary .ss-val { font-size: 15px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
-.fx-single-table-wrap { max-height: 180px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
-.fx-single-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.fx-single-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; }
-.fx-single-table th:first-child, .fx-single-table th:nth-child(2), .fx-single-table th:nth-child(3) { text-align: left; }
-.fx-single-table td { padding: 6px 8px; border-bottom: 1px solid rgba(30,45,74,0.4); text-align: right; }
-.fx-single-table td:first-child, .fx-single-table td:nth-child(2), .fx-single-table td:nth-child(3) { text-align: left; }
-
-/* ═══ Report Modal ═════════════════════════════ */
-.report-modal-overlay {
-  position: fixed; inset: 0; z-index: 1000;
-  background: rgba(0,0,0,0.7);
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-}
-.report-modal {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; width: 100%; max-width: 780px;
-  max-height: 85vh; display: flex; flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.report-modal-header {
-  padding: 16px 20px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.report-modal-title { font-size: 14px; font-weight: 600; color: var(--accent); }
-.report-modal-close {
-  background: none; border: none; color: var(--text-muted);
-  font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 4px;
-}
-.report-modal-close:hover { background: var(--card-hover); color: var(--text); }
-.report-modal-body { flex: 1; overflow-y: auto; padding: 20px; }
-.report-content { font-size: 13px; line-height: 1.7; color: var(--text); }
-.report-content h2 { font-size: 14px; font-weight: 600; color: var(--accent); margin: 16px 0 6px; }
-.report-content ul { margin: 6px 0 10px 18px; }
-.report-content li { margin-bottom: 3px; }
-.report-modal-footer {
-  padding: 12px 20px; border-top: 1px solid var(--border);
-  display: flex; gap: 8px; justify-content: flex-end;
-}
-.report-loading { text-align: center; padding: 40px 20px; color: var(--text-muted); }
-.report-loading .rl-spinner {
-  width: 32px; height: 32px; border: 3px solid var(--border);
-  border-top-color: var(--accent); border-radius: 50%;
-  animation: spin 0.8s linear infinite; margin: 0 auto 12px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <link rel="stylesheet" href="/static/css/layout.css" />
+  <link rel="stylesheet" href="/static/css/components.css" />
+  <link rel="stylesheet" href="/static/css/animations.css" />
+  <link rel="stylesheet" href="/static/css/login.css" />
+  <link rel="stylesheet" href="/static/css/irs.css" />
 </head>
+
 <body>
 
-<!-- ═══════════ LOGIN SCREEN ═══════════ -->
-<div class="login-screen" id="login-screen">
-  <canvas id="login-volsurface"></canvas>
-  <div class="login-box">
-    <div class="login-logo">
-      <div class="logo-mark">◈ Optima</div>
-      <div class="logo-sub">Derivatives Valuation Platform</div>
+  <!-- ═══════════ LOGIN SCREEN ═══════════ -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-grid-glow"></div>
+    <canvas id="login-volsurface" aria-hidden="true"></canvas>
+
+    <header class="reference-login-header">
+      <div class="reference-optima-brand" aria-label="Optima">
+        <span class="reference-optima-text">Optima</span><span class="reference-optima-dot"></span>
+      </div>
+      <div class="reference-deloitte-text" aria-label="Deloitte">
+        <span>Deloitte</span><span class="deloitte-green-dot"></span>
+      </div>
+    </header>
+
+    <div class="reference-login-layout">
+      <section class="reference-hero" aria-label="Optima introduction">
+        
+
+        <!-- Main Hero Text Component -->
+        <div class="hero-text-block">
+          <h1>Mastering risk,<br><span>empowering decisions</span></h1>
+          <p class="hero-description">Valuation with Precision. Hedging with Purpose. Analytics with Impact</p>
+        </div>
+
+        <!-- Space for Background 3D Graphics -->
+        <div class="hero-visual" aria-hidden="true"></div>
+
+        <div class="feature-row reference-feature-boxes">
+          <div class="feature-item"><strong>Valuation</strong></div>
+          <div class="feature-item"><strong>Market data</strong></div>
+          <div class="feature-item"><strong>Reporting</strong></div>
+        </div>
+      </section>
+
+      <section class="login-box reference-login-card">
+        <div class="reference-login-title-row">
+          <div class="reference-lock">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="10" width="12" height="10" rx="2"></rect>
+              <path d="M8.5 10V7a3.5 3.5 0 0 1 7 0v3"></path>
+              <circle cx="12" cy="15" r="1"></circle>
+            </svg>
+          </div>
+          <div>
+            <h2>Sign in to Optima</h2>
+            <p>Sign in to Optima, the derivatives valuation<br>and risk workspace.</p>
+          </div>
+        </div>
+
+        <div class="reference-field">
+          <label for="login-user">User ID</label>
+          <div class="reference-input-wrap">
+            <span class="user-icon">
+              <span class="user-head"></span>
+              <span class="user-body"></span>
+            </span><input type="text" id="login-user" placeholder="Enter your user ID" autocomplete="username"
+              autofocus />
+          </div>
+        </div>
+        <div class="reference-field">
+          <label for="login-pass">Password</label>
+
+          <div class="reference-input-wrap">
+            <span class="password-icon">
+              <span class="lock-shackle"></span>
+              <span class="lock-body"></span>
+            </span>
+
+            <input type="password" id="login-pass" placeholder="Enter your password" autocomplete="current-password" />
+
+            <button type="button" class="password-toggle" aria-label="Show password"
+              onclick="const p=document.getElementById('login-pass'); p.type=p.type==='password'?'text':'password'; this.setAttribute('aria-label',p.type==='password'?'Show password':'Hide password');">
+            </button>
+          </div>
+        </div>
+
+        <div class="login-error" id="login-error"></div>
+        <button class="login-btn reference-signin-btn" id="login-btn" type="button">Sign in</button>
+
+        <div class="reference-or"><span></span><em>or</em><span></span></div>
+        <button type="button" class="reference-sso-btn">
+          <svg class="sso-bank-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 9h18L12 4 3 9Z"></path>
+            <path d="M5 10v8"></path>
+            <path d="M9 10v8"></path>
+            <path d="M15 10v8"></path>
+            <path d="M19 10v8"></path>
+            <path d="M3 20h18"></path>
+          </svg>
+          <span>Sign in with SSO</span>
+        </button>
+        <p class="reference-demo-note">Demo environment&nbsp; · &nbsp;Optima valuation workspace</p>
+      </section>
     </div>
-    <label>Username</label>
-    <input type="text" id="login-user" placeholder="Enter username" autofocus/>
-    <label>Password</label>
-    <input type="password" id="login-pass" placeholder="Enter password"/>
-    <div class="login-error" id="login-error"></div>
-    <button class="login-btn" id="login-btn">Sign In</button>
-  </div>
-</div>
 
-<!-- ═══════════ MAIN APP (hidden until login) ═══════════ -->
-<div id="app-shell" style="display:none">
 
-<header id="app-header">
-  <div class="header-top">
-    <div class="logo" id="logo-home">◈ Optima <span>v0.6.0</span></div>
-    <div class="breadcrumb" id="breadcrumb" style="display:none">
-      <a class="bc-link" id="bc-home">Home</a>
-      <span class="sep">›</span>
-      <span class="bc-current" id="bc-module"></span>
-      <span class="sep" id="bc-sep2" style="display:none">›</span>
-      <span class="bc-current" id="bc-asset" style="display:none"></span>
-      <span class="sep" id="bc-sep3" style="display:none">›</span>
-      <span class="bc-current" id="bc-inst" style="display:none"></span>
-    </div>
-    <div class="header-right">
-      <button class="btn-back" id="btn-go-back" style="display:none">← Back</button>
-      <div class="status-pill" id="api-status">⏳ Connecting...</div>
-      <button class="btn-back" id="btn-logout">⏻ Sign Out</button>
-    </div>
+    <div class="reference-footer">Optima — Mastering risk, empowering decisions</div>
   </div>
-</header>
 
-<!-- ═══ MODULE BOXES (post-login landing) ═══ -->
-<div class="page active" id="page-modules">
-  <div style="text-align:center;padding-top:30px;margin-bottom:10px">
-    <h2 style="font-size:20px;color:var(--text);font-weight:600">Welcome to Optima</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-top:4px">Select a module to get started</p>
-  </div>
-  <div class="module-grid">
-    <div class="module-box" data-module="valuation"><div class="mb-icon">📊</div><div class="mb-label">Valuation</div><div class="mb-desc">Mark-to-market & deal pricing</div></div>
-    <div class="module-box disabled"><div class="mb-icon">📈</div><div class="mb-label">Fixed Income</div><div class="mb-desc">Bond analytics & yield curves</div><div class="mb-coming">Coming Soon</div></div>
-    <div class="module-box disabled"><div class="mb-icon">🔗</div><div class="mb-label">Correlation Matrices</div><div class="mb-desc">Cross-asset correlations</div><div class="mb-coming">Coming Soon</div></div>
-    <div class="module-box disabled"><div class="mb-icon">📉</div><div class="mb-label">HET</div><div class="mb-desc">Hedge effectiveness testing</div><div class="mb-coming">Coming Soon</div></div>
-    <div class="module-box disabled"><div class="mb-icon">⚠️</div><div class="mb-label">ECL</div><div class="mb-desc">Expected credit loss</div><div class="mb-coming">Coming Soon</div></div>
-    <div class="module-box disabled"><div class="mb-icon">🎯</div><div class="mb-label">VaR</div><div class="mb-desc">Value at Risk analytics</div><div class="mb-coming">Coming Soon</div></div>
-    <div class="module-box disabled"><div class="mb-icon">💰</div><div class="mb-label">Cash Management</div><div class="mb-desc">Liquidity & cash flow</div><div class="mb-coming">Coming Soon</div></div>
-    <div class="module-box disabled"><div class="mb-icon">⚖️</div><div class="mb-label">ALM</div><div class="mb-desc">Asset-liability management</div><div class="mb-coming">Coming Soon</div></div>
-  </div>
-</div>
 
-<!-- ═══ VALUATION — Vertical expandable sections ═══ -->
-<div class="page" id="page-valuation">
-  <div class="val-sections">
-    <h2 style="font-size:18px;margin-bottom:16px;color:var(--text)">Valuation — Select Instrument</h2>
-    <details class="val-section">
-      <summary class="val-section-toggle"><span class="badge badge-fx">FX</span><span class="val-section-name">Foreign Exchange</span><span class="val-section-count">15 instruments</span></summary>
-      <div class="val-section-body">
-        <div class="fx-categories">
-          <div class="fx-cat-col"><div class="fx-cat-header">Forwards</div><div class="fx-card" data-inst="fx_forward" data-label="Vanilla Forward">Vanilla Forward<div class="fx-card-sub">FX forward on export/import receivables</div></div><div class="fx-card" data-inst="fx_range_forward" data-label="Range Forward">Range Forward<div class="fx-card-sub">Bounded forward with upper & lower rates</div></div></div>
-          <div class="fx-cat-col"><div class="fx-cat-header">Options</div><div class="fx-card" data-inst="fx_option" data-label="Buy Call (BC)" data-preset='{"option_type":"call","direction":"buy"}'>Buy Call (BC)<div class="fx-card-sub">Long call — importer hedge</div></div><div class="fx-card" data-inst="fx_option" data-label="Sell Call (SC)" data-preset='{"option_type":"call","direction":"sell"}'>Sell Call (SC)<div class="fx-card-sub">Short call — premium income</div></div><div class="fx-card" data-inst="fx_option" data-label="Sell Put (SP)" data-preset='{"option_type":"put","direction":"sell"}'>Sell Put (SP)<div class="fx-card-sub">Short put — premium income</div></div><div class="fx-card" data-inst="fx_option" data-label="Buy Put (BP)" data-preset='{"option_type":"put","direction":"buy"}'>Buy Put (BP)<div class="fx-card-sub">Long put — exporter hedge</div></div><div class="fx-card" data-inst="fx_seagull" data-label="Seagull">Seagull<div class="fx-card-sub">Three-legged FX structure</div></div><div class="fx-card" data-inst="fx_call_spread" data-label="Call Spread">Call Spread<div class="fx-card-sub">Long call + short call</div></div><div class="fx-card" data-inst="fx_put_spread" data-label="Put Spread">Put Spread<div class="fx-card-sub">Long put + short put</div></div><div class="fx-card" data-inst="fx_range_forward_opt" data-label="Range Forward (Opt)">Range Forward<div class="fx-card-sub">Zero-cost collar</div></div></div>
-          <div class="fx-cat-col"><div class="fx-cat-header">Swaps</div><div class="fx-card" data-inst="principal_only_swap" data-label="POS">POS<div class="fx-card-sub">Principal Only Swap</div></div><div class="fx-card" data-inst="ccirs" data-label="CCIRS">CCIRS<div class="fx-card-sub">Cross Currency IRS</div></div></div>
-          <div class="fx-cat-col"><div class="fx-cat-header">Exotics</div><div class="fx-card" data-inst="fx_swaption" data-label="FX Swaption">Swaption<div class="fx-card-sub">Option on FX swap</div></div><div class="fx-card" data-inst="fx_digital" data-label="Digital Option">Digital Option<div class="fx-card-sub">Cash-or-nothing</div></div><div class="fx-card" data-inst="fx_barrier" data-label="Barrier Option">Barrier Option<div class="fx-card-sub">Knock-in/out</div></div></div>
+  <!-- ═══════════ MAIN APP (hidden until login) ═══════════ -->
+  <div id="app-shell" style="display:none">
+
+    <header id="app-header">
+      <div class="header-top">
+
+        <div class="logo" id="logo-home">
+
+          <span class="optima-text">Optima</span>
+          <span class="optima-dot"
+            style="background:#2F86B5 !important; box-shadow:0 0 8px #2F86B5, 0 0 16px #2F86B5;"></span>
+        </div>
+
+
+        <div class="breadcrumb" id="breadcrumb" style="display:none">
+          <a class="bc-link" id="bc-home">Home</a>
+          <span class="sep">›</span>
+          <span class="bc-current" id="bc-module"></span>
+          <span class="sep" id="bc-sep2" style="display:none">›</span>
+          <span class="bc-current" id="bc-asset" style="display:none"></span>
+          <span class="sep" id="bc-sep3" style="display:none">›</span>
+          <span class="bc-current" id="bc-inst" style="display:none"></span>
+        </div>
+        <div class="header-right">
+          <button class="btn-back" id="btn-go-back" style="display:none">← Back</button>
+          <button class="btn-back" id="btn-logout">⏻ Sign Out</button>
         </div>
       </div>
-    </details>
-    <details class="val-section">
-      <summary class="val-section-toggle"><span class="badge badge-rates">RATES</span><span class="val-section-name">Interest Rate Derivatives</span><span class="val-section-count">8 instruments</span></summary>
-      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="irs"><div class="ic-name">Interest Rate Swap</div><div class="ic-desc">Fixed vs floating</div></a><a class="inst-card" data-inst="cos"><div class="ic-name">Coupon Only Swap</div><div class="ic-desc">Float leg coupon</div></a><a class="inst-card" data-inst="cap_floor"><div class="ic-name">Cap</div><div class="ic-desc">Interest rate cap</div></a><a class="inst-card" data-inst="floor"><div class="ic-name">Floor</div><div class="ic-desc">Interest rate floor</div></a><a class="inst-card" data-inst="ir_collar"><div class="ic-name">Collar</div><div class="ic-desc">Cap + Floor</div></a><a class="inst-card" data-inst="swaption"><div class="ic-name">Swaption</div><div class="ic-desc">Option on IRS</div></a><a class="inst-card" data-inst="fra"><div class="ic-name">FRA</div><div class="ic-desc">Forward rate agreement</div></a><a class="inst-card" data-inst="bond"><div class="ic-name">Bond / G-Sec</div><div class="ic-desc">Fixed rate bond</div></a></div></div>
-    </details>
-    <details class="val-section">
-      <summary class="val-section-toggle"><span class="badge badge-eq">EQ</span><span class="val-section-name">Equity Derivatives</span><span class="val-section-count">7 instruments</span></summary>
-      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="equity_swap"><div class="ic-name">Equity Swap</div><div class="ic-desc">Total/price return</div></a><a class="inst-card" data-inst="esop"><div class="ic-name">ESOP</div><div class="ic-desc">Employee stock option</div></a><a class="inst-card" data-inst="vanilla_option"><div class="ic-name">Vanilla Option</div><div class="ic-desc">European call/put</div></a><a class="inst-card" data-inst="barrier_option"><div class="ic-name">Barrier Option</div><div class="ic-desc">Knock-in/out</div></a><a class="inst-card" data-inst="digital_option"><div class="ic-name">Digital Option</div><div class="ic-desc">Cash-or-nothing</div></a><a class="inst-card" data-inst="asian_option"><div class="ic-name">Asian Option</div><div class="ic-desc">Average price</div></a><a class="inst-card" data-inst="lookback_option"><div class="ic-name">Lookback Option</div><div class="ic-desc">Floating strike</div></a></div></div>
-    </details>
-    <details class="val-section">
-      <summary class="val-section-toggle"><span class="badge badge-cmdty">CMDTY</span><span class="val-section-name">Commodity Derivatives</span><span class="val-section-count">4 instruments</span></summary>
-      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="commodity_future"><div class="ic-name">Commodity Future</div><div class="ic-desc">Exchange-traded</div></a><a class="inst-card" data-inst="commodity_swap"><div class="ic-name">Commodity Swap</div><div class="ic-desc">Fixed vs floating</div></a><a class="inst-card" data-inst="commodity_asian_option"><div class="ic-name">Asian Option</div><div class="ic-desc">Average strike</div></a><a class="inst-card" data-inst="commodity_spot_avg_option"><div class="ic-name">Spot Avg Option</div><div class="ic-desc">Spot average strike</div></a></div></div>
-    </details>
-    <details class="val-section">
-      <summary class="val-section-toggle"><span class="badge badge-credit">CREDIT</span><span class="val-section-name">Credit Derivatives</span><span class="val-section-count">1 instrument</span></summary>
-      <div class="val-section-body"><div class="inst-grid"><a class="inst-card" data-inst="cds"><div class="ic-name">Credit Default Swap</div><div class="ic-desc">Protection against default</div></a></div></div>
-    </details>
+    </header>
+
+    <!-- ═══ MODULE BOXES (post-login landing) ═══ -->
+    <div class="page active" id="page-modules">
+      <div style="text-align:center;padding-top:30px;margin-bottom:10px">
+        <h2 style="font-size:20px;color:var(--text);font-weight:600">Welcome to Optima</h2>
+        <p style="color:#163F5F;font-size:13px;margin-top:4px">Select a module to get started</p>
+      </div>
+      <div class="module-grid">
+        <div class="module-box" data-module="valuation">
+          <div class="mb-icon">📊</div>
+          <div class="mb-label">Valuation</div>
+          <div class="mb-desc">Mark-to-market &amp;<br>deal pricing</div>
+        </div>
+        <div class="module-box" data-module="het">
+          <div class="mb-icon">📉</div>
+          <div class="mb-label">HET</div>
+          <div class="mb-desc">Hedge Effectiveness<br>Testing</div>
+        </div>
+        <div class="module-box coming-soon-tile"><div class="mb-coming">Coming Soon...</div></div>
+        <div class="module-box coming-soon-tile"><div class="mb-coming">Coming Soon...</div></div>
+        <div class="module-box coming-soon-tile"><div class="mb-coming">Coming Soon...</div></div>
+        <div class="module-box coming-soon-tile"><div class="mb-coming">Coming Soon...</div></div>
+        <div class="module-box coming-soon-tile"><div class="mb-coming">Coming Soon...</div></div>
+        <div class="module-box coming-soon-tile"><div class="mb-coming">Coming Soon...</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ VALUATION — Stacked asset-class rows → instrument page ═══ -->
+<div class="page" id="page-valuation">
+  <div class="val-sections">
+    <div id="vs-list">
+      <div class="vs-title"><span class="vs-t1">Valuation</span><span class="vs-div"></span><span class="vs-t2">Select Instrument</span></div>
+      <div class="vs-rows">
+        <button type="button" class="vs-row" data-asset="fx"><span class="vs-ini">FX</span><span class="vs-main"><b>Foreign Exchange</b></span><span class="vs-side"><span>Forwards · Options · Swaps · Exotics</span><b>15 instruments ›</b></span></button>
+        <button type="button" class="vs-row" data-asset="rates"><span class="vs-ini">IR</span><span class="vs-main"><b>Interest Rate Derivatives</b></span><span class="vs-side"><span>Swaps · Caps & Floors · Options · Bonds</span><b>8 instruments ›</b></span></button>
+        <button type="button" class="vs-row" data-asset="eq"><span class="vs-ini">EQ</span><span class="vs-main"><b>Equity Derivatives</b></span><span class="vs-side"><span>Equity Swap · ESOP · Vanilla Option …</span><b>7 instruments ›</b></span></button>
+        <button type="button" class="vs-row" data-asset="cmdty"><span class="vs-ini">CM</span><span class="vs-main"><b>Commodity Derivatives</b></span><span class="vs-side"><span>Commodity Future · Commodity Swap · Asian Option …</span><b>4 instruments ›</b></span></button>
+        <button type="button" class="vs-row" data-asset="credit"><span class="vs-ini">CR</span><span class="vs-main"><b>Credit Derivatives</b></span><span class="vs-side"><span>Credit Default Swap</span><b>1 instrument ›</b></span></button>
+      </div>
+    </div>
+    <div class="vs-detail" id="vs-fx" data-asset="fx" style="display:none">
+      <button type="button" class="vs-back">‹ All asset classes</button>
+      <div class="vs-title"><span class="vs-t1">Foreign Exchange</span></div>
+      <p class="vs-sub">15 instruments available</p>
+      <div class="vs-switch"><a data-asset="fx" class="on">Foreign Exchange</a><a data-asset="rates">Interest Rate</a><a data-asset="eq">Equity</a><a data-asset="cmdty">Commodity</a><a data-asset="credit">Credit</a></div>
+      <div class="vs-gl">Forwards</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="fx_forward" data-label="Vanilla Forward"><span class="vs-ini sm">VF</span><span class="vs-txt"><b>Vanilla Forward</b><span class="fx-card-sub">FX forward on export/import receivables</span></span></div>
+        <div class="fx-card" data-inst="fx_range_forward" data-label="Range Forward"><span class="vs-ini sm">RF</span><span class="vs-txt"><b>Range Forward</b><span class="fx-card-sub">Bounded forward with upper & lower rates</span></span></div>
+      </div>
+      <div class="vs-gl">Options</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="fx_option" data-label="Buy Call (BC)" data-preset='{"option_type":"call","direction":"buy"}'><span class="vs-ini sm">BC</span><span class="vs-txt"><b>Buy Call (BC)</b><span class="fx-card-sub">Long call — importer hedge</span></span></div>
+        <div class="fx-card" data-inst="fx_option" data-label="Sell Call (SC)" data-preset='{"option_type":"call","direction":"sell"}'><span class="vs-ini sm">SC</span><span class="vs-txt"><b>Sell Call (SC)</b><span class="fx-card-sub">Short call — premium income</span></span></div>
+        <div class="fx-card" data-inst="fx_option" data-label="Sell Put (SP)" data-preset='{"option_type":"put","direction":"sell"}'><span class="vs-ini sm">SP</span><span class="vs-txt"><b>Sell Put (SP)</b><span class="fx-card-sub">Short put — premium income</span></span></div>
+        <div class="fx-card" data-inst="fx_option" data-label="Buy Put (BP)" data-preset='{"option_type":"put","direction":"buy"}'><span class="vs-ini sm">BP</span><span class="vs-txt"><b>Buy Put (BP)</b><span class="fx-card-sub">Long put — exporter hedge</span></span></div>
+        <div class="fx-card" data-inst="fx_seagull" data-label="Seagull"><span class="vs-ini sm">SE</span><span class="vs-txt"><b>Seagull</b><span class="fx-card-sub">Three-legged FX structure</span></span></div>
+        <div class="fx-card" data-inst="fx_call_spread" data-label="Call Spread"><span class="vs-ini sm">CS</span><span class="vs-txt"><b>Call Spread</b><span class="fx-card-sub">Long call + short call</span></span></div>
+        <div class="fx-card" data-inst="fx_put_spread" data-label="Put Spread"><span class="vs-ini sm">PS</span><span class="vs-txt"><b>Put Spread</b><span class="fx-card-sub">Long put + short put</span></span></div>
+        <div class="fx-card" data-inst="fx_range_forward_opt" data-label="Range Forward (Opt)"><span class="vs-ini sm">RO</span><span class="vs-txt"><b>Range Forward</b><span class="fx-card-sub">Zero-cost collar</span></span></div>
+      </div>
+      <div class="vs-gl">Swaps</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="principal_only_swap" data-label="POS"><span class="vs-ini sm">PO</span><span class="vs-txt"><b>POS</b><span class="fx-card-sub">Principal Only Swap</span></span></div>
+        <div class="fx-card" data-inst="ccirs" data-label="CCIRS"><span class="vs-ini sm">CC</span><span class="vs-txt"><b>CCIRS</b><span class="fx-card-sub">Cross Currency IRS</span></span></div>
+      </div>
+      <div class="vs-gl">Exotics</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="fx_swaption" data-label="FX Swaption"><span class="vs-ini sm">FS</span><span class="vs-txt"><b>Swaption</b><span class="fx-card-sub">Option on FX swap</span></span></div>
+        <div class="fx-card" data-inst="fx_digital" data-label="Digital Option"><span class="vs-ini sm">DO</span><span class="vs-txt"><b>Digital Option</b><span class="fx-card-sub">Cash-or-nothing</span></span></div>
+        <div class="fx-card" data-inst="fx_barrier" data-label="Barrier Option"><span class="vs-ini sm">BO</span><span class="vs-txt"><b>Barrier Option</b><span class="fx-card-sub">Knock-in/out</span></span></div>
+      </div>
+    </div>
+    <div class="vs-detail" id="vs-rates" data-asset="rates" style="display:none">
+      <button type="button" class="vs-back">‹ All asset classes</button>
+      <div class="vs-title"><span class="vs-t1">Interest Rate Derivatives</span></div>
+      <p class="vs-sub">8 instruments available</p>
+      <div class="vs-switch"><a data-asset="fx">Foreign Exchange</a><a data-asset="rates" class="on">Interest Rate</a><a data-asset="eq">Equity</a><a data-asset="cmdty">Commodity</a><a data-asset="credit">Credit</a></div>
+      <div class="vs-gl">Swaps</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="irs" data-label="Interest Rate Swap"><span class="vs-ini sm">IR</span><span class="vs-txt"><b>Interest Rate Swap</b><span class="fx-card-sub">Fixed vs floating rate swap</span></span></div>
+        <div class="fx-card" data-inst="cos" data-label="Coupon Only Swap"><span class="vs-ini sm">CO</span><span class="vs-txt"><b>Coupon Only Swap</b><span class="fx-card-sub">Float leg coupon only</span></span></div>
+      </div>
+      <div class="vs-gl">Caps & Floors</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="cap_floor" data-label="Cap"><span class="vs-ini sm">CA</span><span class="vs-txt"><b>Cap</b><span class="fx-card-sub">Interest rate cap</span></span></div>
+        <div class="fx-card" data-inst="floor" data-label="Floor"><span class="vs-ini sm">FL</span><span class="vs-txt"><b>Floor</b><span class="fx-card-sub">Interest rate floor</span></span></div>
+        <div class="fx-card" data-inst="ir_collar" data-label="Collar"><span class="vs-ini sm">CO</span><span class="vs-txt"><b>Collar</b><span class="fx-card-sub">Cap + Floor combined</span></span></div>
+      </div>
+      <div class="vs-gl">Options</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="swaption" data-label="Swaption"><span class="vs-ini sm">SW</span><span class="vs-txt"><b>Swaption</b><span class="fx-card-sub">Option on interest rate swap</span></span></div>
+        <div class="fx-card" data-inst="fra" data-label="FRA"><span class="vs-ini sm">FR</span><span class="vs-txt"><b>FRA</b><span class="fx-card-sub">Forward rate agreement</span></span></div>
+      </div>
+      <div class="vs-gl">Bonds</div>
+      <div class="vs-tiles">
+        <div class="fx-card" data-inst="bond" data-label="Bond / G-Sec"><span class="vs-ini sm">BG</span><span class="vs-txt"><b>Bond / G-Sec</b><span class="fx-card-sub">Fixed rate bond</span></span></div>
+      </div>
+    </div>
+    <div class="vs-detail" id="vs-eq" data-asset="eq" style="display:none">
+      <button type="button" class="vs-back">‹ All asset classes</button>
+      <div class="vs-title"><span class="vs-t1">Equity Derivatives</span></div>
+      <p class="vs-sub">7 instruments available</p>
+      <div class="vs-switch"><a data-asset="fx">Foreign Exchange</a><a data-asset="rates">Interest Rate</a><a data-asset="eq" class="on">Equity</a><a data-asset="cmdty">Commodity</a><a data-asset="credit">Credit</a></div>
+      <div class="vs-tiles">
+        <a class="inst-card" data-inst="equity_swap"><span class="vs-ini sm">ES</span><span class="vs-txt"><b class="ic-name">Equity Swap</b><span class="ic-desc">Total/price return</span></span></a>
+        <a class="inst-card" data-inst="esop"><span class="vs-ini sm">ES</span><span class="vs-txt"><b class="ic-name">ESOP</b><span class="ic-desc">Employee stock option</span></span></a>
+        <a class="inst-card" data-inst="vanilla_option"><span class="vs-ini sm">VO</span><span class="vs-txt"><b class="ic-name">Vanilla Option</b><span class="ic-desc">European call/put</span></span></a>
+        <a class="inst-card" data-inst="barrier_option"><span class="vs-ini sm">BO</span><span class="vs-txt"><b class="ic-name">Barrier Option</b><span class="ic-desc">Knock-in/out</span></span></a>
+        <a class="inst-card" data-inst="digital_option"><span class="vs-ini sm">DO</span><span class="vs-txt"><b class="ic-name">Digital Option</b><span class="ic-desc">Cash-or-nothing</span></span></a>
+        <a class="inst-card" data-inst="asian_option"><span class="vs-ini sm">AO</span><span class="vs-txt"><b class="ic-name">Asian Option</b><span class="ic-desc">Average price</span></span></a>
+        <a class="inst-card" data-inst="lookback_option"><span class="vs-ini sm">LO</span><span class="vs-txt"><b class="ic-name">Lookback Option</b><span class="ic-desc">Floating strike</span></span></a>
+      </div>
+    </div>
+    <div class="vs-detail" id="vs-cmdty" data-asset="cmdty" style="display:none">
+      <button type="button" class="vs-back">‹ All asset classes</button>
+      <div class="vs-title"><span class="vs-t1">Commodity Derivatives</span></div>
+      <p class="vs-sub">4 instruments available</p>
+      <div class="vs-switch"><a data-asset="fx">Foreign Exchange</a><a data-asset="rates">Interest Rate</a><a data-asset="eq">Equity</a><a data-asset="cmdty" class="on">Commodity</a><a data-asset="credit">Credit</a></div>
+      <div class="vs-tiles">
+        <a class="inst-card" data-inst="commodity_future"><span class="vs-ini sm">CF</span><span class="vs-txt"><b class="ic-name">Commodity Future</b><span class="ic-desc">Exchange-traded</span></span></a>
+        <a class="inst-card" data-inst="commodity_swap"><span class="vs-ini sm">CS</span><span class="vs-txt"><b class="ic-name">Commodity Swap</b><span class="ic-desc">Fixed vs floating</span></span></a>
+        <a class="inst-card" data-inst="commodity_asian_option"><span class="vs-ini sm">AO</span><span class="vs-txt"><b class="ic-name">Asian Option</b><span class="ic-desc">Average strike</span></span></a>
+        <a class="inst-card" data-inst="commodity_spot_avg_option"><span class="vs-ini sm">SA</span><span class="vs-txt"><b class="ic-name">Spot Avg Option</b><span class="ic-desc">Spot average strike</span></span></a>
+      </div>
+    </div>
+    <div class="vs-detail" id="vs-credit" data-asset="credit" style="display:none">
+      <button type="button" class="vs-back">‹ All asset classes</button>
+      <div class="vs-title"><span class="vs-t1">Credit Derivatives</span></div>
+      <p class="vs-sub">1 instruments available</p>
+      <div class="vs-switch"><a data-asset="fx">Foreign Exchange</a><a data-asset="rates">Interest Rate</a><a data-asset="eq">Equity</a><a data-asset="cmdty">Commodity</a><a data-asset="credit" class="on">Credit</a></div>
+      <div class="vs-tiles">
+        <a class="inst-card" data-inst="cds"><span class="vs-ini sm">CD</span><span class="vs-txt"><b class="ic-name">Credit Default Swap</b><span class="ic-desc">Protection against default</span></span></a>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- ═══════════ WORKSPACE ═══════════ -->
-<div class="page" id="page-workspace">
+    <div class="page" id="page-workspace">
 
-  <!-- ═══ MODE TOGGLE (only visible for instruments that support bulk) ═══ -->
-  <div id="ws-mode-toggle" class="mode-toggle" style="display:none">
-    <button class="mode-btn active" data-mode="single">● Single Deal</button>
-    <button class="mode-btn" data-mode="bulk">⬆ Bulk Upload</button>
-  </div>
-
-  <!-- ═══ SINGLE DEAL MODE ═══ -->
-  <div id="ws-single-mode">
-
-    <!-- ═══ GROUPED FIELD LAYOUT (3 columns) ═══ -->
-    <div id="ws-grouped-fields" class="ws-grouped-layout" style="display:none"></div>
-
-    <!-- ═══ ACTION ROW (shown instead of engine card when hideModelEngine=true) ═══ -->
-    <div id="ws-action-row" class="ws-action-row" style="display:none">
-      <button class="btn btn-primary" id="btn-price">⚡ Price</button>
-      <button class="btn" id="btn-clear">✕ Clear</button>
-    </div>
-
-    <!-- ═══ FLAT LAYOUT (original 2-column) ═══ -->
-    <div class="grid g2" id="ws-flat-left">
-    <div>
-      <div class="card" id="ws-trade-card">
-        <div class="card-title"><div class="dot"></div><span id="ws-trade-title">Trade Inputs</span></div>
-        <div class="grid g2" id="ws-trade-fields"></div>
+      <!-- ═══ MODE TOGGLE (only visible for instruments that support bulk) ═══ -->
+      <div id="ws-mode-toggle" class="mode-toggle" style="display:none">
+        <button class="mode-btn active" data-mode="single">● Single Deal</button>
+        <button class="mode-btn" data-mode="bulk">⬆ Bulk Upload</button>
       </div>
-      <div class="card" style="margin-top:14px" id="ws-md-card">
-        <div class="card-title"><div class="dot"></div>Market Data</div>
-        <div class="grid g3" id="ws-md-fields"></div>
-      </div>
-    </div>
-    <div>
-      <div class="npv-display" id="ws-npv-flat">
-        <div class="npv-label">Net Present Value</div>
-        <div class="npv-value" id="npv-value">—</div>
-        <div class="npv-meta" id="npv-meta">Configure and click Price</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══ MODEL & ENGINE (hidden for simple instruments via hideModelEngine) ═══ -->
-  <div class="card" style="margin-top:10px" id="ws-engine-card">
-    <div class="card-title"><div class="dot"></div>Model & Engine</div>
-    <div class="grid g4">
-      <div><label>Model</label><select id="f-model"></select></div>
-      <div><label>Engine</label><select id="f-engine"></select></div>
-      <div id="ws-engine-params"></div>
-      <div><button class="btn" id="btn-compare" style="margin-top:22px">▦ Compare</button></div>
-    </div>
-  </div>
+      <!-- ═══ SINGLE DEAL MODE ═══ -->
+      <div id="ws-single-mode">
 
-  <!-- ═══ VALUATION RESULTS STRIP (shown only for grouped layout) ═══ -->
-  <div id="ws-outputs">
-  <!-- FX Single Deal Results -->
-  <div id="ws-fx-results" style="display:none; margin-top:10px;">
-    <div class="fx-single-summary">
-      <div class="ss-cell"><div class="ss-label">Ref</div><div class="ss-val" id="ss-ref" style="font-size:12px">—</div></div>
-      <div class="ss-cell"><div class="ss-label">Forward Rate</div><div class="ss-val" id="ss-fwd">—</div></div>
-      <div class="ss-cell"><div class="ss-label">Disc Factor</div><div class="ss-val" id="ss-df" style="font-size:13px">—</div></div>
-      <div class="ss-cell"><div class="ss-label">NPV (INR)</div><div class="ss-val" id="ss-npv">—</div></div>
-      <div class="ss-cell"><div class="ss-label">Long Term</div><div class="ss-val" id="ss-lt">—</div></div>
-      <div class="ss-cell"><div class="ss-label">Short Term</div><div class="ss-val" id="ss-st">—</div></div>
-    </div>
-    <div class="fx-single-table-wrap">
-      <table class="fx-single-table">
-        <thead><tr>
-          <th>Ref</th><th>Client</th><th>Ccy</th>
-          <th>Strike</th><th>Maturity</th><th>Spot</th>
-          <th>Forward</th><th>Disc Factor</th>
-          <th>NPV (INR)</th><th>Long Term</th><th>Short Term</th><th>Status</th>
-        </tr></thead>
-        <tbody id="fx-single-tbody"></tbody>
-      </table>
-    </div>
-    <div style="margin-top:8px">
-      <button class="btn btn-primary btn-sm" id="fx-single-download">📥 Download Excel</button>
-    </div>
-  </div>
+        <!-- ═══ GROUPED FIELD LAYOUT (3 columns) ═══ -->
+        <div id="ws-grouped-fields" class="ws-grouped-layout" style="display:none"></div>
 
-  <div id="ws-results-strip" class="results-strip">
-    <div class="rs-title">Valuation Results</div>
-    <div class="rs-cell"><div class="rs-label">CCY</div><div><select id="rs-ccy" style="width:80px;text-align:center;padding:4px"><option>INR</option><option>USD</option></select></div></div>
-    <div class="rs-cell"><div class="rs-label">MTM / NPV</div><div class="rs-val" id="rs-npv">—</div></div>
-    <div class="rs-cell"><div class="rs-label">Long Term</div><div class="rs-val" id="rs-long-term">—</div></div>
-    <div class="rs-cell"><div class="rs-label">Short Term</div><div class="rs-val" id="rs-short-term">—</div></div>
-  </div>
-
-  <!-- ═══ SENSITIVITIES ═══ -->
-  <div class="card" style="margin-top:10px" id="ws-greeks-card">
-    <div class="card-title"><div class="dot"></div>Sensitivities</div>
-    <div class="kpi-grid" id="ws-greeks-grid"></div>
-  </div>
-
-  <!-- ═══ Compare / Diagnostics ═══ -->
-  <div class="card" style="margin-top:10px;display:none" id="compare-card">
-    <div class="card-title"><div class="dot"></div>Engine Comparison</div>
-    <table><thead><tr><th>Engine</th><th>NPV</th><th>Diff (bp)</th><th>Time (ms)</th></tr></thead><tbody id="compare-body"></tbody></table>
-  </div>
-  <details class="ws-section" style="margin-top:10px">
-    <summary>Diagnostics</summary>
-    <div class="ws-body"><pre id="diagnostics" style="font-size:12px;color:var(--text-dim);white-space:pre-wrap;">Run a pricing to see diagnostics.</pre></div>
-  </details>
-
-  <!-- ═══ Output panels ═══ -->
-  <details class="ws-section" id="ws-payoff-section" style="display:none"><summary>Payoff Diagram</summary><div class="ws-body"><div id="payoff-chart"></div></div></details>
-  <details class="ws-section" id="ws-cashflows-section" style="display:none"><summary>Cashflow Schedule</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-cashflows" style="margin-bottom:10px">Load Cashflows</button><div id="cashflows-body"></div></div></details>
-  <details class="ws-section" id="ws-risk-section" style="display:none"><summary>Risk — DV01 by Bucket</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-risk-ladder" style="margin-bottom:10px">Compute Risk Ladder</button><div class="grid g2"><div id="risk-ladder-body"></div><div id="risk-ladder-chart"></div></div></div></details>
-  <details class="ws-section" id="ws-curves-section" style="display:none"><summary>Curve Data</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-curves" style="margin-bottom:10px">Load Curves</button><div class="grid g2"><div id="curves-body"></div><div id="curves-chart"></div></div></div></details>
-  <details class="ws-section" id="ws-resets-section" style="display:none"><summary>Resets (Fixings)</summary><div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-resets" style="margin-bottom:10px">Load Resets</button><div id="resets-body"></div></div></details>
-  <details class="ws-section" id="ws-analysis-section"><summary>Analysis</summary><div class="ws-body"><div class="grid g2" id="ws-analysis-panels"></div></div></details>
-  </div><!-- /ws-outputs -->
-
-  </div><!-- /ws-single-mode -->
-
-  <!-- ═══ BULK UPLOAD MODE ═══ -->
-  <div id="ws-bulk-mode" style="display:none">
-    <div class="bulk-upload-area">
-      <div class="bulk-upload-bar">
-        <div class="bulk-left">
-          <div class="bulk-title">📁 Bulk Deal Upload — FX Vanilla Forward</div>
-          <div class="bulk-desc">Upload an Excel file matching the standard template. Each row = one FX forward deal.</div>
+        <!-- ═══ ACTION ROW (shown instead of engine card when hideModelEngine=true) ═══ -->
+        <div id="ws-action-row" class="ws-action-row" style="display:none">
+          <button class="btn btn-primary" id="btn-price">⚡ Price</button>
+          <button class="btn" id="btn-clear">✕ Clear</button>
         </div>
-        <div class="bulk-rates">
-          <div><label>Domestic Rate (%)</label><input type="number" id="bulk-rd" value="6.5" step="0.1" style="width:80px"/></div>
-          <div><label>Foreign Rate (%)</label><input type="number" id="bulk-rf" value="4.5" step="0.1" style="width:80px"/></div>
-          <div><label>Interpolation</label><select id="bulk-interp" style="width:120px"><option value="linear" selected>Linear</option><option value="cubic_spline">Cubic Spline</option></select></div>
-        </div>
-      </div>
-      <!-- Mandatory fields info card -->
-      <div style="margin: 12px 0; padding: 14px 16px; background: rgba(14,165,233,0.04); border: 1px solid rgba(14,165,233,0.15); border-radius: 8px; border-left: 3px solid var(--accent);">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);margin-bottom:10px;">📋 Required Fields</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;">
-          <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span style="color:var(--red);font-weight:700">*</span> Transaction Ref No</div>
-          <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span style="color:var(--red);font-weight:700">*</span> Strike Rate</div>
-          <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span style="color:var(--red);font-weight:700">*</span> Valuation / Reporting Date</div>
-          <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span style="color:var(--red);font-weight:700">*</span> Notional Currency 1</div>
-          <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span style="color:var(--red);font-weight:700">*</span> Currency Pair</div>
-          <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span style="color:var(--red);font-weight:700">*</span> Buy/Sell (CCY1)</div>
-          <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span style="color:var(--red);font-weight:700">*</span> Maturity Date</div>
-          <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;"><span style="color:var(--text-dim)">○</span> Spot <span style="font-size:10px;color:var(--text-dim)">(required if no curve sheets)</span></div>
-        </div>
-      </div>
 
-      <div class="bulk-drop-zone" id="bulk-drop-zone">
-        <div class="bulk-drop-icon">📄</div>
-        <div class="bulk-drop-text">Drop .xlsx file here or click to browse</div>
-        <div class="bulk-drop-hint">Columns: Transaction Ref, Client, Ccy Pair, Strike, Notional, Maturity Date, Spot, ...</div>
-        <input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none"/>
-      </div>
-      <div class="bulk-bar-actions">
-        <button class="btn btn-primary" id="bulk-price-btn" style="display:none">⚡ Price</button>
-      </div>
-    </div>
-    <div id="bulk-status" class="bulk-status" style="display:none"></div>
-
-    <!-- Results summary strip -->
-    <div id="bulk-summary" style="display:none" class="bulk-summary-strip">
-      <div class="bs-cell"><div class="bs-label">Deals Priced</div><div class="bs-val" id="bs-priced">—</div></div>
-      <div class="bs-cell"><div class="bs-label">Total NPV (INR)</div><div class="bs-val" id="bs-npv">—</div></div>
-      <div class="bs-cell"><div class="bs-label">Long Term</div><div class="bs-val" id="bs-lt">—</div></div>
-      <div class="bs-cell"><div class="bs-label">Short Term</div><div class="bs-val" id="bs-st">—</div></div>
-      <div class="bs-cell"><div class="bs-label">Errors</div><div class="bs-val" id="bs-errors">—</div></div>
-    </div>
-
-    <!-- Results table -->
-    <div id="bulk-results-wrap" class="bulk-results-wrap" style="display:none">
-      <table class="bulk-results-table">
-        <thead><tr>
-          <th>Ref</th><th>Client</th><th>Ccy</th>
-          <th>Strike</th><th>Maturity</th><th>Forward</th>
-          <th>NPV (INR)</th><th>Long Term</th><th>Short Term</th><th>Status</th>
-        </tr></thead>
-        <tbody id="bulk-results-body"></tbody>
-      </table>
-    </div>
-
-    <!-- Action buttons (appear after pricing) -->
-    <div id="bulk-excel-row" style="display:none; margin-top:8px; gap:8px; flex-wrap:wrap;">
-      <button class="btn btn-primary" id="bulk-excel-btn">📥 Download Excel Report</button>
-      <button class="btn" id="bulk-report-btn" style="border-color:var(--accent);color:var(--accent);">🤖 Generate AI Report</button>
-      <button class="btn" id="bulk-pdf-btn" style="border-color:var(--purple);color:var(--purple);">📄 Download PDF Report</button>
-    </div>
-
-    <!-- Report modal -->
-    <div id="report-modal" class="report-modal-overlay" style="display:none;">
-      <div class="report-modal">
-        <div class="report-modal-header">
-          <span class="report-modal-title">🤖 AI-Generated MTM Report</span>
-          <button class="report-modal-close" id="report-modal-close">✕</button>
-        </div>
-        <div class="report-modal-body" id="report-modal-body">
-          <div class="report-loading">
-            <div class="rl-spinner"></div>
-            <div>Generating report via Llama 3.1 8B...</div>
-            <div style="font-size:11px;color:var(--text-dim);margin-top:6px">This may take 20–40 seconds on CPU</div>
+        <!-- ═══ FLAT LAYOUT (original 2-column) ═══ -->
+        <div class="grid g2" id="ws-flat-left">
+          <div>
+            <div class="card" id="ws-trade-card">
+              <div class="card-title">
+                <div class="dot"></div><span id="ws-trade-title">Trade Inputs</span>
+              </div>
+              <div class="grid g2" id="ws-trade-fields"></div>
+            </div>
+            <div class="card" style="margin-top:14px" id="ws-md-card">
+              <div class="card-title">
+                <div class="dot"></div>Market Data
+              </div>
+              <div class="grid g3" id="ws-md-fields"></div>
+            </div>
+          </div>
+          <div>
+            <div class="npv-display" id="ws-npv-flat">
+              <div class="npv-label">Net Present Value</div>
+              <div class="npv-value" id="npv-value">—</div>
+              <div class="npv-meta" id="npv-meta">Configure and click Price</div>
+            </div>
           </div>
         </div>
-        <div class="report-modal-footer">
-          <button class="btn btn-sm" id="report-copy-btn">📋 Copy Markdown</button>
-          <button class="btn btn-sm btn-primary" id="report-download-btn">📥 Download .md</button>
-          <button class="btn btn-sm" id="report-modal-close2">Close</button>
+
+        <!-- ═══ MODEL & ENGINE (hidden for simple instruments via hideModelEngine) ═══ -->
+        <div class="card" style="margin-top:10px" id="ws-engine-card">
+          <div class="card-title">
+            <div class="dot"></div>Model & Engine
+          </div>
+          <div class="grid g4">
+            <div><label>Model</label><select id="f-model"></select></div>
+            <div><label>Engine</label><select id="f-engine"></select></div>
+            <div id="ws-engine-params"></div>
+            <div><button class="btn" id="btn-compare" style="margin-top:22px">▦ Compare</button></div>
+          </div>
         </div>
+
+        <!-- ═══ VALUATION RESULTS STRIP (shown only for grouped layout) ═══ -->
+        <div id="ws-outputs">
+          <!-- FX Single Deal Results -->
+          <div id="ws-irs-results" style="display:none; margin-top:10px;"></div>
+
+          <div id="ws-fx-results" style="display:none; margin-top:10px;">
+            <div class="fx-single-summary">
+              <div class="ss-cell">
+                <div class="ss-label">Ref</div>
+                <div class="ss-val" id="ss-ref" style="font-size:12px">—</div>
+              </div>
+              <div class="ss-cell">
+                <div class="ss-label">Forward Rate</div>
+                <div class="ss-val" id="ss-fwd">—</div>
+              </div>
+              <div class="ss-cell">
+                <div class="ss-label">Disc Factor</div>
+                <div class="ss-val" id="ss-df" style="font-size:13px">—</div>
+              </div>
+              <div class="ss-cell">
+                <div class="ss-label">NPV (INR)</div>
+                <div class="ss-val" id="ss-npv">—</div>
+              </div>
+              <div class="ss-cell">
+                <div class="ss-label">Long Term</div>
+                <div class="ss-val" id="ss-lt">—</div>
+              </div>
+              <div class="ss-cell">
+                <div class="ss-label">Short Term</div>
+                <div class="ss-val" id="ss-st">—</div>
+              </div>
+            </div>
+            <div class="fx-single-table-wrap">
+              <table class="fx-single-table">
+                <thead>
+                  <tr>
+                    <th>Ref</th>
+                    <th>Client</th>
+                    <th>Ccy</th>
+                    <th>Strike</th>
+                    <th>Maturity</th>
+                    <th>Spot</th>
+                    <th>Forward</th>
+                    <th>Disc Factor</th>
+                    <th>NPV (INR)</th>
+                    <th>Long Term</th>
+                    <th>Short Term</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="fx-single-tbody"></tbody>
+              </table>
+            </div>
+            <div style="margin-top:8px">
+              <button class="btn btn-primary btn-sm" id="fx-single-download">📥 Download Excel</button>
+            </div>
+          </div>
+
+          <div id="ws-results-strip" class="results-strip">
+            <div class="rs-title">Valuation Results</div>
+            <div class="rs-cell">
+              <div class="rs-label">CCY</div>
+              <div><select id="rs-ccy" style="width:80px;text-align:center;padding:4px">
+                  <option>INR</option>
+                  <option>USD</option>
+                </select></div>
+            </div>
+            <div class="rs-cell">
+              <div class="rs-label">MTM / NPV</div>
+              <div class="rs-val" id="rs-npv">—</div>
+            </div>
+            <div class="rs-cell">
+              <div class="rs-label">Long Term</div>
+              <div class="rs-val" id="rs-long-term">—</div>
+            </div>
+            <div class="rs-cell">
+              <div class="rs-label">Short Term</div>
+              <div class="rs-val" id="rs-short-term">—</div>
+            </div>
+          </div>
+
+          <!-- ═══ SENSITIVITIES ═══ -->
+          <div class="card" style="margin-top:10px" id="ws-greeks-card">
+            <div class="card-title">
+              <div class="dot"></div>Sensitivities
+            </div>
+            <div class="kpi-grid" id="ws-greeks-grid"></div>
+          </div>
+
+          <!-- ═══ Compare / Diagnostics ═══ -->
+          <div class="card" style="margin-top:10px;display:none" id="compare-card">
+            <div class="card-title">
+              <div class="dot"></div>Engine Comparison
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Engine</th>
+                  <th>NPV</th>
+                  <th>Diff (bp)</th>
+                  <th>Time (ms)</th>
+                </tr>
+              </thead>
+              <tbody id="compare-body"></tbody>
+            </table>
+          </div>
+          <details class="ws-section" style="margin-top:10px">
+            <summary>Diagnostics</summary>
+            <div class="ws-body">
+              <pre id="diagnostics"
+                style="font-size:12px;color:var(--text-dim);white-space:pre-wrap;">Run a pricing to see diagnostics.</pre>
+            </div>
+          </details>
+
+          <!-- ═══ Output panels ═══ -->
+          <details class="ws-section" id="ws-payoff-section" style="display:none">
+            <summary>Payoff Diagram</summary>
+            <div class="ws-body">
+              <div id="payoff-chart"></div>
+            </div>
+          </details>
+          <details class="ws-section" id="ws-cashflows-section" style="display:none">
+            <summary>Cashflow Schedule</summary>
+            <div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-cashflows"
+                style="margin-bottom:10px">Load Cashflows</button>
+              <div id="cashflows-body"></div>
+            </div>
+          </details>
+          <details class="ws-section" id="ws-risk-section" style="display:none">
+            <summary>Risk — DV01 by Bucket</summary>
+            <div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-risk-ladder"
+                style="margin-bottom:10px">Compute Risk Ladder</button>
+              <div class="grid g2">
+                <div id="risk-ladder-body"></div>
+                <div id="risk-ladder-chart"></div>
+              </div>
+            </div>
+          </details>
+          <details class="ws-section" id="ws-curves-section" style="display:none">
+            <summary>Curve Data</summary>
+            <div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-curves" style="margin-bottom:10px">Load
+                Curves</button>
+              <div class="grid g2">
+                <div id="curves-body"></div>
+                <div id="curves-chart"></div>
+              </div>
+            </div>
+          </details>
+          <details class="ws-section" id="ws-resets-section" style="display:none">
+            <summary>Resets (Fixings)</summary>
+            <div class="ws-body"><button class="btn btn-sm btn-primary" id="btn-resets" style="margin-bottom:10px">Load
+                Resets</button>
+              <div id="resets-body"></div>
+            </div>
+          </details>
+          <details class="ws-section" id="ws-analysis-section">
+            <summary>Analysis</summary>
+            <div class="ws-body">
+              <div class="grid g2" id="ws-analysis-panels"></div>
+            </div>
+          </details>
+        </div><!-- /ws-outputs -->
+
+      </div><!-- /ws-single-mode -->
+
+      <!-- ═══ BULK UPLOAD MODE ═══ -->
+      <div id="ws-bulk-mode" style="display:none">
+        <div class="bulk-upload-area">
+          <div class="bulk-upload-bar">
+            <div class="bulk-left">
+              <div class="bulk-title">📁 Bulk Deal Upload — FX Vanilla Forward</div>
+              <div class="bulk-desc">Upload an Excel file matching the standard template. Each row = one FX forward
+                deal.</div>
+            </div>
+            <div class="bulk-rates">
+              <div><label>Domestic Rate (%)</label><input type="number" id="bulk-rd" value="6.5" step="0.1"
+                  style="width:80px" /></div>
+              <div><label>Foreign Rate (%)</label><input type="number" id="bulk-rf" value="4.5" step="0.1"
+                  style="width:80px" /></div>
+              <div><label>Interpolation</label><select id="bulk-interp" style="width:120px">
+                  <option value="linear" selected>Linear</option>
+                  <option value="cubic_spline">Cubic Spline</option>
+                </select></div>
+            </div>
+          </div>
+          <!-- Mandatory fields info card -->
+          <div
+            style="margin: 12px 0; padding: 14px 16px; background: rgba(47, 134, 181, 0.04); border: 1px solid rgba(47, 134, 181, 0.15); border-radius: 8px; border-left: 3px solid var(--accent);">
+            <div
+              style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);margin-bottom:10px;">
+              📋 Required Fields</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;">
+              <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--red);font-weight:700">*</span> Transaction Ref No</div>
+              <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--red);font-weight:700">*</span> Strike Rate</div>
+              <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--red);font-weight:700">*</span> Valuation / Reporting Date</div>
+              <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--red);font-weight:700">*</span> Notional Currency 1</div>
+              <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--red);font-weight:700">*</span> Currency Pair</div>
+              <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--red);font-weight:700">*</span> Buy/Sell (CCY1)</div>
+              <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--red);font-weight:700">*</span> Maturity Date</div>
+              <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;"><span
+                  style="color:var(--text-dim)">○</span> Spot <span
+                  style="font-size:10px;color:var(--text-dim)">(required if no curve sheets)</span></div>
+            </div>
+          </div>
+
+          <div class="bulk-drop-zone" id="bulk-drop-zone">
+            <div class="bulk-drop-icon">📄</div>
+            <div class="bulk-drop-text">Drop .xlsx file here or click to browse</div>
+            <div class="bulk-drop-hint">Columns: Transaction Ref, Client, Ccy Pair, Strike, Notional, Maturity Date,
+              Spot, ...</div>
+            <input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none" />
+          </div>
+          <div class="bulk-bar-actions">
+            <button class="btn btn-primary" id="bulk-price-btn" style="display:none">⚡ Price</button>
+          </div>
+        </div>
+        <div id="bulk-status" class="bulk-status" style="display:none"></div>
+
+        <!-- Results summary strip -->
+        <div id="bulk-summary" style="display:none" class="bulk-summary-strip">
+          <div class="bs-cell">
+            <div class="bs-label">Deals Priced</div>
+            <div class="bs-val" id="bs-priced">—</div>
+          </div>
+          <div class="bs-cell">
+            <div class="bs-label">Total NPV (INR)</div>
+            <div class="bs-val" id="bs-npv">—</div>
+          </div>
+          <div class="bs-cell">
+            <div class="bs-label">Long Term</div>
+            <div class="bs-val" id="bs-lt">—</div>
+          </div>
+          <div class="bs-cell">
+            <div class="bs-label">Short Term</div>
+            <div class="bs-val" id="bs-st">—</div>
+          </div>
+          <div class="bs-cell">
+            <div class="bs-label">Errors</div>
+            <div class="bs-val" id="bs-errors">—</div>
+          </div>
+        </div>
+
+        <!-- Results table -->
+        <div id="bulk-results-wrap" class="bulk-results-wrap" style="display:none">
+          <table class="bulk-results-table">
+            <thead>
+              <tr>
+                <th>Ref</th>
+                <th>Client</th>
+                <th>Ccy</th>
+                <th>Strike</th>
+                <th>Maturity</th>
+                <th>Forward</th>
+                <th>NPV (INR)</th>
+                <th>Long Term</th>
+                <th>Short Term</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bulk-results-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Excel download (appears after pricing) -->
+        <div id="bulk-excel-row" style="display:none; margin-top:8px">
+          <button class="btn btn-primary" id="bulk-excel-btn">📥 Download Excel Report</button>
+        </div>
+
+        <div id="bulk-results-preview" style="display:none"></div>
       </div>
+
+    </div><!-- /page-workspace -->
+
+    <!-- ═══════════ IRS PRICING PAGE (Valuation → Interest Rates → Interest Rate Swap) ═══════════ -->
+    <div class="page" id="page-irs">
+<!-- IRS workspace page. Layout and classes from the original IRS design; behaviour and
+     pricing are in instruments/rates/irs.js (registry module, POST /api/v1/pricing/irs).
+     Select options are filled by irs.js from IRS_OPTIONS (data-opts), so they are exactly
+     the labels the engine accepts. Nothing on this page holds a price until the engine
+     returns one. -->
+
+<div class="irs-container">
+
+<!-- TOP-LEVEL BLOOMBERG-STYLE TABS -->
+<div class="irs-top-tabs">
+    <button class="irs-top-tab irs-active" data-top-tab="irs-economic-terms">Economic Terms</button>
+    <button class="irs-top-tab" data-top-tab="irs-amortization-schedule">Amortization Schedule</button>
+    <button class="irs-top-tab" data-top-tab="irs-market-pricing">Market Data &amp; Pricing Results</button>
+</div>
+
+<!-- ECONOMIC TERMS TAB (Trade Details + Swap Legs) -->
+<div class="irs-top-pane irs-active" id="irs-economic-terms">
+
+<section class="irs-section">
+    <div class="irs-section-header irs-header-row"><span>Trade Details</span>
+        <span class="irs-import" title="Fill the form from a sheet of the IRS input workbook (v4 layout). Every field can be edited before pricing.">
+            <span class="irs-import-label">Load from workbook</span>
+            <input type="file" id="irs-wb-file" accept=".xlsx" aria-label="Input workbook">
+            <select id="irs-wb-sheet" aria-label="Trade sheet"><option value="">Sheet</option></select>
+            <span class="irs-import-status" id="irs-wb-status"></span>
+        </span>
+    </div>
+    <div class="irs-section-body">
+        <div class="irs-grid irs-grid-6">
+            <div><label for="irs-trade_id">Trade ID</label><input type="text" id="irs-trade_id"></div>
+            <div><label for="irs-currency">Currency</label><select id="irs-currency" data-opts="currencies"></select></div>
+            <div><label for="irs-notional">Notional</label><input type="number" step="any" id="irs-notional" placeholder="Period 1"></div>
+            <div><label for="irs-effective_date">Effective Date</label><input type="date" id="irs-effective_date"></div>
+            <div><label for="irs-maturity_date">Maturity Date</label><input type="date" id="irs-maturity_date"></div>
+            <div><label for="irs-valuation_date">Valuation Date</label><input type="date" id="irs-valuation_date"></div>
+        </div>
+    </div>
+</section>
+
+<section class="irs-section">
+    <div class="irs-section-header">Swap Legs</div>
+    <div class="irs-section-body">
+        <div class="irs-legs">
+
+            <div class="irs-leg">
+                <div class="irs-leg-header irs-fixed">Counterparty A · Fixed Leg</div>
+                <div class="irs-leg-body">
+                    <div class="irs-grid irs-grid-2">
+                        <div><label for="irs-fixed_direction">Direction</label><select id="irs-fixed_direction" data-opts="directions"></select></div>
+                        <div><label for="irs-fixed_rate_percent">Fixed Rate (%)</label><input type="number" step="any" id="irs-fixed_rate_percent" placeholder="e.g. 5 for 5%"></div>
+                        <div><label for="irs-fixed_payment_frequency">Payment Frequency</label><select id="irs-fixed_payment_frequency" data-opts="paymentFrequencies"></select></div>
+                        <div><label for="irs-fixed_day_count">Day Count</label><select id="irs-fixed_day_count" data-opts="dayCounts"></select></div>
+                        <div><label for="irs-fixed_bdc">Business Day Convention</label><select id="irs-fixed_bdc" data-opts="businessDayConventions"></select></div>
+                        <div><label for="irs-fixed_calendar">Payment Calendar</label><select id="irs-fixed_calendar" data-opts="calendars"></select></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="irs-leg">
+                <div class="irs-leg-header irs-floating">Counterparty B · Floating Leg</div>
+                <div class="irs-leg-body">
+                    <div class="irs-grid irs-grid-2">
+                        <div><label for="irs-float_direction">Direction</label><select id="irs-float_direction" data-opts="directions"></select></div>
+                        <div><label for="irs-benchmark">Benchmark</label><select id="irs-benchmark" data-opts="benchmarks"></select></div>
+                        <div><label for="irs-index_tenor">Index Tenor</label><select id="irs-index_tenor" data-opts="indexTenors"></select></div>
+                        <div><label for="irs-spread_bp">Spread (bp)</label><input type="number" step="any" id="irs-spread_bp"></div>
+                        <div><label for="irs-leverage">Leverage</label><input type="number" step="any" id="irs-leverage"></div>
+                        <div><label for="irs-reset_frequency">Reset Frequency</label><select id="irs-reset_frequency" data-opts="resetFrequencies"></select></div>
+                        <div><label for="irs-float_payment_frequency">Payment Frequency</label><select id="irs-float_payment_frequency" data-opts="paymentFrequencies"></select></div>
+                        <div><label for="irs-float_day_count">Day Count</label><select id="irs-float_day_count" data-opts="dayCounts"></select></div>
+                        <div><label for="irs-float_bdc">Business Day Convention</label><select id="irs-float_bdc" data-opts="businessDayConventions"></select></div>
+                        <div><label for="irs-float_calendar">Payment Calendar</label><select id="irs-float_calendar" data-opts="calendars"></select></div>
+                        <!-- overnight (1D) index -->
+                        <div data-leg="1D"><label for="irs-rate_timing">Rate Timing</label><select id="irs-rate_timing" data-opts="rateTimings"></select></div>
+                        <div data-leg="1D"><label for="irs-lookback_days">Lookback (Days)</label><input type="number" step="any" id="irs-lookback_days"></div>
+                        <div data-leg="1D"><label for="irs-lookback_type">Lookback Type</label><select id="irs-lookback_type" data-opts="lookbackTypes"></select></div>
+                        <div data-leg="1D"><label for="irs-rate_cutoff_days">Rate Cutoff (Days)</label><input type="number" step="any" id="irs-rate_cutoff_days"></div>
+                        <div data-leg="1D"><label for="irs-compounding">Compounding</label><select id="irs-compounding" data-opts="compounding"></select></div>
+                        <div data-leg="1D"><label for="irs-spread_treatment">Spread Treatment</label><select id="irs-spread_treatment" data-opts="spreadTreatments"></select></div>
+                        <!-- 6M term-rate index -->
+                        <div data-leg="6M"><label for="irs-fixing_calendar">Fixing Calendar</label><select id="irs-fixing_calendar" data-opts="fixingCalendars"></select></div>
+                        <div data-leg="6M"><label for="irs-fixing_lag_days">Fixing Lag (BD)</label><input type="number" step="any" id="irs-fixing_lag_days"></div>
+                        <div data-leg="6M"><label for="irs-term_compounding">Term Compounding</label><select id="irs-term_compounding" data-opts="termCompounding"></select></div>
+                        <div data-leg="SF" class="irs-span-2"><label for="irs-observation_method">SARON Observation Method</label><select id="irs-observation_method" data-opts="observationMethods"></select></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="irs-section market-card" aria-label="Market">
+    <div class="irs-section-header market-head"><span>Market</span><button class="refresh-button" id="irs-market-refresh" type="button" aria-label="Refresh Market" title="Reload the curve the engine will use">⟳</button></div>
+    <div class="irs-section-body market-grid">
+        <div class="market-side">
+            <div class="market-row irs-market-row">
+                <span class="market-label">Dscnt</span><input class="market-curve-input" type="text" id="irs-mkt-discount-a" readonly aria-label="Fixed leg discount curve" placeholder="Set Currency and Valuation Date">
+            </div>
+        </div>
+        <div class="market-side">
+            <div class="market-row irs-market-row">
+                <span class="market-label">Dscnt</span><input class="market-curve-input" type="text" id="irs-mkt-discount-b" readonly aria-label="Floating leg discount curve" placeholder="Set Currency and Valuation Date">
+            </div>
+            <div class="market-row irs-market-row">
+                <span class="market-label">Fwd</span><input class="market-curve-input" type="text" id="irs-mkt-forward" readonly aria-label="Floating leg forward curve" placeholder="Set Currency and Valuation Date">
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="irs-button-row">
+    <button class="irs-btn-secondary">Reset</button>
+    <button class="irs-btn-primary">Price IRS</button>
+</div>
+
+</div>
+
+<!-- AMORTIZATION SCHEDULE TAB -->
+<div class="irs-top-pane" id="irs-amortization-schedule">
+
+<section class="irs-section">
+    <div class="irs-section-header">Amortization</div>
+    <div class="irs-tabs">
+        <button type="button" class="irs-sub-tab irs-active" data-sub-tab="irs-amort-leg1">Notional Schedule – Both Legs</button>
+        <button type="button" class="irs-sub-tab" data-sub-tab="irs-amort-leg2">Reset Schedule – Floating (6M)</button>
     </div>
 
-    <div id="bulk-results-preview" style="display:none"></div>
-  </div>
+    <div class="irs-sub-pane irs-active irs-section-body" id="irs-amort-leg1">
+        <div class="irs-subheading">Contract Detail</div>
+        <div class="irs-grid irs-grid-4">
+            <div><label for="irs-principal_exchange">Principal Exchange</label><select id="irs-principal_exchange" data-opts="principalExchanges"></select></div>
+            <div><label for="irs-amortisation_type">Amortisation Type</label><select id="irs-amortisation_type" data-opts="amortisationTypes"></select></div>
+            <div><label for="irs-first-payment">First Payment</label><input type="text" id="irs-first-payment" readonly placeholder="From the schedule"></div>
+            <div><label for="irs-last-payment">Last Payment</label><input type="text" id="irs-last-payment" readonly placeholder="From the schedule"></div>
+        </div>
+        <label class="irs-check"><input type="checkbox" checked disabled> Apply Amortization to the Other Leg <span class="irs-hint">(the engine applies one schedule to both legs)</span></label>
+        <div class="irs-table-container irs-amort-table">
+            <table class="irs-edit-table" id="irs-schedule-table">
+                <thead><tr><th>Period</th><th>Accrual Start</th><th>Accrual End</th><th>Pay Dates</th><th>Amort Rates (%)</th><th>Amort Amount</th><th>Balance</th><th>Action</th><th></th></tr></thead>
+                <tbody id="irs-amort-rows1"></tbody>
+            </table>
+        </div>
+        <button type="button" class="irs-add-row" data-table="schedule">+ Add period</button>
+    </div>
 
-</div><!-- /page-workspace -->
+    <div class="irs-sub-pane irs-section-body" id="irs-amort-leg2">
+        <div class="irs-subheading">Contract Detail</div>
+        <div class="irs-note" id="irs-resets-note">Reset dates are inputs, never derived. Each payment period needs at least one reset; several resets in a period are combined by Term Compounding. Used only for 6M term-rate legs.</div>
+        <div class="irs-table-container irs-amort-table" data-leg="6M">
+            <table class="irs-edit-table" id="irs-resets-table">
+                <thead><tr><th>Payment Period</th><th>Reset Date</th><th>Rate Start</th><th>Rate End</th><th></th></tr></thead>
+                <tbody id="irs-amort-rows2"></tbody>
+            </table>
+        </div>
+        <button type="button" class="irs-add-row" data-table="resets" data-leg="6M">+ Add reset</button>
+    </div>
+</section>
 
-</div><!-- /app-shell -->
+<div class="irs-button-row">
+    <button class="irs-btn-secondary">Reset</button>
+    <button class="irs-btn-primary">Price IRS</button>
+</div>
 
-<!-- ═══════════ SCRIPTS ═══════════ -->
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</div>
 
-<!-- Schema & Registry -->
-<script src="/static/schema/schema_master.js"></script>
-<script src="/static/instruments/_base.js"></script>
+<!-- MARKET DATA & PRICING RESULTS TAB -->
+<div class="irs-top-pane" id="irs-market-pricing">
+<div class="irs-mp-grid"><div class="irs-mp-left">
 
-<!-- Instrument Modules — FX -->
-<script src="/static/instruments/fx/fx_forward.js"></script>
-<script src="/static/instruments/fx/fx_range_forward.js"></script>
-<script src="/static/instruments/fx/fx_option.js"></script>
-<script src="/static/instruments/fx/fx_seagull.js"></script>
-<script src="/static/instruments/fx/fx_call_spread.js"></script>
-<script src="/static/instruments/fx/fx_put_spread.js"></script>
-<script src="/static/instruments/fx/fx_range_forward_opt.js"></script>
-<script src="/static/instruments/fx/principal_only_swap.js"></script>
-<script src="/static/instruments/fx/ccirs.js"></script>
-<script src="/static/instruments/fx/fx_swaption.js"></script>
-<script src="/static/instruments/fx/fx_digital.js"></script>
-<script src="/static/instruments/fx/fx_barrier.js"></script>
+<section class="irs-section">
+    <div class="irs-section-header">Market Data</div>
+    <div class="irs-section-body">
+        <div class="irs-grid irs-grid-4" style="margin-bottom:15px;">
+            <div><label for="irs-curve">Curve</label><select id="irs-curve" data-opts="curves"></select></div>
+            <div><label for="irs-reference_date">Reference Date</label><input type="date" id="irs-reference_date" title="Optional cross-check against the snapshot"></div>
+            <div><label for="irs-data-source">Data Source</label><input type="text" id="irs-data-source" readonly placeholder="Prepared snapshot"></div>
+            <div><label for="irs-interpolation">Interpolation</label><select id="irs-interpolation" data-opts="interpolations"></select></div>
+            <div><label for="irs-curve_source_file">Curve Snapshot File</label><select id="irs-curve_source_file"><option value=""></option></select></div>
+            <div><label for="irs-fixings_source_file">Fixings File (if needed)</label><select id="irs-fixings_source_file"><option value=""></option></select></div>
+            <div class="irs-span-2"><label for="irs-snapshot_folder">Snapshot Folder (optional)</label><input type="text" id="irs-snapshot_folder" placeholder="market_data/&lt;date&gt;/&lt;CCY&gt;/"></div>
+        </div>
 
-<!-- Instrument Modules — Rates -->
-<script src="/static/instruments/rates/irs.js"></script>
-<script src="/static/instruments/rates/cos.js"></script>
-<script src="/static/instruments/rates/cap_floor.js"></script>
-<script src="/static/instruments/rates/floor.js"></script>
-<script src="/static/instruments/rates/ir_collar.js"></script>
-<script src="/static/instruments/rates/swaption.js"></script>
-<script src="/static/instruments/rates/fra.js"></script>
-<script src="/static/instruments/rates/bond.js"></script>
+        <div class="irs-table-container">
+            <table class="irs-market-table">
+                <thead><tr><th>Date</th><th>Tenor</th><th class="irs-number">Zero Rate</th><th class="irs-number">Discount Factor</th></tr></thead>
+                <tbody id="irs-curve-rows">
+                    <tr><td colspan="4" class="irs-empty">Set Currency and Valuation Date to show the curve the engine uses.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="irs-note" id="irs-curve-note">The engine's prepared curve snapshot, shown read-only: it is not an input and cannot be edited here.</div>
+    </div>
+</section>
 
-<!-- Instrument Modules — Equity -->
-<script src="/static/instruments/equity/equity_swap.js"></script>
-<script src="/static/instruments/equity/esop.js"></script>
-<script src="/static/instruments/equity/vanilla_option.js"></script>
-<script src="/static/instruments/equity/barrier_option.js"></script>
-<script src="/static/instruments/equity/digital_option.js"></script>
-<script src="/static/instruments/equity/asian_option.js"></script>
-<script src="/static/instruments/equity/lookback_option.js"></script>
+<div class="irs-button-row">
+    <button class="irs-btn-secondary">Reset</button>
+    <button class="irs-btn-primary">Price IRS</button>
+</div>
 
-<!-- Instrument Modules — Commodity -->
-<script src="/static/instruments/commodity/commodity_future.js"></script>
-<script src="/static/instruments/commodity/commodity_swap.js"></script>
-<script src="/static/instruments/commodity/commodity_asian_option.js"></script>
-<script src="/static/instruments/commodity/commodity_spot_avg_option.js"></script>
+</div><!-- /irs-mp-left -->
 
-<!-- Instrument Modules — Credit -->
-<script src="/static/instruments/credit/cds.js"></script>
+<section class="irs-section" id="irs-pricing-results" style="display:none;">
+    <div class="irs-section-header" id="irs-results-title">Pricing Results</div>
+    <div id="irs-results-body"></div>
+</section>
+</div><!-- /irs-mp-grid -->
+</div>
 
-<!-- Registry Loader & Core -->
-<script src="/static/optima_registry.js"></script>
-<script src="/static/optima_core.js"></script>
+</div>
+    </div><!-- /page-irs -->
 
-<script>
-(function() {
+
+  </div><!-- /app-shell -->
+
+  <!-- ═══════════ SCRIPTS ═══════════ -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Schema & Registry -->
+  <script src="/static/schema/schema_master.js"></script>
+  <script src="/static/instruments/_base.js"></script>
+
+  <!-- Instrument Modules — FX -->
+  <script src="/static/instruments/fx/fx_forward.js"></script>
+  <script src="/static/instruments/fx/fx_range_forward.js"></script>
+  <script src="/static/instruments/fx/fx_option.js"></script>
+  <script src="/static/instruments/fx/fx_seagull.js"></script>
+  <script src="/static/instruments/fx/fx_call_spread.js"></script>
+  <script src="/static/instruments/fx/fx_put_spread.js"></script>
+  <script src="/static/instruments/fx/fx_range_forward_opt.js"></script>
+  <script src="/static/instruments/fx/principal_only_swap.js"></script>
+  <script src="/static/instruments/fx/ccirs.js"></script>
+  <script src="/static/instruments/fx/fx_swaption.js"></script>
+  <script src="/static/instruments/fx/fx_digital.js"></script>
+  <script src="/static/instruments/fx/fx_barrier.js"></script>
+
+  <!-- Instrument Modules — Rates -->
+  <script src="/static/instruments/rates/irs.js"></script>
+  <script src="/static/instruments/rates/cos.js"></script>
+  <script src="/static/instruments/rates/cap_floor.js"></script>
+  <script src="/static/instruments/rates/floor.js"></script>
+  <script src="/static/instruments/rates/ir_collar.js"></script>
+  <script src="/static/instruments/rates/swaption.js"></script>
+  <script src="/static/instruments/rates/fra.js"></script>
+  <script src="/static/instruments/rates/bond.js"></script>
+
+  <!-- Instrument Modules — Equity -->
+  <script src="/static/instruments/equity/equity_swap.js"></script>
+  <script src="/static/instruments/equity/esop.js"></script>
+  <script src="/static/instruments/equity/vanilla_option.js"></script>
+  <script src="/static/instruments/equity/barrier_option.js"></script>
+  <script src="/static/instruments/equity/digital_option.js"></script>
+  <script src="/static/instruments/equity/asian_option.js"></script>
+  <script src="/static/instruments/equity/lookback_option.js"></script>
+
+  <!-- Instrument Modules — Commodity -->
+  <script src="/static/instruments/commodity/commodity_future.js"></script>
+  <script src="/static/instruments/commodity/commodity_swap.js"></script>
+  <script src="/static/instruments/commodity/commodity_asian_option.js"></script>
+  <script src="/static/instruments/commodity/commodity_spot_avg_option.js"></script>
+
+  <!-- Instrument Modules — Credit -->
+  <script src="/static/instruments/credit/cds.js"></script>
+
+  <!-- Registry Loader & Core -->
+  <script src="/static/optima_registry.js"></script>
+  <script src="/static/optima_core.js"></script>
+  <script>
+/* Optima animation module */
+(function () {
   const canvas = document.getElementById('login-volsurface');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let W, H, t = 0;
-
-  const COLS = 32, ROWS = 22;
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
-
-  function volSurface(mx, ty, t) {
-    const smile     = 0.12 + 0.35 * Math.pow(mx - 1, 2);
-    const termStruc = 0.80 + 0.22 * (1 - Math.exp(-ty * 2.5));
-    const breathe   = Math.sin(t * 0.00055 + mx * 1.8 + ty * 2.4) * 0.035
-                    + Math.cos(t * 0.00038 + ty * 3.1) * 0.022
-                    + Math.sin(t * 0.00072 + mx * 0.9) * 0.015;
-    return smile * termStruc + breathe;
-  }
-
-  function project(col, row, vol) {
-    const surfW   = W * 0.90;
-    const surfH   = H * 0.62;
-    const originX = W * 0.05;
-    const originY = H * 0.92;
-    const tx = col / (COLS - 1);
-    const ty = row / (ROWS - 1);
-    const x  = originX + tx * surfW * 0.78 + ty * surfW * 0.22;
-    const y  = originY - ty * surfH - vol * H * 0.72;
-    return { x, y, vol, tx, ty };
-  }
-
-  function volToColor(vol, tx, ty) {
-    const atmDist = Math.abs(tx - 0.5) * 2;
-    const volNorm = Math.min(1, (vol - 0.10) / 0.35);
-    const r = Math.round(14  + atmDist * 125);
-    const g = Math.round(165 - atmDist * 75);
-    const b = 233;
-    const a = Math.min(0.55, 0.06 + volNorm * 0.22 + (1 - atmDist) * 0.08);
-    return { r, g, b, a };
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#0a0f1a';
-    ctx.fillRect(0, 0, W, H);
-
-    const pts = [];
-    for (let row = 0; row < ROWS; row++) {
-      pts[row] = [];
-      for (let col = 0; col < COLS; col++) {
-        const mx  = (col / (COLS - 1)) * 2;
-        const ty  = row / (ROWS - 1);
-        const vol = volSurface(mx, ty, t);
-        pts[row][col] = { ...project(col, row, vol), vol, mx, ty };
-      }
-    }
-
-    // Filled quads
-    for (let row = 0; row < ROWS - 1; row++) {
-      for (let col = 0; col < COLS - 1; col++) {
-        const p00 = pts[row][col], p10 = pts[row][col+1];
-        const p01 = pts[row+1][col], p11 = pts[row+1][col+1];
-        const avgVol = (p00.vol+p10.vol+p01.vol+p11.vol)/4;
-        const avgTx  = (p00.tx+p10.tx+p01.tx+p11.tx)/4;
-        const c = volToColor(avgVol, avgTx, 0);
-        ctx.beginPath();
-        ctx.moveTo(p00.x,p00.y); ctx.lineTo(p10.x,p10.y);
-        ctx.lineTo(p11.x,p11.y); ctx.lineTo(p01.x,p01.y);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${c.a*0.18})`;
-        ctx.fill();
-      }
-    }
-
-    // Smile lines (rows)
-    for (let row = 0; row < ROWS; row++) {
-      ctx.beginPath();
-      for (let col = 0; col < COLS; col++) {
-        const p = pts[row][col];
-        col === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-      }
-      const p0 = pts[row][0], pN = pts[row][COLS-1];
-      const pM = pts[row][Math.floor(COLS/2)];
-      const g = ctx.createLinearGradient(p0.x, p0.y, pN.x, pN.y);
-      const cL = volToColor(p0.vol, p0.tx, p0.ty);
-      const cM = volToColor(pM.vol, 0.5, pM.ty);
-      const cR = volToColor(pN.vol, pN.tx, pN.ty);
-      g.addColorStop(0,   `rgba(${cL.r},${cL.g},${cL.b},${cL.a})`);
-      g.addColorStop(0.5, `rgba(${cM.r},${cM.g},${cM.b},${cM.a*0.6})`);
-      g.addColorStop(1,   `rgba(${cR.r},${cR.g},${cR.b},${cR.a})`);
-      ctx.strokeStyle = g;
-      ctx.lineWidth = row === Math.floor(ROWS*0.3) ? 1.2 : 0.65;
-      ctx.stroke();
-    }
-
-    // Tenor lines (cols)
-    for (let col = 0; col < COLS; col++) {
-      ctx.beginPath();
-      for (let row = 0; row < ROWS; row++) {
-        const p = pts[row][col];
-        row === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-      }
-      const p0 = pts[0][col], pN = pts[ROWS-1][col];
-      const c0 = volToColor(p0.vol, p0.tx, p0.ty);
-      const cN = volToColor(pN.vol, pN.tx, pN.ty);
-      const g = ctx.createLinearGradient(p0.x, p0.y, pN.x, pN.y);
-      g.addColorStop(0, `rgba(${c0.r},${c0.g},${c0.b},${c0.a*0.5})`);
-      g.addColorStop(1, `rgba(${cN.r},${cN.g},${cN.b},${cN.a*0.8})`);
-      ctx.strokeStyle = g;
-      ctx.lineWidth = col === Math.floor(COLS/2) ? 1.4 : 0.55;
-      ctx.stroke();
-    }
-
-    // ATM spine
-    const atmCol = Math.floor(COLS/2);
-    ctx.beginPath();
-    for (let row = 0; row < ROWS; row++) {
-      const p = pts[row][atmCol];
-      row === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-    }
-    ctx.strokeStyle = `rgba(14,165,233,${0.45 + Math.sin(t*0.0018)*0.12})`;
-    ctx.lineWidth = 1.6;
-    ctx.stroke();
-
-    // Wing spines
-    [0, COLS-1].forEach(wCol => {
-      ctx.beginPath();
-      for (let row = 0; row < ROWS; row++) {
-        const p = pts[row][wCol];
-        row === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-      }
-      ctx.strokeStyle = `rgba(139,92,246,${0.30 + Math.cos(t*0.0022)*0.10})`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-    });
-
-    // Peak glow
-    for (let row = 0; row < ROWS; row++) {
-      for (let col of [0, 1, COLS-2, COLS-1]) {
-        const p = pts[row][col];
-        if (p.vol > 0.28) {
-          const ga = (p.vol - 0.28) / 0.20 * 0.12;
-          const grd = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,18);
-          grd.addColorStop(0, `rgba(139,92,246,${ga})`);
-          grd.addColorStop(1, 'rgba(139,92,246,0)');
-          ctx.fillStyle = grd;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 18, 0, Math.PI*2);
-          ctx.fill();
-        }
-      }
-    }
-
-    // Vignette
-    const vig = ctx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.85);
-    vig.addColorStop(0, 'rgba(10,15,26,0)');
-    vig.addColorStop(1, 'rgba(10,15,26,0.72)');
-    ctx.fillStyle = vig;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  function loop(ts) { t = ts; draw(); requestAnimationFrame(loop); }
-  resize();
-  window.addEventListener('resize', resize);
-  requestAnimationFrame(loop);
 })();
+
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const cards = document.querySelectorAll('#page-modules .module-card, #page-modules .feature-card');
+  cards.forEach(function (card) {
+    card.addEventListener('click', function () {
+      cards.forEach(function (item) { item.classList.remove('module-selected'); });
+      card.classList.add('module-selected');
+    });
+  });
+});
+</script>
 </body>
+
 </html>

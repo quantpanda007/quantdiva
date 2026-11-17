@@ -11,7 +11,7 @@ const fx_range_forward = {
     groups: [
       {
         id:'counterparty', label:'Counterparty Details',
-        collapsible: true, collapsed: true,
+        collapsible: true, collapsed: false,
         fields: [
           ...COUNTERPARTY_FIELDS,
           {id:'contract_type',label:'Type of Contract',type:'text',val:'Range Forward',ro:true},
@@ -28,6 +28,11 @@ const fx_range_forward = {
           ...FX_NOTIONAL_2,
         ],
       },
+	      {
+        id:'market_data', label:'Market Data as on Valuation Date',
+        fields: [...FX_MARKET_DATA],
+      },  
+	  
       {
         id:'dates', label:'Dates',
         fields: [
@@ -40,10 +45,7 @@ const fx_range_forward = {
           {id:'maturity_hint',label:'',type:'hint',val:'Sell → start date, Buy → end date'},
         ],
       },
-      {
-        id:'market_data', label:'Market Data as on Valuation Date',
-        fields: [...FX_MARKET_DATA],
-      },
+
     ],
   },
   flatFields: [
@@ -116,3 +118,4 @@ const fx_range_forward = {
   },
 };
 INSTRUMENT_REGISTRY['fx_range_forward'] = fx_range_forward;
+

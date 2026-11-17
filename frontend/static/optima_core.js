@@ -22,17 +22,17 @@ let currentPreset = null;  // Preset field overrides from card click
 
 const PLOT_LAYOUT = {
   paper_bgcolor: 'rgba(0,0,0,0)',
-  plot_bgcolor: 'rgba(10,15,26,0.5)',
-  font: { color: '#94a3b8', size: 11, family: 'Inter, system-ui' },
+  plot_bgcolor: 'rgba(47, 134, 181, 0.5)',
+  font: { color: '#6F8796', size: 11, family: 'Inter, system-ui' },
   margin: { t: 30, r: 20, b: 40, l: 55 },
-  xaxis: { gridcolor: '#1e2d4a', zerolinecolor: '#2e4a7a' },
-  yaxis: { gridcolor: '#1e2d4a', zerolinecolor: '#2e4a7a' },
+  xaxis: { gridcolor: '#B8CEDE', zerolinecolor: '#8FB9D2' },
+  yaxis: { gridcolor: '#B8CEDE', zerolinecolor: '#8FB9D2' },
 };
 const PLOT_CONFIG = { displayModeBar: false, responsive: true };
 
 function plotLine(divId, x, y, title, xLabel, yLabel, extra) {
   const traces = [{ x, y, type: 'scatter', mode: 'lines+markers',
-    line: { color: '#0ea5e9', width: 2 }, marker: { size: 4 }, ...extra }];
+    line: { color: '#2F86B5', width: 2 }, marker: { size: 4 }, ...extra }];
   const layout = { ...PLOT_LAYOUT, title: { text: title, font: { size: 13 } },
     xaxis: { ...PLOT_LAYOUT.xaxis, title: xLabel },
     yaxis: { ...PLOT_LAYOUT.yaxis, title: yLabel },
@@ -41,7 +41,7 @@ function plotLine(divId, x, y, title, xLabel, yLabel, extra) {
 }
 
 function plotBar(divId, x, y, title, xLabel, yLabel) {
-  const colors = y.map(v => v >= 0 ? '#10b981' : '#ef4444');
+  const colors = y.map(v => v >= 0 ? '#4F8A76' : '#B85C6B');
   const traces = [{ x, y, type: 'bar', marker: { color: colors } }];
   const layout = { ...PLOT_LAYOUT, title: { text: title, font: { size: 13 } },
     xaxis: { ...PLOT_LAYOUT.xaxis, title: xLabel },
@@ -52,7 +52,7 @@ function plotBar(divId, x, y, title, xLabel, yLabel) {
 
 function plotHeatmap(divId, z, x, y, title) {
   const traces = [{ z, x, y, type: 'heatmap',
-    colorscale: [[0,'#ef4444'],[0.5,'#0ea5e9'],[1,'#10b981']],
+    colorscale: [[0,'#B85C6B'],[0.5,'#2F86B5'],[1,'#4F8A76']],
     hovertemplate: 'Spot: %{x}<br>Vol: %{y}<br>NPV: $%{z:.2f}<extra></extra>' }];
   const layout = { ...PLOT_LAYOUT, title: { text: title, font: { size: 13 } },
     xaxis: { ...PLOT_LAYOUT.xaxis, title: 'Spot' },
@@ -268,7 +268,7 @@ function renderBulkResults(data) {
   const allErrors = [...(data.parse_errors || []), ...(data.pricing_errors || [])];
   allErrors.forEach(e => {
     const tr = document.createElement('tr');
-    tr.style.background = 'rgba(239,68,68,0.04)';
+    tr.style.background = 'rgba(184, 92, 107, 0.04)';
     tr.innerHTML = `
       <td style="color:var(--accent);font-weight:600">${e.ref || '—'}</td>
       <td>—</td>
@@ -375,11 +375,11 @@ document.addEventListener('click', async (e) => {
     }
   }
 
-  // ── Download PDF Report ───────────────────────────────────────────
+
+ // ── Download PDF Report ───────────────────────────────────────────
   if (e.target.id === 'bulk-pdf-btn') {
     if (!_lastBulkData) return;
     const btn = e.target;
-    if (btn.disabled) return;
     btn.textContent = '⏳ Generating PDF...';
     btn.disabled = true;
     try {
@@ -398,18 +398,9 @@ document.addEventListener('click', async (e) => {
       document.body.appendChild(a); a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
-      // Success state
-      btn.textContent = '✓ PDF Downloaded';
-      btn.style.color = 'var(--green)';
-      btn.style.borderColor = 'var(--green)';
-      setTimeout(() => {
-        btn.textContent = '📄 Download PDF Report';
-        btn.style.color = 'var(--purple)';
-        btn.style.borderColor = 'var(--purple)';
-        btn.disabled = false;
-      }, 3000);
     } catch (err) {
       alert('PDF generation failed: ' + err.message);
+    } finally {
       btn.textContent = '📄 Download PDF Report';
       btn.disabled = false;
     }
@@ -500,7 +491,8 @@ function resetBulkUI() {
   _lastBulkData = null;
   _lastReportMarkdown = '';
   _lastFXSingleResult = null;
-  if ($('ws-fx-results')) $('ws-fx-results').style.display = 'none';
+  if ($('ws-fx-results'))  $('ws-fx-results').style.display  = 'none';
+  if ($('ws-irs-results')) $('ws-irs-results').style.display = 'none';
   if ($('fx-single-tbody')) $('fx-single-tbody').innerHTML = '';
   if ($('ws-results-strip'))   $('ws-results-strip').style.display   = '';
 if ($('ws-greeks-card'))     $('ws-greeks-card').style.display     = '';
@@ -529,6 +521,10 @@ function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pg = $(pageId);
   if (pg) pg.classList.add('active');
+
+  // Deloitte branding belongs only on the Welcome/Home page.
+  const shell = $('app-shell');
+  if (shell) shell.classList.toggle('home-page', pageId === 'page-modules');
 }
 
 function updateBreadcrumb(parts) {
@@ -567,13 +563,38 @@ function goModules() {
   updateBreadcrumb([]);
 }
 
-function goValuation() {
+// ── Valuation: stacked asset-class rows → instrument page ──────────
+let valAsset = null; // asset class currently open on the Valuation page (null = row list)
+const VAL_ASSET_NAMES = {
+  fx: 'Foreign Exchange', rates: 'Interest Rate Derivatives', eq: 'Equity Derivatives',
+  cmdty: 'Commodity Derivatives', credit: 'Credit Derivatives'
+};
+
+function showValAsset(key) {
+  valAsset = key || null;
+  const list = $('vs-list');
+  if (list) list.style.display = valAsset ? 'none' : '';
+  document.querySelectorAll('.vs-detail').forEach(d => {
+    d.style.display = (valAsset && d.dataset.asset === valAsset) ? '' : 'none';
+  });
+  if (valAsset) {
+    navStack = ['modules', 'valuation-list'];
+    updateBreadcrumb([{text: 'Valuation'}, {text: VAL_ASSET_NAMES[valAsset] || valAsset}]);
+  } else {
+    navStack = ['modules'];
+    updateBreadcrumb([{text: 'Valuation'}]);
+  }
+  window.scrollTo(0, 0);
+}
+
+// keepAsset = true → return to the instrument page the user came from (e.g. back from workspace)
+function goValuation(keepAsset) {
   navStack = ['modules'];
   currentInst = null;
   currentPreset = null;
   resetBulkUI();
   showPage('page-valuation');
-  updateBreadcrumb([{text: 'Valuation'}]);
+  showValAsset(keepAsset === true ? valAsset : null);
 }
 
 function goBack() {
@@ -581,8 +602,10 @@ function goBack() {
   const prev = navStack[navStack.length - 1];
   if (prev === 'modules') {
     goModules();
+  } else if (prev === 'valuation-list') {
+    goValuation();            // instrument page → asset-class rows
   } else if (prev === 'valuation') {
-    goValuation();
+    goValuation(true);        // workspace → instrument page we came from
   } else {
     goModules();
   }
@@ -597,11 +620,39 @@ document.querySelectorAll('.module-box').forEach(box => {
   });
 });
 
+// Valuation page: asset-class rows, back link, class switcher
+document.querySelectorAll('.vs-row').forEach(r => r.addEventListener('click', () => showValAsset(r.dataset.asset)));
+document.querySelectorAll('.vs-back').forEach(b => b.addEventListener('click', () => showValAsset(null)));
+document.querySelectorAll('.vs-switch a').forEach(a => a.addEventListener('click', () => showValAsset(a.dataset.asset)));
+
 $('logo-home').addEventListener('click', goModules);
 $('bc-home').addEventListener('click', goModules);
 $('btn-go-back').addEventListener('click', goBack);
 
+// ── Instruments with their own workspace page (registry `workspacePage`) ──
+// The module owns that page's markup in optima.html and its behaviour (`onOpen`).
+function openModulePage(instType, instModule, preset) {
+  resetBulkUI();
+  currentInst = instType;
+  currentPreset = preset || null;
+  showPage(instModule.workspacePage);
+  navStack = ['modules', 'valuation'];
+  const schema = SCHEMA[instType] || {};
+  updateBreadcrumb([
+    {text: 'Valuation'},
+    {text: instModule.breadcrumbAsset || schema.asset},
+    {text: preset?._cardLabel || schema.label},
+  ]);
+  window.scrollTo(0, 0);
+  if (instModule.onOpen) instModule.onOpen(preset);
+}
+
 function openWorkspace(instType, preset) {
+  const pageModule = INSTRUMENT_REGISTRY[instType];
+  if (pageModule?.workspacePage && $(pageModule.workspacePage)) {
+    openModulePage(instType, pageModule, preset);
+    return;
+  }
   resetBulkUI();
   currentInst = instType;
   currentPreset = preset || null;
@@ -977,10 +1028,10 @@ function renderPayoff() {
 
   const traces = [
     { x, y: yPayoff, type: 'scatter', mode: 'lines', name: 'Payoff at Expiry',
-      line: { color: '#0ea5e9', width: 2 } },
+      line: { color: '#2F86B5', width: 2 } },
     { x: [currentSpot, currentSpot], y: [Math.min(...yPayoff), Math.max(...yPayoff)],
       type: 'scatter', mode: 'lines', name: 'Current Spot',
-      line: { color: '#3b82f6', width: 1, dash: 'dot' } },
+      line: { color: '#4B88B8', width: 1, dash: 'dot' } },
   ];
   const layout = { ...PLOT_LAYOUT, height: 250, showlegend: true,
     legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0)', font: { size: 10 } },
@@ -988,7 +1039,7 @@ function renderPayoff() {
     xaxis: { ...PLOT_LAYOUT.xaxis, title: 'Spot Price' },
     yaxis: { ...PLOT_LAYOUT.yaxis, title: 'Payoff' },
     shapes: [{ type: 'line', x0: lo, x1: hi, y0: 0, y1: 0,
-      line: { color: '#475569', width: 1, dash: 'dash' } }],
+      line: { color: '#6F8796', width: 1, dash: 'dash' } }],
   };
   Plotly.newPlot('payoff-chart', traces, layout, PLOT_CONFIG);
 }
@@ -1366,8 +1417,52 @@ document.addEventListener('click', (e) => {
 // EVENT: Price Button
 // ═══════════════════════════════════════════════════════════════════
 
+
+// ── Registry-driven pricing endpoint (registry `apiEndpoint`) ───────────
+// The request body is the module's buildRequest() (own workspace page) or its
+// mapPayload(allFields) (grouped fields); onPriceResult / onPriceError render the response.
+async function priceViaModuleEndpoint(instModule, button) {
+  const btn = button || $('btn-price');
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Pricing...'; }
+  let request = null;
+  try {
+    request = instModule.buildRequest ? instModule.buildRequest()
+                                      : collectPayload().instrument.params;
+    const r = await fetch(API + instModule.apiEndpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    let data = null;
+    try { data = await r.json(); } catch { data = null; }
+    if (!r.ok) {
+      const d = data ? data.detail : null;
+      const err = new Error((d && (d.message || (typeof d === 'string' ? d : ''))) ||
+                            `${r.status} ${r.statusText}`);
+      err.status = r.status;
+      err.detail = d;
+      throw err;
+    }
+    if (instModule.onPriceResult) instModule.onPriceResult(data, request);
+  } catch (e) {
+    console.error('Price error:', e);
+    if (instModule.onPriceError) instModule.onPriceError(e, request);
+    else alert('Pricing error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
+}
+
 $('btn-price').addEventListener('click', async () => {
   if ($('rs-npv')) $('rs-npv').textContent = '...';
+
+  // Instruments with their own pricing endpoint (registry `apiEndpoint`)
+  const endpointModule = INSTRUMENT_REGISTRY[currentInst];
+  if (endpointModule?.apiEndpoint) {
+    await priceViaModuleEndpoint(endpointModule);
+    return;
+  }
+
   try {
     const payload = collectPayload();
     const validationErrors = validatePayload(payload);
@@ -1387,7 +1482,7 @@ $('btn-price').addEventListener('click', async () => {
     // Always reveal outputs first — before any processing that could throw
     if ($('ws-outputs')) $('ws-outputs').style.display = 'block';
     if ($('ws-results-strip')) $('ws-results-strip').style.display = 'grid';
-    $('diagnostics').textContent = JSON.stringify(priceRes, null, 2);
+    if ($('diagnostics')) $('diagnostics').textContent = JSON.stringify(priceRes, null, 2);
 
 if (['fx_forward','fx_range_forward'].includes(currentInst)) {
   renderFXSingleResult(priceRes, payload);
@@ -1395,8 +1490,10 @@ if (['fx_forward','fx_range_forward'].includes(currentInst)) {
   if ($('ws-greeks-card'))      $('ws-greeks-card').style.display      = 'none';
   if ($('ws-analysis-section')) $('ws-analysis-section').style.display = 'none';
   if ($('ws-payoff-section'))   $('ws-payoff-section').style.display   = 'none';
+  if ($('ws-irs-results'))      $('ws-irs-results').style.display      = 'none';
 } else {
-  if ($('ws-fx-results')) $('ws-fx-results').style.display = 'none';
+  if ($('ws-fx-results'))  $('ws-fx-results').style.display  = 'none';
+  if ($('ws-irs-results')) $('ws-irs-results').style.display = 'none';
 }
 
     const npv = typeof priceRes.npv === 'number' ? priceRes.npv : null;
@@ -1442,7 +1539,7 @@ if (['fx_forward','fx_range_forward'].includes(currentInst)) {
     if ($('npv-value')) $('npv-value').textContent = 'Error';
     if ($('npv-meta')) $('npv-meta').textContent = e.message;
     if ($('rs-npv')) { $('rs-npv').textContent = 'Error'; $('rs-npv').style.color = 'var(--red)'; }
-    $('diagnostics').textContent = 'Error: ' + e.message;
+    if ($('diagnostics')) $('diagnostics').textContent = 'Error: ' + e.message;
   }
 });
 
@@ -1771,8 +1868,8 @@ $('btn-curves').addEventListener('click', async () => {
       $('curves-body').innerHTML = html;
 
       const traces = [
-        { x: tenors, y: zeros.map(v => v * 100), name: 'Zero Rate', line: { color: '#0ea5e9' } },
-        { x: tenors, y: fwds.map(v => v * 100), name: 'Forward Rate', line: { color: '#3b82f6', dash: 'dash' } },
+        { x: tenors, y: zeros.map(v => v * 100), name: 'Zero Rate', line: { color: '#2F86B5' } },
+        { x: tenors, y: fwds.map(v => v * 100), name: 'Forward Rate', line: { color: '#4B88B8', dash: 'dash' } },
       ];
       const layout = { ...PLOT_LAYOUT, height: 260, showlegend: true,
         legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0)' },
@@ -1825,9 +1922,13 @@ async function checkHealth() {
   try {
     const r = await fetch(API.replace('/api/v1', '') + '/health');
     const d = await r.json();
-    $('api-status').textContent = '✓ API v' + d.version;
-    $('api-status').classList.add('ok');
-  } catch { $('api-status').textContent = '✗ API Offline'; }
+    if ($('api-status')) {
+      $('api-status').textContent = '✓ API v' + d.version;
+      $('api-status').classList.add('ok');
+    }
+  } catch {
+    if ($('api-status')) $('api-status').textContent = '✗ API Offline';
+  }
 }
 
 
@@ -1848,6 +1949,11 @@ document.querySelectorAll('.mod-tab').forEach(tab => {
 document.querySelectorAll('.fx-card').forEach(card => {
   card.addEventListener('click', () => {
     const inst = card.dataset.inst;
+    // Keep the selected blue fill for the two FX forward cards only.
+    if (inst === 'fx_forward' || inst === 'fx_range_forward') {
+      document.querySelectorAll('.fx-card[data-inst="fx_forward"], .fx-card[data-inst="fx_range_forward"]').forEach(item => item.classList.remove('fx-forward-selected'));
+      card.classList.add('fx-forward-selected');
+    }
     const presetStr = card.dataset.preset;
     let preset = presetStr ? JSON.parse(presetStr) : null;
     if (preset) preset._cardLabel = card.dataset.label || SCHEMA[inst]?.label;
@@ -1861,6 +1967,14 @@ document.querySelectorAll('.inst-card').forEach(card => {
   card.addEventListener('click', () => openWorkspace(card.dataset.inst));
 });
 
+// Valuation page: a clicked card keeps its blue selected look (never white)
+document.querySelectorAll('#page-valuation .vs-row, #page-valuation .fx-card, #page-valuation .inst-card').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#page-valuation .is-selected').forEach(x => x.classList.remove('is-selected'));
+    el.classList.add('is-selected');
+  });
+});
+
 checkHealth();
 
 // URL param support: ?inst=vanilla_option or ?inst=fx_option&preset={"option_type":"call","direction":"buy"}
@@ -1871,3 +1985,49 @@ if (urlInst && SCHEMA[urlInst]) {
   try { preset = urlPreset ? JSON.parse(urlPreset) : null; } catch {}
   openWorkspace(urlInst, preset);
 }
+/* ===== Breadcrumb Navigation ===== */
+
+document.addEventListener('click', function () {
+
+    const home = document.getElementById('bc-home');
+    const module = document.getElementById('bc-module');
+    const asset = document.getElementById('bc-asset');
+
+    if (home && !home.dataset.bound) {
+
+        home.dataset.bound = '1';
+
+        home.onclick = function () {
+
+            if (typeof goModules === 'function') {
+                goModules();
+            }
+
+        };
+    }
+
+    if (module && !module.dataset.bound) {
+
+        module.dataset.bound = '1';
+
+        module.onclick = function () {
+
+            if (typeof goValuation === 'function') {
+                goValuation();
+            }
+
+        };
+    }
+
+    if (asset && !asset.dataset.bound) {
+
+        asset.dataset.bound = '1';
+
+        asset.onclick = function () {
+
+            document.getElementById('btn-go-back')?.click();
+
+        };
+    }
+
+});

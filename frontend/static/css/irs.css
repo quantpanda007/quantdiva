@@ -1,0 +1,335 @@
+/* ══════════════════════════════════════════════════════
+   Optima — IRS workspace (#page-irs)
+   Part 1: the IRS page styles exactly as in the original design (moved here from the
+   inline <style> of optima.html). Part 2 (end of file): additions for engine-backed
+   controls: read-only fields, editable schedule tables, workbook import, results.
+   ══════════════════════════════════════════════════════ */
+
+/* IRS Pricing page — scoped to #page-irs, uses the Optima theme variables (css/theme.css) */
+#page-irs, #page-irs * { box-sizing: border-box; }
+#page-irs { font: 13px/1.5 inherit; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text); }
+
+
+
+
+#page-irs .irs-container { padding: 0 0 24px; max-width: none; margin: 0; }
+
+/* Cards / sections */
+#page-irs .irs-section {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(20, 59, 92, 0.18);
+}
+#page-irs .irs-section-header {
+    padding: 9px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--accent); background: rgba(47, 134, 181, 0.06); border-bottom: 1px solid var(--border);
+}
+#page-irs .irs-section-body { padding: 16px; }
+#page-irs .irs-grid { display: grid; gap: 12px 18px; }
+#page-irs .irs-grid-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+#page-irs .irs-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+#page-irs .irs-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#page-irs .irs-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Form fields */
+#page-irs label { display: block; margin: 0 0 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-muted); }
+#page-irs input, #page-irs select {
+    width: 100%; height: 34px; padding: 6px 9px; border: 1px solid var(--border); border-radius: 5px;
+    background: var(--input-bg); color: var(--text); font-size: 12px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s;
+}
+#page-irs input:hover, #page-irs select:hover { border-color: var(--border-accent); }
+#page-irs input:focus, #page-irs select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+/* Swap legs */
+#page-irs .irs-legs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+#page-irs .irs-leg { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--card);
+    transition: box-shadow 0.2s, transform 0.2s; }
+#page-irs .irs-leg-header { padding: 9px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--accent); background: rgba(47, 134, 181, 0.06); border-bottom: 1px solid var(--border); }
+#page-irs .irs-leg-header.irs-fixed { border-left: 4px solid var(--accent); }
+#page-irs .irs-leg-header.irs-floating { border-left: 4px solid var(--cyan); }
+#page-irs .irs-leg-body { padding: 14px; }
+
+/* Buttons */
+#page-irs .irs-button-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; margin-bottom: 14px; }
+#page-irs button { height: 36px; padding: 0 20px; border-radius: 6px; border: 1px solid var(--border);
+    cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all 0.15s; }
+#page-irs .irs-btn-primary { background: var(--accent); color: #fff; border-color: transparent; font-weight: 700; }
+#page-irs .irs-btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(47, 134, 181, 0.45); transform: translateY(-1px); }
+#page-irs .irs-btn-secondary { background: var(--card); color: var(--text); }
+#page-irs .irs-btn-secondary:hover { background: var(--card-hover); border-color: var(--border-accent); }
+
+/* Tables */
+#page-irs .irs-table-container { overflow-x: auto; }
+#page-irs table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#page-irs th { position: static; background: var(--card-hover); color: var(--text-muted); text-align: left; font-size: 10px;
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; padding: 9px 10px;
+    border-bottom: 1px solid var(--border); white-space: nowrap; }
+#page-irs td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid rgba(47, 134, 181, 0.18); white-space: nowrap; color: var(--text); }
+#page-irs tbody tr { transition: background 0.15s; }
+#page-irs tbody tr:hover { background: rgba(47, 134, 181, 0.07); }
+#page-irs td.irs-number, #page-irs th.irs-number { text-align: right; font-variant-numeric: tabular-nums; }
+#page-irs .irs-market-table input { height: 29px; min-width: 100px; }
+
+/* Result cards */
+#page-irs .irs-result-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+#page-irs .irs-result-card { border: 1px solid var(--border); border-top: 2px solid var(--accent); border-radius: 8px;
+    padding: 12px; background: var(--card); transition: transform 0.2s, box-shadow 0.2s; }
+#page-irs .irs-result-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(47, 134, 181, 0.3); }
+#page-irs .irs-result-label { color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 700;
+    letter-spacing: 0.6px; margin-bottom: 8px; }
+#page-irs .irs-result-value { font-size: 18px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+#page-irs .irs-result-card.irs-primary { background: linear-gradient(135deg, var(--card) 0%, var(--npv-gradient-end) 100%);
+    border-color: var(--border-accent); border-top-color: var(--accent); }
+#page-irs .irs-result-card.irs-primary .irs-result-value { font-size: 22px; }
+#page-irs .irs-negative { color: var(--red) !important; }
+#page-irs .irs-positive { color: var(--green) !important; }
+
+/* Top-level tabs */
+#page-irs .irs-top-tabs { display: flex; align-items: stretch; margin-bottom: 14px; overflow-x: auto;
+    background: var(--card); border: 1px solid var(--border); border-bottom: 3px solid var(--accent);
+    border-radius: 10px 10px 0 0; box-shadow: 0 4px 20px rgba(20, 59, 92, 0.18); }
+#page-irs .irs-top-tab { appearance: none; height: 42px; padding: 0 22px; border: 0; border-right: 1px solid var(--border);
+    border-radius: 0; background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; transition: all 0.15s; }
+#page-irs .irs-top-tab:hover { background: var(--card-hover); color: var(--accent); }
+#page-irs .irs-top-tab.irs-active { background: var(--accent); color: #fff; font-weight: 700; border-right-color: var(--accent); }
+#page-irs .irs-top-pane { display: none; }
+#page-irs .irs-top-pane.irs-active { display: block; }
+
+/* Result tabs */
+#page-irs .irs-tabs { display: flex; background: rgba(47, 134, 181, 0.06); border-bottom: 1px solid var(--border); overflow-x: auto; }
+#page-irs .irs-tab { padding: 10px 16px; border-right: 1px solid var(--border); cursor: pointer; font-size: 12px;
+    font-weight: 600; color: var(--text-muted); white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.15s; }
+#page-irs .irs-tab:hover { background: var(--card-hover); color: var(--accent); }
+#page-irs .irs-tab.irs-active { background: var(--card); color: var(--accent); border-bottom: 2px solid var(--accent); }
+#page-irs .irs-tab-content { padding: 16px; }
+#page-irs .irs-tab-pane { display: none; }
+#page-irs .irs-tab-pane.irs-active { display: block; }
+
+/* Misc */
+#page-irs .irs-status { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; color: #D8EAF6; }
+#page-irs .irs-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4F8A76;
+    box-shadow: 0 0 4px rgba(79, 138, 118, 0.5); animation: optimaPulse 1.1s infinite ease-in-out; }
+#page-irs .irs-subheading { margin: 4px 0 12px; padding-top: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--cyan); }
+#page-irs .irs-note { margin-top: 14px; padding: 10px 12px; font-size: 12px; color: var(--text-muted);
+    background: rgba(47, 134, 181, 0.06); border-left: 3px solid var(--accent); border-radius: 4px; }
+
+@media (max-width: 1100px) {
+    #page-irs .irs-grid-6 { grid-template-columns: repeat(3, 1fr); }
+    #page-irs .irs-result-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 800px) {
+    #page-irs .irs-legs { grid-template-columns: 1fr; }
+    #page-irs .irs-grid-6, #page-irs .irs-grid-4, #page-irs .irs-grid-3, #page-irs .irs-grid-2 { grid-template-columns: 1fr 1fr; }
+    #page-irs .irs-top-tab { padding: 0 14px; font-size: 11px; }
+}
+
+/* ═══ Optima selection effect (same as Valuation › Select Instrument cards) ═══
+   Rest: pale blue + light border.  Hover / selected: blue gradient, navy border, soft blue glow, 1px lift. */
+#page-irs {
+    --irs-rest-bg: #EAF5FC;
+    --irs-rest-bd: #A8D7F0;
+    --irs-hl-grad: linear-gradient(135deg, #D8EEFC 0%, #B9E2F8 52%, #DDF2FD 100%);
+    --irs-hl-bd: #143B5C;
+    --irs-glow: 0 0 0 3px rgba(143, 208, 245, 0.55), 0 0 22px 6px rgba(150, 215, 255, 0.75);
+}
+/* let the glow breathe: no clipping on cards / tab strips */
+#page-irs .irs-section { overflow: visible; min-width: 0; }
+#page-irs .irs-section-header { border-radius: 10px 10px 0 0; }
+
+/* Tab strips become rows of separate selectable tabs */
+#page-irs .irs-top-tabs, #page-irs .irs-tabs {
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; overflow: visible;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+}
+#page-irs .irs-top-tabs { margin-bottom: 16px; box-shadow: 0 4px 20px rgba(20, 59, 92, 0.18); }
+#page-irs .irs-tabs { border-radius: 0; border-width: 0 0 1px 0; background: rgba(47, 134, 181, 0.04); }
+
+#page-irs .irs-top-tab, #page-irs .irs-tab, #page-irs .irs-sub-tab,
+#page-irs .irs-btn-secondary, #page-irs .irs-btn-primary {
+    background: var(--irs-rest-bg) !important; background-image: none !important;
+    border: 2px solid var(--irs-rest-bd) !important; border-radius: 8px !important;
+    color: #163B5C !important; box-shadow: 0 1px 3px rgba(20, 59, 92, 0.08) !important;
+    transform: none !important; outline: none !important;
+    transition: background-color .22s ease, border-color .22s ease, box-shadow .25s ease, transform .18s ease !important;
+}
+#page-irs .irs-top-tab { height: 42px; padding: 0 22px; }
+#page-irs .irs-tab { height: 38px; padding: 0 18px; display: inline-flex; align-items: center; border-bottom-width: 2px; }
+
+#page-irs .irs-top-tab:hover, #page-irs .irs-top-tab:focus-visible, #page-irs .irs-top-tab.irs-active,
+#page-irs .irs-tab:hover,     #page-irs .irs-tab:focus-visible,     #page-irs .irs-tab.irs-active,
+#page-irs .irs-sub-tab:hover, #page-irs .irs-sub-tab:focus-visible, #page-irs .irs-sub-tab.irs-active,
+#page-irs .irs-btn-secondary:hover, #page-irs .irs-btn-secondary:active, #page-irs .irs-btn-secondary:focus-visible,
+#page-irs .irs-btn-primary:hover,   #page-irs .irs-btn-primary:active,   #page-irs .irs-btn-primary:focus-visible {
+    background-color: #CFE9FA !important; background-image: var(--irs-hl-grad) !important;
+    border: 2px solid var(--irs-hl-bd) !important; box-shadow: var(--irs-glow) !important;
+    transform: translateY(-1px) !important; color: #163B5C !important;
+}
+/* Price IRS keeps a blue identity at rest */
+#page-irs .irs-btn-primary { background: var(--accent) !important; border-color: var(--irs-hl-bd) !important; color: #fff !important; }
+#page-irs .irs-btn-primary:hover, #page-irs .irs-btn-primary:active, #page-irs .irs-btn-primary:focus-visible { color: #163B5C !important; }
+
+/* Legs and result cards: same highlight on hover */
+#page-irs .irs-leg, #page-irs .irs-result-card { border: 2px solid var(--irs-rest-bd); background: var(--irs-rest-bg); }
+#page-irs .irs-result-card { border-top: 2px solid var(--irs-rest-bd); }
+#page-irs .irs-result-card:hover,
+#page-irs .irs-result-card.irs-primary {
+    background-image: var(--irs-hl-grad); border-color: var(--irs-hl-bd);
+    box-shadow: var(--irs-glow); transform: translateY(-1px);
+}
+#page-irs .irs-result-card.irs-primary:hover { transform: translateY(-2px); }
+#page-irs .irs-leg-header { background: transparent; }
+
+/* ═══ Page title row — matches the Valuation page heading ═══ */
+#page-irs .irs-title-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 14px; padding: 0 2px; }
+#page-irs .irs-title { display: flex; align-items: center; gap: 14px; }
+#page-irs .irs-t1 { font-size: 24px; font-weight: 700; color: #FFFFFF; letter-spacing: 0.2px; }
+#page-irs .irs-div { width: 3px; height: 24px; border-radius: 1px; background: #FFFFFF; }
+#page-irs .irs-t2 { font-size: 20px; font-weight: 600; color: #FFFFFF; }
+#page-irs .irs-status { padding: 5px 12px; border-radius: 20px; background: #EAF5FC; border: 1px solid #A8D7F0;
+    color: #163B5C; font-size: 11px; font-weight: 700; }
+#page-irs .irs-top-tabs { background: transparent !important; border: 0 !important; box-shadow: none !important;
+    border-radius: 0 !important; padding: 4px 4px 16px; margin: 0; }
+/* ═══ One-screen layout: the IRS page fits the window height, no page scrolling ═══ */
+#page-irs.active { display: flex; flex-direction: column; overflow: hidden; padding: 10px 16px 12px; }
+#page-irs .irs-title-row { flex: none; margin: 0 0 6px; }
+#page-irs .irs-t1 { font-size: 22px; }
+#page-irs .irs-t2 { font-size: 18px; }
+#page-irs .irs-div { height: 20px; }
+#page-irs .irs-container { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0; }
+#page-irs .irs-top-tabs { flex: none; gap: 8px; padding: 4px 4px 10px; }
+#page-irs .irs-top-tab { height: 36px; padding: 0 18px; font-size: 11.5px; }
+#page-irs .irs-top-pane.irs-active { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#page-irs #irs-economic-terms.irs-active { overflow-y: auto; }
+#page-irs #irs-economic-terms .irs-section, #page-irs #irs-economic-terms .irs-button-row { flex: none; }
+
+/* ═══ Market (Economic Terms) – uses the same section/header/field styles as Trade Details & Swap Legs ═══ */
+#page-irs .market-head { display: flex; align-items: center; gap: 8px; }
+#page-irs .refresh-button { margin-left: auto; border: 0; background: transparent; color: var(--accent); font-size: 19px; line-height: 18px;
+    padding: 0 3px; height: 22px; cursor: pointer; transition: color .2s ease, transform .3s ease; }
+#page-irs .refresh-button:hover { color: var(--text); transform: rotate(180deg); }
+#page-irs .market-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 14px; align-items: start; }
+#page-irs .market-side { min-width: 0; display: grid; gap: 8px; }
+#page-irs .market-row { display: grid; grid-template-columns: 52px 54px 64px minmax(120px, 1fr); gap: 8px; align-items: center; }
+#page-irs .market-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+#page-irs .market-num-input { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) { #page-irs .market-grid { grid-template-columns: 1fr; gap: 0; } }
+
+/* ═══ Amortization Schedule – sub-tabs, date boxes, schedule tables (project theme) ═══ */
+#page-irs #irs-amortization-schedule .irs-tabs { width: 100%; box-sizing: border-box; border-bottom: 1px solid var(--border); border-radius: 0; }
+#page-irs .irs-sub-pane { display: none; }
+#page-irs .irs-sub-pane.irs-active { display: block; }
+#page-irs #irs-amortization-schedule.irs-active { overflow-y: auto; }
+#page-irs #irs-amortization-schedule .irs-section, #page-irs #irs-amortization-schedule .irs-button-row { flex: none; }
+#page-irs .irs-sub-tab { appearance: none; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    height: 38px; padding: 0 18px; display: inline-flex; align-items: center; }
+#page-irs .irs-datebox { position: relative; display: flex; gap: 4px; }
+#page-irs .irs-datebox .irs-cal { flex: 0 0 32px; height: 30px; padding: 0; border: 1px solid var(--border); border-radius: 5px; background: var(--input-bg);
+    color: #000; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease; }
+#page-irs .irs-datebox .irs-cal:hover { border-color: var(--border-accent); }
+#page-irs .irs-datebox .irs-hid { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; padding: 0; border: 0; }
+#page-irs .irs-check { display: flex; align-items: center; gap: 8px; margin: 14px 0 10px; font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--text); }
+#page-irs .irs-check input { width: 16px; height: 16px; padding: 0; accent-color: var(--accent); }
+#page-irs .irs-amort-table th, #page-irs .irs-amort-table td { text-align: center; font-variant-numeric: tabular-nums; }
+
+/* compact cards, fields and buttons */
+#page-irs .irs-section { margin-bottom: 8px; }
+#page-irs .irs-section-header { padding: 6px 14px; }
+#page-irs .irs-section-body { padding: 10px 14px; }
+#page-irs .irs-grid { gap: 8px 14px; }
+#page-irs label { margin-bottom: 2px; }
+#page-irs input, #page-irs select { height: 30px; padding: 4px 8px; }
+#page-irs .irs-button-row { margin: 8px 0 0; flex: none; }
+#page-irs button { height: 34px; }
+#page-irs .irs-leg-header { padding: 6px 12px; }
+#page-irs .irs-leg-body { padding: 10px 12px; }
+#page-irs .irs-legs { gap: 12px; }
+#page-irs .irs-leg-body .irs-grid-2 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#page-irs th { padding: 6px 8px; }
+#page-irs td { padding: 4px 8px; }
+#page-irs .irs-market-table input { height: 26px; min-width: 80px; padding: 2px 8px; }
+#page-irs .irs-grid[style*="margin-bottom"] { margin-bottom: 8px !important; }
+
+/* Market Data & Pricing Results: data on the left, results on the right */
+#page-irs .irs-mp-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; flex: 1 1 auto; min-height: 0; align-items: stretch; }
+#page-irs #irs-market-pricing.irs-has-results .irs-mp-grid { grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); }
+#page-irs #irs-market-pricing.irs-has-results .irs-mp-left .irs-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#page-irs .irs-mp-left { display: flex; flex-direction: column; min-height: 0; }
+#page-irs #irs-pricing-results { flex-direction: column; min-height: 0; margin: 0; }
+#page-irs #irs-pricing-results .irs-section-body { flex: none; }
+#page-irs #irs-pricing-results .irs-result-grid { gap: 8px; }
+#page-irs #irs-pricing-results .irs-result-card { padding: 8px 10px; }
+#page-irs #irs-pricing-results .irs-result-label { margin-bottom: 4px; font-size: 9.5px; }
+#page-irs #irs-pricing-results .irs-result-value { font-size: 15px; }
+#page-irs #irs-pricing-results .irs-result-card.irs-primary .irs-result-value { font-size: 17px; }
+#page-irs #irs-pricing-results .irs-tabs { flex: none; padding: 8px 10px; gap: 6px; }
+#page-irs #irs-pricing-results .irs-tab { height: 30px; padding: 0 12px; font-size: 11.5px; }
+#page-irs #irs-pricing-results .irs-tab-content { padding: 10px 14px; flex: 1 1 auto; min-height: 0; }
+#page-irs #irs-pricing-results .irs-tab-pane.irs-active { overflow: auto; }
+#page-irs #irs-pricing-results .irs-subheading { margin: 0 0 6px; }
+#page-irs #irs-pricing-results .irs-subheading[style*="margin-top"] { margin-top: 10px !important; }
+#page-irs #irs-pricing-results table { font-size: 11.5px; }
+#page-irs #irs-pricing-results .irs-grid-3, #page-irs #irs-pricing-results .irs-grid-4 { gap: 8px; }
+@media (max-width: 1100px) { #page-irs .irs-leg-body .irs-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ══════════════════════════════════════════════════════
+   Part 2 — additions for the engine-backed IRS workspace (instruments/rates/irs.js)
+   ══════════════════════════════════════════════════════ */
+
+/* Trade Details header: compact workbook import on the right */
+#page-irs .irs-header-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#page-irs .irs-import { margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    text-transform: none; letter-spacing: 0; font-weight: 600; }
+#page-irs .irs-import-label { font-size: 10.5px; color: var(--text-muted); }
+#page-irs .irs-import input[type=file] { width: 190px; height: 24px; padding: 1px 4px; font-size: 10.5px; }
+#page-irs .irs-import select { width: 92px; height: 24px; padding: 1px 6px; font-size: 11px; }
+#page-irs .irs-import-status { font-size: 10.5px; font-weight: 500; color: var(--text-muted); max-width: 320px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* fields hidden for the other floating-leg type; wide field */
+#page-irs [data-leg][hidden] { display: none !important; }
+#page-irs .irs-span-2 { grid-column: span 2; }
+
+/* Market card: one read-only curve description per row */
+#page-irs .market-row.irs-market-row { grid-template-columns: 52px minmax(120px, 1fr); }
+#page-irs input[readonly] { background: rgba(47, 134, 181, 0.06); color: var(--text); }
+
+/* Editable schedule tables */
+#page-irs .irs-edit-table td { padding: 3px 4px; }
+#page-irs .irs-edit-table input { height: 26px; padding: 2px 6px; min-width: 96px; text-align: center; }
+#page-irs .irs-edit-table td:last-child { width: 30px; }
+#page-irs .irs-del-row { height: 24px !important; width: 24px; padding: 0 !important; border: 0 !important;
+    background: transparent !important; color: var(--red) !important; font-size: 16px; box-shadow: none !important; }
+#page-irs .irs-add-row { height: 28px !important; padding: 0 12px !important; margin-top: 8px; font-size: 11.5px !important;
+    background: var(--irs-rest-bg) !important; border: 2px solid var(--irs-rest-bd) !important; color: #163B5C !important; }
+#page-irs .irs-hint { font-weight: 500; color: var(--text-muted); }
+#page-irs td.irs-empty { color: var(--text-muted); font-style: italic; text-align: center; }
+
+/* Pricing results: engine outputs only */
+#page-irs #irs-pricing-results .irs-result-grid.irs-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#page-irs .irs-result-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+#page-irs tr.irs-settled td { color: var(--text-muted); font-style: italic; }
+#page-irs tr.irs-total td { font-weight: 700; background: rgba(47, 134, 181, 0.08); }
+#page-irs .irs-facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 12px; }
+#page-irs .irs-facts dt { color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding-top: 2px; }
+#page-irs .irs-facts dd { margin: 0; white-space: normal; }
+#page-irs .irs-note.irs-warning { border-left-color: var(--red); background: rgba(184, 92, 107, 0.06); color: var(--text); }
+#page-irs .irs-issues { margin: 8px 0 0 18px; font-size: 12px; line-height: 1.6; }
+#page-irs .irs-issues code { font-size: 11.5px; color: var(--accent); }
+
+/* Market Data: a long curve scrolls inside its card, so the page keeps fitting the window */
+#page-irs #irs-market-pricing.irs-active .irs-mp-left > .irs-section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#page-irs #irs-market-pricing.irs-active .irs-mp-left > .irs-section > .irs-section-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+#page-irs #irs-market-pricing .irs-market-table th { position: sticky; top: 0; z-index: 1; }
+
+/* Results: Excel download (same workbook as price_irs_workbook --output) */
+#page-irs .irs-download-row { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 8px; }
+#page-irs .irs-download-status { font-size: 11px; color: var(--text-muted); }
+#page-irs .irs-download-btn {
+    height: 28px; padding: 0 14px; font-size: 11.5px; font-weight: 600; font-family: inherit; cursor: pointer;
+    color: #163B5C; background: var(--irs-rest-bg); border: 2px solid var(--irs-rest-bd); border-radius: 8px;
+}
+#page-irs .irs-download-btn:hover:not(:disabled) { background-image: var(--irs-hl-grad); border-color: var(--irs-hl-bd); box-shadow: var(--irs-glow); }
+#page-irs .irs-download-btn:disabled { opacity: 0.6; cursor: default; }

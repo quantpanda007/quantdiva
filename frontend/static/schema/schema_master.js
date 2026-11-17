@@ -119,7 +119,7 @@ const SCHEMA = {
     payoff:true, cashflows:false, risk_ladder:false, curves:false, resets:false,
   },
 
-  // ─── FX: OPTIONS ───────────────────────────────────────────────
+// ─── FX: OPTIONS ───────────────────────────────────────────────
 
   fx_option: {
     label:'FX Option', asset:'FX', badge:'badge-fx',
@@ -231,7 +231,7 @@ const SCHEMA = {
     engines:[{v:'analytic',l:'Analytic'}],
     sensitivities:[{id:'dv01',l:'DV01',d:2},{id:'duration',l:'Duration',d:4},{id:'convexity',l:'Convexity',d:2}],
     analysis:['rate_ladder','scenario'],
-    payoff:false, cashflows:true, risk_ladder:true, curves:true, resets:true,
+    payoff:false, cashflows:false, risk_ladder:false, curves:false, resets:false,
   },
   cos: {
     label:'Coupon Only Swap', asset:'Interest Rates', badge:'badge-rates',
